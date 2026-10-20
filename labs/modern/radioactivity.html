@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radioactivity Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── same styles as before, with fullscreen additions ─── */
+        :root {
+            --bg-color: #0a0f05;
+            --bg-gradient-1: rgba(16, 185, 129, 0.06);
+            --bg-gradient-2: rgba(245, 158, 11, 0.06);
+            --glass-bg: rgba(8, 16, 8, 0.55);
+            --glass-blur: 24px;
+            --glass-blur-light: 16px;
+            --glass-border: rgba(16, 185, 129, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.03);
+            --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.4);
+            --secondary: #f59e0b;
+            --secondary-glow: rgba(245, 158, 11, 0.4);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.4);
+            --accent: #f472b6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+                radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        h1 {
+            font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #10b981, #f59e0b, #ef4444);
+            background-size: 200% auto;
+            color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(8, 16, 8, 0.7); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+        .lang-btn:hover { color: white; border-color: rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+        .lang-btn.active { background: rgba(16, 185, 129, 0.18); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+        .radio-mode-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .radio-mode-btn { background: rgba(8, 16, 8, 0.6); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.95rem; box-shadow: var(--glass-inner-shadow); }
+        .radio-mode-btn:hover { color: white; border-color: rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+        .radio-mode-btn.active { background: linear-gradient(135deg, #10b981, #f59e0b); color: white; border-color: transparent; box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+        .canvas-container, .controls-panel {
+            flex: 1; min-width: 320px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: 24px; padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+        .canvas-container::before, .controls-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+            pointer-events: none; border-radius: 24px 24px 0 0;
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        #three-container {
+            width: 100%; height: 500px; min-height: 400px; max-height: 520px;
+            border-radius: 16px; overflow: hidden;
+            background: #0a0f05;
+            border: 1px solid rgba(16,185,129,0.08);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(16,185,129,0.2); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--primary-glow); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--primary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #34d399; }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .data-display { background: rgba(4, 10, 4, 0.7); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.5), var(--glass-inner-shadow); }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+        .data-value { color: var(--primary); font-weight: bold; text-shadow: 0 0 10px var(--primary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .lab-action-btn {
+            background: linear-gradient(135deg, #10b981, #f59e0b);
+            border: 1px solid rgba(255,255,255,0.12); padding: 12px 24px; border-radius: 30px;
+            color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow);
+        }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); background: linear-gradient(135deg, #34d399, #fbbf24); }
+
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 20px rgba(16,185,129,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(16,185,129,0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #334155); box-shadow: var(--glass-inner-shadow); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+        details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--primary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .distinction-box { background: rgba(16,185,129,0.08); backdrop-filter: blur(4px); border-left: 4px solid var(--primary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+        .distinction-box strong { color: white; }
+        .danger-box { background: rgba(239,68,68,0.08); border-left-color: #ef4444; }
+        .warning-box { background: rgba(245,158,11,0.08); border-left-color: #f59e0b; }
+
+        footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+        footer .brand span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glass-inner-shadow);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #10b981, #f59e0b); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+        @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+        .ai-window {
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+            height: 600px; max-height: calc(100vh - 140px);
+            background: rgba(4, 10, 4, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 28px; overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), var(--glass-inner-shadow);
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            border: 1px solid var(--glass-border);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+        .ai-header { background: linear-gradient(135deg, rgba(16,185,129,0.9), rgba(245,158,11,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 5px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.3); border-radius: 10px; }
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { background: rgba(8, 16, 8, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .ai-message.user .ai-message-content { background: linear-gradient(135deg, #10b981, #f59e0b); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(16,185,129,0.3); }
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(4,10,4,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+        .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); background: rgba(8,16,8,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--primary-glow); background: rgba(8,16,8,0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { background: linear-gradient(135deg, #10b981, #f59e0b); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--primary-glow); flex-shrink: 0; }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+        .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+        .ai-typing span { width: 8px; height: 8px; background: white; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s; padding: 20px; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: linear-gradient(135deg, rgba(8,16,8,0.95), rgba(4,10,4,0.95)); backdrop-filter: blur(30px); border-radius: 32px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: hidden; padding: 32px; border: 1px solid rgba(16,185,129,0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow); transform: translateY(20px) scale(0.95); transition: 0.4s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+        .modal-scroll::-webkit-scrollbar { width: 5px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.3); border-radius: 10px; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question:hover { border-color: rgba(16,185,129,0.15); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #10b981; flex-shrink: 0; cursor: pointer; }
+        .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--primary); }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            padding: 0;
+            border-radius: 0;
+            background: #0a0f05;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            border-radius: 0;
+            min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 12px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            display: flex;
+            gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        /* Hide header, footer, controls-panel when fullscreen */
+        .fullscreen-mode header,
+        .fullscreen-mode .controls-panel,
+        .fullscreen-mode .info-section,
+        .fullscreen-mode footer,
+        .fullscreen-mode .language-selector,
+        .fullscreen-mode .radio-mode-selector,
+        .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab {
+            display: none !important;
+        }
+        .fullscreen-mode .container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .fullscreen-mode .sim-container {
+            margin: 0;
+            gap: 0;
+        }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            .radio-mode-btn { padding: 10px 18px; font-size: 0.8rem; }
+            #three-container { min-height: 320px; max-height: 380px; height: 380px; }
+            .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+            .modal-content { padding: 22px; max-height: 90vh; }
+            .canvas-container.fullscreen .canvas-controls {
+                bottom: 10px;
+                padding: 8px 16px;
+                gap: 8px;
+            }
+            .canvas-container.fullscreen .canvas-controls button {
+                font-size: 0.8rem;
+                padding: 4px 12px;
+            }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .radio-mode-btn { padding: 8px 14px; font-size: 0.75rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <header>
+        <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+        <h1>☢️ Radioactivity Lab</h1>
+        <p class="subtitle">Explore Alpha, Beta, Gamma Decay &amp; Half-Life | WAEC Modern Physics</p>
+    </header>
+
+    <div class="language-selector">
+        <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+        <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+        <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+        <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+        <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+    </div>
+
+    <div class="radio-mode-selector">
+        <button class="radio-mode-btn active" onclick="setRadioMode('decay')">☢️ Decay Simulation</button>
+        <button class="radio-mode-btn" onclick="setRadioMode('halflife')">📉 Half-Life Graph</button>
+        <button class="radio-mode-btn" onclick="setRadioMode('types')">⚛️ Decay Types</button>
+    </div>
+
+    <div class="sim-container">
+        <div class="canvas-container" id="canvasContainer">
+            <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+            <div class="canvas-controls">
+                <button class="btn-secondary" onclick="resetRadio()">🔄 Reset</button>
+                <button class="btn-secondary" onclick="toggleRadioAnimation()">⏸️ Play/Pause</button>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+            </div>
+        </div>
+        <div class="controls-panel" id="controlsPanel">
+            <div class="slider-container" id="halflifeSliderContainer">
+                <label>⏱️ Half-Life (t₁/₂): <span id="halflifeValue">5.0</span> s</label>
+                <input type="range" id="halflifeSlider" min="1" max="10" step="0.5" value="5" oninput="updateRadio()">
+            </div>
+            <div class="slider-container" id="initialAtomsContainer">
+                <label>🔵 Initial Atoms: <span id="initialValue">100</span></label>
+                <input type="range" id="initialSlider" min="20" max="200" step="10" value="100" oninput="updateRadio()">
+            </div>
+            <div class="slider-container" id="decayTypeContainer" style="display:none;">
+                <label>⚛️ Decay Type: <span id="decayTypeLabel">Alpha (α)</span></label>
+                <input type="range" id="decayTypeSlider" min="0" max="2" step="1" value="0" oninput="updateRadio()">
+            </div>
+
+            <div class="data-display">
+                <div class="data-row"><span>Time Elapsed:</span><span id="displayTime" class="data-value" style="color:#10b981;">0.0 s</span></div>
+                <div class="data-row"><span>Remaining Atoms:</span><span id="displayRemaining" class="data-value" style="color:#f59e0b;">100</span></div>
+                <div class="data-row"><span>Decayed Atoms:</span><span id="displayDecayed" class="data-value" style="color:#ef4444;">0</span></div>
+                <div class="data-row"><span>Activity:</span><span id="displayActivity" class="data-value" style="color:#f472b6;">--- Bq</span></div>
+                <div class="data-row" id="decayTypeRow"><span>Decay Type:</span><span id="displayDecayType" class="data-value" style="color:#a78bfa;">Alpha (α)</span></div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <details>
+            <summary>📖 Understanding Radioactivity</summary>
+            <div class="theory-content">
+                <div class="distinction-box">
+                    <p><strong>Radioactive Decay:</strong> Unstable nuclei emit radiation to become stable. Types: Alpha (α), Beta (β), Gamma (γ).</p>
+                </div>
+                <div class="distinction-box warning-box">
+                    <p><strong>Half-Life (t₁/₂):</strong> The time for half of the radioactive nuclei to decay. N = N₀(½)^(t/t₁/₂).</p>
+                </div>
+                <div class="distinction-box danger-box">
+                    <p><strong>Decay Types:</strong><br>
+                    • <strong>Alpha (α):</strong> Helium nucleus (²⁴He) — low penetration, high ionization.<br>
+                    • <strong>Beta (β):</strong> Electron or positron — medium penetration.<br>
+                    • <strong>Gamma (γ):</strong> High-energy photon — high penetration, low ionization.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#f472b6;">
+                    <p><strong>Activity (A):</strong> The rate of decay. A = λN, measured in Becquerels (Bq). λ = ln(2) / t₁/₂.</p>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<footer>
+    <div class="brand">☢️ <span>Adusei Labs</span> | Powered by bksolutions</div>
+    <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+</footer>
+
+<button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+<button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+<div id="aiAssistant" class="ai-window">
+    <div class="ai-header">
+        <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Radioactivity AI Tutor <span class="ai-badge">Ultra</span></div>
+        <button class="ai-close" onclick="toggleAI()">✕</button>
+    </div>
+    <div class="ai-body">
+        <div class="ai-messages" id="aiMessages"></div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Ask about alpha, beta, gamma, half-life..." onkeypress="handleAIKeypress(event)">
+            <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+        <div class="ai-disclaimer">💡 Try: "What is half-life?" | "Explain alpha decay" | "Show WAEC questions"</div>
+    </div>
+</div>
+
+<div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<!-- ─── Three.js & add-ons ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// 1. RADIOACTIVITY ENGINE – 3D with CSS2D labels & Fullscreen
+// ─────────────────────────────────────────────────────────────
+let radioMode = 'decay';
+let isAnimating = true;
+let animFrame = null;
+let time = 0;
+let decayedCount = 0;
+let atoms = [];
+let userStats = { configurations: 0, quizScores: [] };
+
+const decayTypes = ['Alpha (α)', 'Beta (β)', 'Gamma (γ)'];
+const decaySymbols = ['α', 'β', 'γ'];
+const decayColors = ['#ef4444', '#f59e0b', '#10b981'];
+
+// ─── Three.js globals ───
+let scene, camera, renderer, cssRenderer, controls;
+let decayGroup, halflifeGroup, typesGroup;
+let container = document.getElementById('three-container');
+let clock = new THREE.Clock();
+let threeReady = false;
+let atomMeshes = [];
+
+function initThree() {
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js library not loaded. Check your internet connection.');
+        }
+
+        const rect = container.getBoundingClientRect();
+        const width = rect.width || container.clientWidth || 800;
+        const height = rect.height || container.clientHeight || 500;
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0f05);
+
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(8, 5, 12);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        // CSS2D Renderer for crisp labels
+        cssRenderer = new THREE.CSS2DRenderer();
+        cssRenderer.setSize(width, height);
+        cssRenderer.domElement.style.position = 'absolute';
+        cssRenderer.domElement.style.top = '0';
+        cssRenderer.domElement.style.left = '0';
+        cssRenderer.domElement.style.pointerEvents = 'none'; // allow clicks to pass through
+        container.style.position = 'relative';
+        container.appendChild(cssRenderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambient);
+        const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+        scene.add(hemi);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 30;
+        mainLight.shadow.camera.left = -10;
+        mainLight.shadow.camera.right = 10;
+        mainLight.shadow.camera.top = 10;
+        mainLight.shadow.camera.bottom = -10;
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+        fillLight.position.set(-5, 0, 5);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+        rimLight.position.set(0, -5, 5);
+        scene.add(rimLight);
+
+        // Grid helper (subtle)
+        const gridHelper = new THREE.GridHelper(12, 12, 0x10b981, 0x0a4a3a);
+        gridHelper.position.y = -3.5;
+        scene.add(gridHelper);
+
+        // Axes helper (small)
+        const axesHelper = new THREE.AxesHelper(2);
+        axesHelper.position.set(-5, -3, 0);
+        scene.add(axesHelper);
+
+        // Groups
+        decayGroup = new THREE.Group();
+        halflifeGroup = new THREE.Group();
+        typesGroup = new THREE.Group();
+        scene.add(decayGroup);
+        scene.add(halflifeGroup);
+        scene.add(typesGroup);
+        decayGroup.visible = false;
+        halflifeGroup.visible = false;
+        typesGroup.visible = false;
+
+        threeReady = true;
+        window.addEventListener('resize', onResize);
+        onResize();
+
+        animate();
+    } catch (e) {
+        container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+        console.error(e);
+    }
+}
+
+function onResize() {
+    if (!threeReady) return;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width || container.clientWidth || 800;
+    const h = rect.height || container.clientHeight || 500;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    cssRenderer.setSize(w, h);
+}
+
+function animate() {
+    animFrame = requestAnimationFrame(animate);
+    if (!threeReady) return;
+    controls.update();
+    renderer.render(scene, camera);
+    cssRenderer.render(scene, camera);
+}
+
+// ─── Clear group ───
+function clearGroup(group) {
+    while(group.children.length > 0) {
+        const child = group.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+        }
+        group.remove(child);
+    }
+}
+
+// ─── Create CSS2D label ───
+function createLabel(text, color = '#ffffff', fontSize = '20px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.6)') {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.color = color;
+    div.style.fontFamily = 'Arial, sans-serif';
+    div.style.fontSize = fontSize;
+    div.style.fontWeight = 'bold';
+    div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+    div.style.padding = '6px 12px';
+    div.style.background = bg;
+    div.style.borderRadius = '8px';
+    div.style.border = '1px solid rgba(255,255,255,0.05)';
+    div.style.backdropFilter = 'blur(4px)';
+    div.style.pointerEvents = 'none';
+    const label = new THREE.CSS2DObject(div);
+    label.position.copy(position);
+    return label;
+}
+
+// ─── Mode switching ───
+function setRadioMode(mode) {
+    radioMode = mode;
+    document.querySelectorAll('.radio-mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.radio-mode-btn[onclick="setRadioMode('${mode}')"]`).classList.add('active');
+
+    document.getElementById('halflifeSliderContainer').style.display = (mode === 'decay' || mode === 'halflife') ? 'block' : 'none';
+    document.getElementById('initialAtomsContainer').style.display = (mode === 'decay' || mode === 'halflife') ? 'block' : 'none';
+    document.getElementById('decayTypeContainer').style.display = (mode === 'types') ? 'block' : 'none';
+    document.getElementById('decayTypeRow').style.display = (mode === 'types') ? 'flex' : 'none';
+
+    if (mode === 'decay') {
+        const initial = parseInt(document.getElementById('initialSlider').value);
+        atoms = [];
+        for (let i = 0; i < initial; i++) {
+            atoms.push({ decayed: false, life: Math.random() * 20 });
+        }
+        decayedCount = 0;
+        time = 0;
+    }
+
+    updateRadio();
+}
+
+function updateRadio() {
+    if (!threeReady) return;
+    userStats.configurations++;
+    const halflife = parseFloat(document.getElementById('halflifeSlider').value);
+    const initial = parseInt(document.getElementById('initialSlider').value);
+    const decayTypeIdx = parseInt(document.getElementById('decayTypeSlider').value);
+
+    document.getElementById('halflifeValue').textContent = halflife.toFixed(1);
+    document.getElementById('initialValue').textContent = initial;
+    document.getElementById('decayTypeLabel').textContent = decayTypes[decayTypeIdx];
+
+    if (radioMode === 'decay') {
+        const lambda = Math.LN2 / halflife;
+        const remaining = atoms.filter(a => !a.decayed).length;
+        const activity = lambda * remaining;
+
+        document.getElementById('displayTime').textContent = time.toFixed(1) + ' s';
+        document.getElementById('displayRemaining').textContent = remaining;
+        document.getElementById('displayDecayed').textContent = decayedCount;
+        document.getElementById('displayActivity').textContent = activity.toFixed(2) + ' Bq';
+        document.getElementById('displayDecayType').textContent = 'N/A';
+
+        drawDecay3D(halflife, initial, remaining, decayedCount, activity);
+
+    } else if (radioMode === 'halflife') {
+        document.getElementById('displayTime').textContent = 'Graph';
+        document.getElementById('displayRemaining').textContent = '---';
+        document.getElementById('displayDecayed').textContent = '---';
+        document.getElementById('displayActivity').textContent = '---';
+        document.getElementById('displayDecayType').textContent = 'N/A';
+
+        drawHalfLifeGraph3D(halflife, initial);
+
+    } else { // types
+        const type = decayTypes[decayTypeIdx];
+        document.getElementById('displayTime').textContent = '---';
+        document.getElementById('displayRemaining').textContent = '---';
+        document.getElementById('displayDecayed').textContent = '---';
+        document.getElementById('displayActivity').textContent = '---';
+        document.getElementById('displayDecayType').textContent = type;
+
+        drawDecayTypes3D(decayTypeIdx);
+    }
+}
+
+function resetRadio() {
+    const initial = parseInt(document.getElementById('initialSlider').value);
+    atoms = [];
+    for (let i = 0; i < initial; i++) {
+        atoms.push({ decayed: false, life: Math.random() * 20 });
+    }
+    decayedCount = 0;
+    time = 0;
+    document.getElementById('halflifeSlider').value = 5;
+    document.getElementById('initialSlider').value = 100;
+    document.getElementById('decayTypeSlider').value = 0;
+    updateRadio();
+}
+
+function toggleRadioAnimation() {
+    isAnimating = !isAnimating;
+    if (isAnimating) radioLoop();
+}
+
+function radioLoop() {
+    if (!isAnimating) {
+        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+        return;
+    }
+
+    if (radioMode === 'decay') {
+        time += 0.1;
+        const halflife = parseFloat(document.getElementById('halflifeSlider').value);
+        const lambda = Math.LN2 / halflife;
+
+        let decayedThisStep = 0;
+        for (let atom of atoms) {
+            if (!atom.decayed && Math.random() < lambda * 0.1) {
+                atom.decayed = true;
+                decayedThisStep++;
+            }
+        }
+        decayedCount += decayedThisStep;
+
+        updateRadio();
+        animFrame = requestAnimationFrame(radioLoop);
+    } else {
+        updateRadio();
+        animFrame = requestAnimationFrame(radioLoop);
+    }
+}
+
+// ─── DECAY SIMULATION (unchanged, uses 3D spheres + CSS2D labels) ───
+function drawDecay3D(halflife, initial, remaining, decayed, activity) {
+    clearGroup(decayGroup);
+    decayGroup.visible = true;
+    halflifeGroup.visible = false;
+    typesGroup.visible = false;
+
+    const cols = 20;
+    const rows = Math.ceil(initial / cols);
+    const spacing = 0.6;
+    const startX = - (cols - 1) * spacing / 2;
+    const startY = - (rows - 1) * spacing / 2;
+
+    let displayed = 0;
+    atomMeshes = [];
+
+    for (let i = 0; i < atoms.length && displayed < 180; i++) {
+        const atom = atoms[i];
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const x = startX + col * spacing;
+        const y = startY + row * spacing;
+
+        if (atom.decayed) {
+            const geo = new THREE.SphereGeometry(0.12, 12, 12);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xef4444,
+                emissive: 0xef4444,
+                emissiveIntensity: 0.3,
+                transparent: true,
+                opacity: 0.6
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, 0);
+            decayGroup.add(mesh);
+            const crossMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            const bar1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.25, 0.02), crossMat);
+            bar1.position.set(x, y, 0.05);
+            decayGroup.add(bar1);
+            const bar2 = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.02), crossMat);
+            bar2.position.set(x, y, 0.05);
+            decayGroup.add(bar2);
+        } else {
+            const geo = new THREE.SphereGeometry(0.2, 16, 16);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0x10b981,
+                emissive: 0x10b981,
+                emissiveIntensity: 0.6,
+                metalness: 0.2,
+                roughness: 0.3
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, 0);
+            mesh.castShadow = true;
+            decayGroup.add(mesh);
+            atomMeshes.push(mesh);
+            displayed++;
+        }
+    }
+
+    // Progress bar
+    const barLength = 6;
+    const barY = - rows * spacing / 2 - 0.8;
+    const barMat = new THREE.MeshBasicMaterial({ color: 0x1a2a1a });
+    const barBg = new THREE.Mesh(new THREE.BoxGeometry(barLength, 0.2, 0.2), barMat);
+    barBg.position.set(0, barY, 0);
+    decayGroup.add(barBg);
+
+    const ratio = remaining / initial;
+    const fillMat = new THREE.MeshStandardMaterial({
+        color: 0x10b981,
+        emissive: 0x10b981,
+        emissiveIntensity: 0.3
+    });
+    const fill = new THREE.Mesh(new THREE.BoxGeometry(barLength * ratio - 0.1, 0.15, 0.15), fillMat);
+    fill.position.set( - (barLength/2) + (barLength * ratio)/2, barY, 0.05);
+    decayGroup.add(fill);
+
+    // CSS2D labels
+    const lbl1 = createLabel(`${(ratio * 100).toFixed(0)}% remaining`, '#94a3b8', '22px', new THREE.Vector3(0, barY - 0.6, 0));
+    decayGroup.add(lbl1);
+    const info = createLabel(`☢️ Decay: t₁/₂=${halflife.toFixed(1)}s  N₀=${initial}  t=${time.toFixed(1)}s`, '#e2e8f0', '24px', new THREE.Vector3(0, rows * spacing / 2 + 1.2, 0));
+    decayGroup.add(info);
+    const act = createLabel(`Remaining: ${remaining}  Decayed: ${decayed}  Activity: ${activity.toFixed(2)} Bq`, '#f59e0b', '22px', new THREE.Vector3(0, rows * spacing / 2 + 0.6, 0));
+    decayGroup.add(act);
+}
+
+// ─── HALF-LIFE GRAPH (POLISHED with CSS2D labels) ───
+function drawHalfLifeGraph3D(halflife, initial) {
+    clearGroup(halflifeGroup);
+    halflifeGroup.visible = true;
+    decayGroup.visible = false;
+    typesGroup.visible = false;
+
+    const graphW = 7;
+    const graphH = 4.5;
+    const maxTime = halflife * 8;
+    const lambda = Math.LN2 / halflife;
+
+    // Panel background
+    const panelMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1a0a,
+        emissive: 0x0a1a0a,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        roughness: 0.6,
+        metalness: 0.1
+    });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(graphW + 1.5, graphH + 1.2), panelMat);
+    panel.position.set(0, 0, -0.1);
+    halflifeGroup.add(panel);
+
+    // Border
+    const borderMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.3 });
+    const borderPoints = [
+        new THREE.Vector3(-graphW/2 - 0.75, -graphH/2 - 0.6, 0),
+        new THREE.Vector3( graphW/2 + 0.75, -graphH/2 - 0.6, 0),
+        new THREE.Vector3( graphW/2 + 0.75,  graphH/2 + 0.6, 0),
+        new THREE.Vector3(-graphW/2 - 0.75,  graphH/2 + 0.6, 0),
+        new THREE.Vector3(-graphW/2 - 0.75, -graphH/2 - 0.6, 0)
+    ];
+    const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPoints);
+    const borderLine = new THREE.Line(borderGeo, borderMat);
+    halflifeGroup.add(borderLine);
+
+    // Grid lines
+    const gridMat = new THREE.LineBasicMaterial({ color: 0x1a3a1a, transparent: true, opacity: 0.4 });
+    for (let i = 0; i <= 8; i++) {
+        const x = -graphW/2 + (i / 8) * graphW;
+        const pts = [
+            new THREE.Vector3(x, -graphH/2, 0),
+            new THREE.Vector3(x,  graphH/2, 0)
+        ];
+        const g = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(g, gridMat);
+        halflifeGroup.add(line);
+    }
+    for (let i = 0; i <= 6; i++) {
+        const y = -graphH/2 + (i / 6) * graphH;
+        const pts = [
+            new THREE.Vector3(-graphW/2, y, 0),
+            new THREE.Vector3( graphW/2, y, 0)
+        ];
+        const g = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(g, gridMat);
+        halflifeGroup.add(line);
+    }
+
+    // Axes with arrows
+    const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, linewidth: 2 });
+    // X axis
+    const xPts = [
+        new THREE.Vector3(-graphW/2 - 0.2, -graphH/2, 0),
+        new THREE.Vector3( graphW/2 + 0.4, -graphH/2, 0)
+    ];
+    const xGeo = new THREE.BufferGeometry().setFromPoints(xPts);
+    const xLine = new THREE.Line(xGeo, axisMat);
+    halflifeGroup.add(xLine);
+    const arrowMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8 });
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.25, 6), arrowMat);
+    arrow.position.set(graphW/2 + 0.4, -graphH/2, 0);
+    arrow.rotation.z = -Math.PI / 2;
+    halflifeGroup.add(arrow);
+
+    // Y axis
+    const yPts = [
+        new THREE.Vector3(-graphW/2, -graphH/2 - 0.2, 0),
+        new THREE.Vector3(-graphW/2,  graphH/2 + 0.4, 0)
+    ];
+    const yGeo = new THREE.BufferGeometry().setFromPoints(yPts);
+    const yLine = new THREE.Line(yGeo, axisMat);
+    halflifeGroup.add(yLine);
+    const yArrow = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.25, 6), arrowMat);
+    yArrow.position.set(-graphW/2, graphH/2 + 0.4, 0);
+    halflifeGroup.add(yArrow);
+
+    // Axis labels (CSS2D)
+    const xLabel = createLabel('Time (s)', '#94a3b8', '22px', new THREE.Vector3(0, -graphH/2 - 0.7, 0));
+    halflifeGroup.add(xLabel);
+    const yLabel = createLabel('N (atoms)', '#94a3b8', '22px', new THREE.Vector3(-graphW/2 - 0.9, 0, 0));
+    halflifeGroup.add(yLabel);
+
+    // Plot curve (thick, glowing)
+    const points = [];
+    const steps = 120;
+    for (let i = 0; i <= steps; i++) {
+        const t = (i / steps) * maxTime;
+        const N = initial * Math.exp(-lambda * t);
+        const px = -graphW/2 + (t / maxTime) * graphW;
+        const py = -graphH/2 + (N / initial) * graphH;
+        points.push(new THREE.Vector3(px, py, 0.02));
+    }
+    const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
+    const curveMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 3 });
+    const curveLine = new THREE.Line(curveGeo, curveMat);
+    halflifeGroup.add(curveLine);
+
+    // Glow curve
+    const glowMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.2 });
+    const glowLine = new THREE.Line(curveGeo.clone(), glowMat);
+    glowLine.scale.set(1.02, 1.02, 1);
+    halflifeGroup.add(glowLine);
+
+    // Half-life markers
+    for (let h = 1; h <= 6; h++) {
+        const t_h = h * halflife;
+        if (t_h > maxTime) break;
+        const N_h = initial * Math.pow(0.5, h);
+        const px = -graphW/2 + (t_h / maxTime) * graphW;
+        const py = -graphH/2 + (N_h / initial) * graphH;
+
+        // Glowing sphere
+        const dotGeo = new THREE.SphereGeometry(0.12, 12, 12);
+        const dotMat = new THREE.MeshStandardMaterial({
+            color: 0xf59e0b,
+            emissive: 0xf59e0b,
+            emissiveIntensity: 0.8
+        });
+        const dot = new THREE.Mesh(dotGeo, dotMat);
+        dot.position.set(px, py, 0.02);
+        halflifeGroup.add(dot);
+
+        // Glow aura
+        const auraGeo = new THREE.SphereGeometry(0.2, 8, 8);
+        const auraMat = new THREE.MeshBasicMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.15
+        });
+        const aura = new THREE.Mesh(auraGeo, auraMat);
+        aura.position.set(px, py, 0.02);
+        halflifeGroup.add(aura);
+
+        // Labels (CSS2D)
+        const lbl = createLabel(`${t_h.toFixed(1)}s`, '#f59e0b', '18px', new THREE.Vector3(px, py - 0.4, 0));
+        halflifeGroup.add(lbl);
+        const lbl2 = createLabel(`N₀/${Math.pow(2, h)}`, 'rgba(255,255,255,0.5)', '16px', new THREE.Vector3(px, py + 0.35, 0));
+        halflifeGroup.add(lbl2);
+    }
+
+    // Title and equation (CSS2D)
+    const title = createLabel(`📉 Half-Life Graph (t₁/₂ = ${halflife.toFixed(1)}s)`, '#e2e8f0', '28px', new THREE.Vector3(0, graphH/2 + 1.2, 0));
+    halflifeGroup.add(title);
+    const eq = createLabel(`N(t) = N₀ · (½)^(t / ${halflife.toFixed(1)})`, '#94a3b8', '22px', new THREE.Vector3(0, graphH/2 + 0.6, 0));
+    halflifeGroup.add(eq);
+}
+
+// ─── DECAY TYPES (POLISHED with CSS2D labels) ───
+function drawDecayTypes3D(typeIdx) {
+    clearGroup(typesGroup);
+    typesGroup.visible = true;
+    decayGroup.visible = false;
+    halflifeGroup.visible = false;
+
+    const types = [
+        { name: 'Alpha (α)', symbol: 'α', desc: 'Helium nucleus (²⁴He)', penetration: 'Low (paper)', ionization: 'High', color: 0xef4444, emoji: '🔴' },
+        { name: 'Beta (β)', symbol: 'β', desc: 'Electron or positron', penetration: 'Medium (aluminum)', ionization: 'Medium', color: 0xf59e0b, emoji: '🟡' },
+        { name: 'Gamma (γ)', symbol: 'γ', desc: 'High-energy photon', penetration: 'High (lead)', ionization: 'Low', color: 0x10b981, emoji: '🟢' }
+    ];
+    const type = types[typeIdx];
+    const colorHex = `#${type.color.toString(16).padStart(6,'0')}`;
+
+    // Background card
+    const cardMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1a0a,
+        emissive: 0x0a1a0a,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        roughness: 0.6,
+        metalness: 0.1
+    });
+    const card = new THREE.Mesh(new THREE.PlaneGeometry(8, 6), cardMat);
+    card.position.set(0, 0, -0.1);
+    typesGroup.add(card);
+
+    // Card border
+    const borderMat = new THREE.LineBasicMaterial({ color: type.color, transparent: true, opacity: 0.3 });
+    const borderPoints = [
+        new THREE.Vector3(-4, -3, 0),
+        new THREE.Vector3( 4, -3, 0),
+        new THREE.Vector3( 4,  3, 0),
+        new THREE.Vector3(-4,  3, 0),
+        new THREE.Vector3(-4, -3, 0)
+    ];
+    const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPoints);
+    const borderLine = new THREE.Line(borderGeo, borderMat);
+    typesGroup.add(borderLine);
+
+    // Large symbol (sprite with canvas texture)
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 512, 512);
+    ctx.font = 'bold 380px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = colorHex;
+    ctx.shadowBlur = 80;
+    ctx.fillStyle = colorHex;
+    ctx.fillText(type.symbol, 256, 270);
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.position.set(0, 0.8, 0);
+    sprite.scale.set(3.5, 3.5, 1);
+    typesGroup.add(sprite);
+
+    // Glow aura sphere
+    const auraMat2 = new THREE.MeshBasicMaterial({
+        color: type.color,
+        transparent: true,
+        opacity: 0.08
+    });
+    const auraSphere = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), auraMat2);
+    auraSphere.position.set(0, 0.8, 0);
+    typesGroup.add(auraSphere);
+
+    // CSS2D labels
+    const title = createLabel(`${type.emoji} ${type.name}`, '#e2e8f0', '32px', new THREE.Vector3(0, 2.6, 0));
+    typesGroup.add(title);
+    const desc = createLabel(type.desc, '#94a3b8', '22px', new THREE.Vector3(0, 2.0, 0));
+    typesGroup.add(desc);
+    const pen = createLabel(`🔹 Penetration: ${type.penetration}`, '#cbd5e1', '20px', new THREE.Vector3(0, 1.3, 0));
+    typesGroup.add(pen);
+    const ion = createLabel(`🔹 Ionization: ${type.ionization}`, '#cbd5e1', '20px', new THREE.Vector3(0, 0.8, 0));
+    typesGroup.add(ion);
+
+    // Shielding blocks on platform
+    const platformMat = new THREE.MeshStandardMaterial({
+        color: 0x1a2a1a,
+        transparent: true,
+        opacity: 0.5,
+        roughness: 0.8
+    });
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.1, 0.6), platformMat);
+    platform.position.set(0, -1.0, 0);
+    typesGroup.add(platform);
+
+    const shieldLabels = ['Paper', 'Aluminum', 'Lead'];
+    const shieldColors = [0xef4444, 0xf59e0b, 0x10b981];
+    for (let i = 0; i < 3; i++) {
+        const x = -1.2 + i * 1.2;
+        const isActive = (i === typeIdx);
+        const mat = new THREE.MeshStandardMaterial({
+            color: isActive ? shieldColors[i] : 0x334155,
+            emissive: isActive ? shieldColors[i] : 0x000000,
+            emissiveIntensity: isActive ? 0.5 : 0,
+            transparent: true,
+            opacity: isActive ? 1.0 : 0.4,
+            metalness: 0.3,
+            roughness: 0.4
+        });
+        const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.4), mat);
+        box.position.set(x, -0.8, 0);
+        box.castShadow = true;
+        typesGroup.add(box);
+        const lbl = createLabel(shieldLabels[i], isActive ? 'white' : '#64748b', '18px', new THREE.Vector3(x, -0.45, 0));
+        typesGroup.add(lbl);
+        if (isActive) {
+            const glowRing = new THREE.Mesh(
+                new THREE.TorusGeometry(0.45, 0.04, 8, 16),
+                new THREE.MeshBasicMaterial({ color: shieldColors[i], transparent: true, opacity: 0.4 })
+            );
+            glowRing.position.set(x, -0.8, 0);
+            glowRing.rotation.x = Math.PI / 2;
+            typesGroup.add(glowRing);
+        }
+    }
+
+    // Equation
+    const equations = [
+        '²³⁸U → ²³⁴Th + α',
+        '¹⁴C → ¹⁴N + β + ν̄',
+        '²⁷Al + γ → ²⁶Al + n'
+    ];
+    const eq = createLabel(equations[typeIdx], 'rgba(255,255,255,0.5)', '22px', new THREE.Vector3(0, -1.6, 0));
+    typesGroup.add(eq);
+
+    // Decorative particles
+    for (let i = 0; i < 40; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const rad = 2.5 + Math.random() * 1.8;
+        const x = Math.cos(angle) * rad;
+        const z = Math.sin(angle) * rad;
+        const y = (Math.random() - 0.5) * 3.5;
+        const size = 0.03 + Math.random() * 0.06;
+        const geo = new THREE.SphereGeometry(size, 6, 6);
+        const mat = new THREE.MeshBasicMaterial({
+            color: type.color,
+            transparent: true,
+            opacity: 0.2 + Math.random() * 0.4
+        });
+        const dot = new THREE.Mesh(geo, mat);
+        dot.position.set(x, y, z);
+        typesGroup.add(dot);
+    }
+}
+
+// ─── FULLSCREEN TOGGLE ───
+function toggleFullscreen() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+        }
+        container.classList.add('fullscreen');
+        main.classList.add('fullscreen-mode');
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+}
+
+// Listen for fullscreen change events to clean up
+document.addEventListener('fullscreenchange', function() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// 2. AI SYSTEM (unchanged from previous working version)
+// ─────────────────────────────────────────────────────────────
+let currentLang = 'english';
+
+const langUI = {
+    english: {
+        btnQuiz: '📝 Take Quiz',
+        btnPred: '🔮 AI Analytics',
+        btnExp: '🧪 Experiment',
+        placeholder: 'Ask about alpha, beta, gamma, half-life...',
+        welcome: '👋 Welcome to the Radioactivity Lab! Ask me about alpha, beta, gamma, half-life, or decay equations.'
+    },
+    twi: {
+        btnQuiz: '📝 Yɛ Nsɔhwɛ',
+        btnPred: '🔮 AI Nkɔmhyɛ',
+        btnExp: '🧪 Yɛ Nhwehwɛmu',
+        placeholder: 'Bisa physics asɛm biara...',
+        welcome: '👋 Akwaaba! Bisa me alpha, beta, gamma, ana half-life ho asɛm.'
+    },
+    ga: {
+        btnQuiz: '📝 Feemɔ Kaamɔ',
+        btnPred: '🔮 AI Kɔkɔbɔ',
+        btnExp: '🧪 Feemɔ Nitsumɔ',
+        placeholder: 'Bi lɛɛlɛŋ sane...',
+        welcome: '👋 Amaa! Bi mi alpha, beta, gamma, loo half-life he sane.'
+    },
+    ewe: {
+        btnQuiz: '📝 Wɔ Dodokpɔ',
+        btnPred: '🔮 AI Nyagbɔgblɔɖi',
+        btnExp: '🧪 Wɔ Dodokpɔ',
+        placeholder: 'Bia nya...',
+        welcome: '👋 Woezɔ! Bia alpha, beta, gamma, alo half-life ŋu nya.'
+    },
+    dagbani: {
+        btnQuiz: '📝 Niŋ Dahimbu',
+        btnPred: '🔮 AI Baŋsim',
+        btnExp: '🧪 Niŋ Niŋsim',
+        placeholder: 'Bɔhi yɛltɔɣa...',
+        welcome: '👋 A ni baŋ! Bɔhi alpha, beta, gamma, bee half-life yɛltɔɣa.'
+    }
+};
+
+const aiKnowledge = {
+    english: {
+        'alpha': '🔴 **Alpha Decay:**\n²³⁸U → ²³⁴Th + α\nEjects a helium nucleus (²⁴He). Low penetration (stopped by paper). High ionization.',
+        'beta': '🟡 **Beta Decay:**\n¹⁴C → ¹⁴N + β + ν̄\nEjects an electron or positron. Medium penetration (stopped by aluminum).',
+        'gamma': '🟢 **Gamma Decay:**\nHigh-energy photon emitted. High penetration (requires lead shielding). Low ionization.',
+        'half-life': '📉 **Half-Life:**\nThe time for half the nuclei to decay. N = N₀(½)^(t/t₁/₂). Each half-life halves the remaining amount.',
+        'halflife': '📉 **Half-Life:**\nThe time for half the nuclei to decay. N = N₀(½)^(t/t₁/₂). Each half-life halves the remaining amount.',
+        'experiment': '🧪 **Experiment Ideas:**\nSet t₁/₂ = 5s and N₀ = 100. Observe decay. After 5s, ~50 remain. After 10s, ~25 remain. After 15s, ~12 remain! Try varying the half-life and see how the curve changes.',
+        'quiz': '📝 **Quiz Requested:**\nI can ask you questions about radioactivity. Try asking: "Give me a quiz question on half-life."',
+        'prediction': '🔮 **AI Analytics:**\nBased on your simulation adjustments and quiz history, I can predict your mastery level. Keep using the lab and I\'ll provide more insights!'
+    },
+    twi: {
+        'alpha': '🔴 **Alpha:** Helium nucleus, penetration ketewa.',
+        'beta': '🟡 **Beta:** Electron, penetration mfimfini.',
+        'gamma': '🟢 **Gamma:** Photon, penetration kɛse.',
+        'half-life': '📉 **Half-Life:** Bere a ɔfa atɔm no fa.',
+        'halflife': '📉 **Half-Life:** Bere a ɔfa atɔm no fa.',
+        'experiment': '🧪 **Nhwehwɛmu:** Sesa t₁/₂ hwɛ decay.',
+        'quiz': '📝 **Nsɔhwɛ:** Bisa me nsɔhwɛ bi.',
+        'prediction': '🔮 **AI Nkɔmhyɛ:** Metumi akyerɛ wo nkɔmhyɛ.'
+    },
+    ga: {
+        'alpha': '🔴 **Alpha:** Helium nucleus.',
+        'beta': '🟡 **Beta:** Electron.',
+        'gamma': '🟢 **Gamma:** Photon.',
+        'half-life': '📉 **Half-Life:** t₁/₂.',
+        'halflife': '📉 **Half-Life:** t₁/₂.',
+        'experiment': '🧪 **Nitsumɔ:** Tsake t₁/₂ lɛ.',
+        'quiz': '📝 **Kaamɔ:** Bisa mi kaamɔ.',
+        'prediction': '🔮 **AI Kɔkɔbɔ:** Manyɛ etsɔɔ mo.'
+    },
+    ewe: {
+        'alpha': '🔴 **Alpha:** Helium nucleus.',
+        'beta': '🟡 **Beta:** Electron.',
+        'gamma': '🟢 **Gamma:** Photon.',
+        'half-life': '📉 **Half-Life:** t₁/₂.',
+        'halflife': '📉 **Half-Life:** t₁/₂.',
+        'experiment': '🧪 **Dodokpɔ:** Tsake t₁/₂ la.',
+        'quiz': '📝 **Dodokpɔ:** Bia dodokpɔ.',
+        'prediction': '🔮 **AI Nyagbɔgblɔɖi:** Maku nya.'
+    },
+    dagbani: {
+        'alpha': '🔴 **Alpha:** Helium nucleus.',
+        'beta': '🟡 **Beta:** Electron.',
+        'gamma': '🟢 **Gamma:** Photon.',
+        'half-life': '📉 **Half-Life:** t₁/₂.',
+        'halflife': '📉 **Half-Life:** t₁/₂.',
+        'experiment': '🧪 **Niŋsim:** Zaŋ t₁/₂ taɣi.',
+        'quiz': '📝 **Dahimbu:** Bɔhi dahimbu.',
+        'prediction': '🔮 **AI Baŋsim:** N ni tooi baŋ.'
+    }
+};
+
+window.getAIResponse = function(query, callback) {
+    if (typeof window._externalGetAIResponse === 'function') {
+        window._externalGetAIResponse(query, callback);
+        return;
+    }
+    const lang = currentLang;
+    const q = query.toLowerCase().trim();
+    let response = '';
+    const keywords = ['alpha', 'beta', 'gamma', 'half-life', 'halflife', 'experiment', 'quiz', 'prediction'];
+    let found = false;
+    for (let kw of keywords) {
+        if (q.includes(kw)) {
+            const key = kw === 'half-life' ? 'half-life' : kw;
+            const kb = aiKnowledge[lang] || aiKnowledge.english;
+            response = kb[key] || aiKnowledge.english[key] || "I don't have an answer for that yet.";
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        if (q.includes('help') || q.includes('?')) {
+            response = "🧠 **I can teach you:**\n• Alpha (α), Beta (β), Gamma (γ) decay\n• Half-life calculations\n• Decay equations\n• Activity (A = λN)\n• Shielding and penetration\n\nJust ask me about any of these!";
+        } else if (q.includes('hello') || q.includes('hi')) {
+            response = "👋 Hello! Ask me about radioactivity, alpha, beta, gamma, or half-life.";
+        } else {
+            response = "I'm not sure about that. Try asking about **alpha**, **beta**, **gamma**, **half-life**, or **experiment**.";
+        }
+    }
+    callback(response);
+};
+
+function setLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+    const ui = langUI[lang] || langUI.english;
+    document.getElementById('btnQuiz').innerHTML = ui.btnQuiz;
+    document.getElementById('btnPred').innerHTML = ui.btnPred;
+    document.getElementById('btnExp').innerHTML = ui.btnExp;
+    document.getElementById('aiInput').placeholder = ui.placeholder;
+
+    document.getElementById('aiMessages').innerHTML = '';
+    getAIResponse('welcome', function(response) {
+        addAIMessage(response || ui.welcome, false);
+    });
+}
+
+function toggleAI() {
+    document.getElementById('aiAssistant').classList.toggle('active');
+    if (document.getElementById('aiAssistant').classList.contains('active')) {
+        if (document.getElementById('aiMessages').children.length === 0) {
+            const ui = langUI[currentLang] || langUI.english;
+            getAIResponse('welcome', function(response) {
+                addAIMessage(response || ui.welcome, false);
+            });
+        }
+    }
+}
+
+function addAIMessage(msg, isUser = false) {
+    const c = document.getElementById('aiMessages');
+    let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+    c.scrollTop = c.scrollHeight;
+}
+
+async function sendAIMessage() {
+    const input = document.getElementById('aiInput');
+    const q = input.value.trim();
+    if (!q) return;
+    addAIMessage(q, true);
+    input.value = '';
+
+    const t = document.createElement('div');
+    t.className = 'ai-message bot';
+    t.id = 'typingIndicator';
+    t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    document.getElementById('aiMessages').appendChild(t);
+    await new Promise(r => setTimeout(r, 600));
+    document.getElementById('typingIndicator').remove();
+
+    getAIResponse(q, function(response) {
+        const res = response || "I'm sorry, I didn't understand that. Try asking about alpha, beta, gamma, or half-life.";
+        addAIMessage(res, false);
+        speakAI(res);
+    });
+}
+
+function handleAIKeypress(e) {
+    if (e.key === 'Enter') sendAIMessage();
+}
+
+function speakAI(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+        clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = currentLang === 'english' ? 'en-US' : 'en-GB';
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+    }
+}
+
+let isListening = false, recognition = null;
+function toggleVoice() {
+    const btn = document.getElementById('voiceBtn');
+    if (isListening) {
+        recognition?.stop();
+        btn.classList.remove('listening');
+        isListening = false;
+    } else if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH';
+        recognition.onstart = () => { btn.classList.add('listening'); isListening = true; };
+        recognition.onresult = (e) => {
+            const cmd = e.results[0][0].transcript;
+            if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+            addAIMessage(cmd, true);
+            getAIResponse(cmd, function(response) {
+                const res = response || "I'm not sure about that. Can you ask something about radioactivity?";
+                addAIMessage(res, false);
+                speakAI(res);
+            });
+        };
+        recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+        recognition.start();
+    }
+}
+
+function showQuiz() {
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    getAIResponse('quiz', function(response) {
+        addAIMessage('📝 **Quiz Requested**', false);
+        addAIMessage(response || 'Ask me: "Give me a quiz question on half-life."', false);
+    });
+}
+
+function showPrediction() {
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    getAIResponse('prediction', function(response) {
+        addAIMessage('🔮 **AI Analytics**', false);
+        addAIMessage(response || 'I need more data to make a prediction. Try adjusting the simulation and ask me specific questions.', false);
+    });
+}
+
+function showExperiment() {
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    getAIResponse('experiment', function(response) {
+        addAIMessage('🧪 **Experiment Suggestions**', false);
+        addAIMessage(response || 'Try varying the half-life and observe how the decay curve changes. Ask me for more details!', false);
+    });
+}
+
+function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('generalModal').classList.add('active'); }
+function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+// ─────────────────────────────────────────────────────────────
+// 3. INIT
+// ─────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+    initThree();
+    const initial = parseInt(document.getElementById('initialSlider').value);
+    atoms = [];
+    for (let i = 0; i < initial; i++) {
+        atoms.push({ decayed: false, life: Math.random() * 20 });
+    }
+    setTimeout(function() {
+        updateRadio();
+        setLanguage('english');
+        if (window.innerWidth > 768) setTimeout(() => document.getElementById('aiAssistant').classList.add('active'), 1000);
+        setTimeout(radioLoop, 500);
+    }, 200);
+});
+
+window._externalGetAIResponse = null;
+</script>
+
+<!-- External scripts (if any) -->
+<script src="/js/ai-content.js" onerror="console.warn('ai-content.js not loaded – using fallback AI.')"></script>
+<script src="/js/global.js" onerror="console.warn('global.js not loaded – using fallback UI.')"></script>
+</body>
+</html>

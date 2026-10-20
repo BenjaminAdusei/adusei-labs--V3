@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties of Matter Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── all original styles, with modifications for 3D container ─── */
+        :root {
+            --bg-color: #0a0a0f;
+            --bg-gradient-1: rgba(107, 114, 128, 0.06);
+            --bg-gradient-2: rgba(20, 184, 166, 0.06);
+            --glass-bg: rgba(16, 16, 20, 0.55);
+            --glass-blur: 24px;
+            --glass-blur-light: 16px;
+            --glass-border: rgba(107, 114, 128, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.03);
+            --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --primary: #6b7280;
+            --primary-glow: rgba(107, 114, 128, 0.4);
+            --secondary: #14b8a6;
+            --secondary-glow: rgba(20, 184, 166, 0.4);
+            --accent: #9ca3af;
+            --accent-glow: rgba(156, 163, 175, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --highlight: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+                radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        h1 {
+            font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #6b7280, #14b8a6, #9ca3af);
+            background-size: 200% auto;
+            color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(16, 16, 20, 0.7); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+        .lang-btn:hover { color: white; border-color: rgba(20, 184, 166, 0.4); transform: translateY(-2px); }
+        .lang-btn.active { background: rgba(20, 184, 166, 0.18); border-color: var(--secondary); color: var(--highlight); box-shadow: 0 0 20px var(--secondary-glow), var(--glass-inner-shadow); }
+
+        .matter-mode-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .matter-mode-btn { background: rgba(16, 16, 20, 0.6); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.95rem; box-shadow: var(--glass-inner-shadow); }
+        .matter-mode-btn:hover { color: white; border-color: rgba(20, 184, 166, 0.4); transform: translateY(-2px); }
+        .matter-mode-btn.active { background: linear-gradient(135deg, #6b7280, #14b8a6); color: white; border-color: transparent; box-shadow: 0 4px 20px var(--secondary-glow), var(--glass-inner-shadow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+        .canvas-container, .controls-panel {
+            flex: 1; min-width: 320px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: 24px; padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        .canvas-container::before, .controls-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+            pointer-events: none; border-radius: 24px 24px 0 0;
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        /* ─── 3D container ─── */
+        #three-container {
+            width: 100%; height: 500px; min-height: 400px; max-height: 520px;
+            border-radius: 16px; overflow: hidden;
+            background: #0a0a0f;
+            border: 1px solid rgba(20, 184, 166, 0.08);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(20, 184, 166, 0.2); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--secondary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--secondary-glow); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--secondary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--secondary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #2dd4bf; }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--secondary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--secondary-glow); }
+
+        .data-display { background: rgba(8, 8, 12, 0.7); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.5), var(--glass-inner-shadow); }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+        .data-value { color: var(--highlight); font-weight: bold; text-shadow: 0 0 10px var(--secondary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .lab-action-btn {
+            background: linear-gradient(135deg, #6b7280, #14b8a6);
+            border: 1px solid rgba(255,255,255,0.12); padding: 12px 24px; border-radius: 30px;
+            color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 4px 20px var(--secondary-glow), var(--glass-inner-shadow);
+        }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--secondary-glow); background: linear-gradient(135deg, #9ca3af, #2dd4bf); }
+
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+        .btn-primary { background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 4px 20px rgba(107,114,128,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(107,114,128,0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #374151, #1f2937); box-shadow: var(--glass-inner-shadow); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #4b5563, #374151); }
+
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+        details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--secondary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .distinction-box { background: rgba(20,184,166,0.08); backdrop-filter: blur(4px); border-left: 4px solid var(--secondary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+        .distinction-box strong { color: white; }
+
+        footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+        footer .brand span { color: var(--secondary); text-shadow: 0 0 15px var(--secondary-glow); }
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glass-inner-shadow);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #6b7280, #14b8a6); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(20,184,166,0.4), var(--glass-inner-shadow); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(20,184,166,0.6); }
+        @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+        .ai-window {
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+            height: 600px; max-height: calc(100vh - 140px);
+            background: rgba(8, 8, 12, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 28px; overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), var(--glass-inner-shadow);
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            border: 1px solid var(--glass-border);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+        .ai-header { background: linear-gradient(135deg, rgba(107,114,128,0.9), rgba(20,184,166,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 5px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(20,184,166,0.3); border-radius: 10px; }
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { background: rgba(16, 16, 20, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .ai-message.user .ai-message-content { background: linear-gradient(135deg, #6b7280, #14b8a6); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(20,184,166,0.3); }
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(8,8,12,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+        .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); background: rgba(16,16,20,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-input-area input:focus { border-color: var(--secondary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--secondary-glow); background: rgba(16,16,20,0.9); }
+        .ai-input-area input::placeholder { color: #6b7280; }
+        .ai-input-area button { background: linear-gradient(135deg, #6b7280, #14b8a6); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--secondary-glow); flex-shrink: 0; }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+        .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+        .ai-typing span { width: 8px; height: 8px; background: white; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s; padding: 20px; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: linear-gradient(135deg, rgba(16,16,20,0.95), rgba(8,8,12,0.95)); backdrop-filter: blur(30px); border-radius: 32px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: hidden; padding: 32px; border: 1px solid rgba(20,184,166,0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow); transform: translateY(20px) scale(0.95); transition: 0.4s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+        .modal-scroll::-webkit-scrollbar { width: 5px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(20,184,166,0.3); border-radius: 10px; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question:hover { border-color: rgba(20,184,166,0.15); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #14b8a6; flex-shrink: 0; cursor: pointer; }
+        .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--secondary); }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; padding: 0; border-radius: 0; background: #0a0a0f;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%; height: 100%; max-height: none; border-radius: 0; min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 40px;
+            backdrop-filter: blur(8px); display: flex; gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover { background: rgba(255,255,255,0.2); }
+        .fullscreen-mode header, .fullscreen-mode .controls-panel, .fullscreen-mode .info-section,
+        .fullscreen-mode footer, .fullscreen-mode .language-selector, .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab { display: none !important; }
+        .fullscreen-mode .container { max-width: 100%; padding: 0; margin: 0; }
+        .fullscreen-mode .sim-container { margin: 0; gap: 0; }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            .matter-mode-btn { padding: 10px 18px; font-size: 0.8rem; }
+            #three-container { min-height: 320px; max-height: 380px; height: 380px; }
+            .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+            .modal-content { padding: 22px; max-height: 90vh; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .matter-mode-btn { padding: 8px 14px; font-size: 0.75rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <header>
+        <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+        <h1>🌊 Properties of Matter Lab</h1>
+        <p class="subtitle">Explore Density, Upthrust, Viscosity, Surface Tension &amp; Pressure | WAEC Mechanics</p>
+    </header>
+
+    <div class="language-selector">
+        <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+        <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+        <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+        <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+        <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+    </div>
+
+    <div class="matter-mode-selector">
+        <button class="matter-mode-btn active" onclick="setMatterMode('density')">📊 Density</button>
+        <button class="matter-mode-btn" onclick="setMatterMode('upthrust')">⬆️ Upthrust</button>
+        <button class="matter-mode-btn" onclick="setMatterMode('viscosity')">🔄 Viscosity</button>
+        <button class="matter-mode-btn" onclick="setMatterMode('surface')">💧 Surface Tension</button>
+        <button class="matter-mode-btn" onclick="setMatterMode('pressure')">📏 Pressure</button>
+    </div>
+
+    <div class="sim-container">
+        <div class="canvas-container" id="canvasContainer">
+            <!-- ─── 3D container ─── -->
+            <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+            <div class="canvas-controls">
+                <button class="btn-secondary" onclick="resetMatter()">🔄 Reset</button>
+                <button class="btn-secondary" onclick="toggleMatterAnimation()">⏸️ Play/Pause</button>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+            </div>
+        </div>
+        <div class="controls-panel" id="controlsPanel">
+            <div class="slider-container" id="massContainer">
+                <label>⚖️ Mass (m): <span id="massValue">2.0</span> kg</label>
+                <input type="range" id="massSlider" min="0.5" max="5" step="0.1" value="2" oninput="updateMatter()">
+            </div>
+            <div class="slider-container" id="volumeContainer">
+                <label>📦 Volume (V): <span id="volumeValue">1.0</span> m³</label>
+                <input type="range" id="volumeSlider" min="0.2" max="3" step="0.1" value="1" oninput="updateMatter()">
+            </div>
+            <div class="slider-container" id="fluidDensityContainer">
+                <label>🌊 Fluid Density: <span id="fluidDensityValue">1000</span> kg/m³</label>
+                <input type="range" id="fluidDensitySlider" min="200" max="2000" step="50" value="1000" oninput="updateMatter()">
+            </div>
+            <div class="slider-container" id="depthContainer" style="display:none;">
+                <label>📏 Depth (h): <span id="depthValue">2.0</span> m</label>
+                <input type="range" id="depthSlider" min="0.5" max="5" step="0.1" value="2" oninput="updateMatter()">
+            </div>
+
+            <div class="data-display">
+                <div class="data-row"><span>Density (ρ):</span><span id="displayDensity" class="data-value" style="color:#14b8a6;">--- kg/m³</span></div>
+                <div class="data-row"><span>Upthrust (Fᵦ):</span><span id="displayUpthrust" class="data-value" style="color:#6b7280;">--- N</span></div>
+                <div class="data-row"><span>Pressure (P):</span><span id="displayPressure" class="data-value" style="color:#9ca3af;">--- Pa</span></div>
+                <div class="data-row"><span>Viscous Force:</span><span id="displayViscous" class="data-value" style="color:#e5e7eb;">--- N</span></div>
+                <div class="data-row"><span>Surface Tension:</span><span id="displaySurface" class="data-value" style="color:#fbbf24;">--- N/m</span></div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <details>
+            <summary>📖 Understanding Properties of Matter</summary>
+            <div class="theory-content">
+                <div class="distinction-box">
+                    <p><strong>Density:</strong> ρ = m/V (kg/m³). Mass per unit volume. Density determines whether objects float or sink.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#6b7280;">
+                    <p><strong>Upthrust (Archimedes' Principle):</strong> Fᵦ = ρ<sub>fluid</sub> × V<sub>displaced</sub> × g. The buoyant force equals the weight of displaced fluid.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#9ca3af;">
+                    <p><strong>Viscosity:</strong> Internal friction in fluids. Viscous force depends on velocity gradient and fluid properties.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#fbbf24;">
+                    <p><strong>Surface Tension:</strong> Force per unit length acting at the surface of a liquid. Causes droplets to form spheres.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#e5e7eb;">
+                    <p><strong>Pressure in Fluids:</strong> P = ρgh. Pressure increases with depth in a fluid.</p>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<footer>
+    <div class="brand">🌊 <span>Adusei Labs</span> | Powered by bksolutions</div>
+    <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+</footer>
+
+<button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+<button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+<div id="aiAssistant" class="ai-window">
+    <div class="ai-header">
+        <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Properties of Matter AI Tutor <span class="ai-badge">Ultra</span></div>
+        <button class="ai-close" onclick="toggleAI()">✕</button>
+    </div>
+    <div class="ai-body">
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message bot">
+                <div class="ai-message-icon">🤖</div>
+                <div class="ai-message-content">🌊 **Adusei AI Tutor Activated.**<br><br>I can help you with density, upthrust, viscosity, surface tension, pressure, and WAEC questions. Try asking:<br>• "Explain Archimedes' principle"<br>• "Show me WAEC questions on density"<br>• "What is surface tension?"</div>
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Ask about density, upthrust, viscosity, surface tension..." onkeypress="handleAIKeypress(event)">
+            <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+        <div class="ai-disclaimer">💡 Try: "What is density?" | "Explain Archimedes' principle" | "Show WAEC questions"</div>
+    </div>
+</div>
+
+<div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<!-- ─── Three.js & add-ons ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// 1. PROPERTIES OF MATTER ENGINE – 3D VERSION
+// ─────────────────────────────────────────────────────────────
+
+let matterMode = 'density';
+let isAnimating = true;
+let animFrame = null;
+let time = 0;
+let userStats = { configurations: 0, quizScores: [] };
+const g = 9.8;
+
+// ─── Three.js globals ───
+let scene, camera, renderer, cssRenderer, controls;
+let matterGroup;
+let container = document.getElementById('three-container');
+let threeReady = false;
+let lastTime = 0;
+let animFrameId = null;
+let modeObjects = {};
+
+// ─── Init Three.js ───
+function initThree() {
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js library not loaded. Check your internet connection.');
+        }
+
+        const rect = container.getBoundingClientRect();
+        const width = rect.width || container.clientWidth || 800;
+        const height = rect.height || container.clientHeight || 500;
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0f);
+
+        camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+        camera.position.set(5, 4, 8);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        cssRenderer = new THREE.CSS2DRenderer();
+        cssRenderer.setSize(width, height);
+        cssRenderer.domElement.style.position = 'absolute';
+        cssRenderer.domElement.style.top = '0';
+        cssRenderer.domElement.style.left = '0';
+        cssRenderer.domElement.style.pointerEvents = 'none';
+        container.style.position = 'relative';
+        container.appendChild(cssRenderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambient);
+        const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+        scene.add(hemi);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 30;
+        mainLight.shadow.camera.left = -10;
+        mainLight.shadow.camera.right = 10;
+        mainLight.shadow.camera.top = 10;
+        mainLight.shadow.camera.bottom = -10;
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+        fillLight.position.set(-5, 0, 5);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+        rimLight.position.set(0, -5, 5);
+        scene.add(rimLight);
+
+        // Grid helper (subtle)
+        const gridHelper = new THREE.GridHelper(10, 10, 0x2a2a3a, 0x1a1a2a);
+        gridHelper.position.y = -0.01;
+        scene.add(gridHelper);
+
+        // Axis line
+        const axisMat = new THREE.LineBasicMaterial({ color: 0x3a3a5a, transparent: true, opacity: 0.2 });
+        const axisPts = [new THREE.Vector3(-5, 0, 0), new THREE.Vector3(5, 0, 0)];
+        const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+        const axisLine = new THREE.Line(axisGeo, axisMat);
+        scene.add(axisLine);
+
+        matterGroup = new THREE.Group();
+        scene.add(matterGroup);
+
+        threeReady = true;
+        window.addEventListener('resize', onResize);
+        onResize();
+
+        // Start main loop
+        lastTime = performance.now();
+        mainLoop();
+    } catch (e) {
+        container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+        console.error(e);
+    }
+}
+
+function onResize() {
+    if (!threeReady) return;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width || container.clientWidth || 800;
+    const h = rect.height || container.clientHeight || 500;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    cssRenderer.setSize(w, h);
+}
+
+function mainLoop() {
+    animFrameId = requestAnimationFrame(mainLoop);
+    if (!threeReady) return;
+
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+
+    if (isAnimating) {
+        time += dt;
+        // Update time-based animations (wave surfaces, particles, etc.)
+        updateAnimations();
+    }
+
+    // Rebuild scene if needed (we rebuild every frame for dynamic modes)
+    buildScene();
+
+    controls.update();
+    renderer.render(scene, camera);
+    cssRenderer.render(scene, camera);
+}
+
+// ─── Clear group ───
+function clearGroup(group) {
+    while(group.children.length > 0) {
+        const child = group.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+        }
+        group.remove(child);
+    }
+}
+
+// ─── Create CSS2D label ───
+function createLabel(text, color = '#ffffff', fontSize = '16px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.color = color;
+    div.style.fontFamily = 'Arial, sans-serif';
+    div.style.fontSize = fontSize;
+    div.style.fontWeight = 'bold';
+    div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+    div.style.padding = '4px 10px';
+    div.style.background = bg;
+    div.style.borderRadius = '6px';
+    div.style.border = '1px solid rgba(255,255,255,0.05)';
+    div.style.backdropFilter = 'blur(4px)';
+    div.style.pointerEvents = 'none';
+    const label = new THREE.CSS2DObject(div);
+    label.position.copy(position);
+    return label;
+}
+
+// ─── Update time-based animations ───
+function updateAnimations() {
+    // Nothing specific needed here; everything is rebuilt each frame
+}
+
+// ─── Build scene based on mode ───
+function buildScene() {
+    clearGroup(matterGroup);
+    if (!threeReady) return;
+
+    const mass = parseFloat(document.getElementById('massSlider').value);
+    const volume = parseFloat(document.getElementById('volumeSlider').value);
+    const fluidDensity = parseFloat(document.getElementById('fluidDensitySlider').value);
+    const depth = parseFloat(document.getElementById('depthSlider').value);
+    const density = mass / volume;
+    const upthrust = fluidDensity * volume * g;
+    const pressure = fluidDensity * g * depth;
+
+    if (matterMode === 'density') {
+        buildDensity(mass, volume, density);
+    } else if (matterMode === 'upthrust') {
+        buildUpthrust(mass, volume, fluidDensity, upthrust, density);
+    } else if (matterMode === 'viscosity') {
+        buildViscosity(fluidDensity);
+    } else if (matterMode === 'surface') {
+        buildSurfaceTension();
+    } else { // pressure
+        buildPressure(fluidDensity, depth, pressure);
+    }
+
+    // ─── Update data display labels in 3D ───
+    const densityLabel = createLabel(`ρ = ${density.toFixed(1)} kg/m³`, '#14b8a6', '20px', new THREE.Vector3(0, 3.5, 0));
+    matterGroup.add(densityLabel);
+    const upthrustLabel = createLabel(`Fᵦ = ${upthrust.toFixed(2)} N`, '#6b7280', '20px', new THREE.Vector3(0, 3.0, 0));
+    matterGroup.add(upthrustLabel);
+    const pressureLabel = createLabel(`P = ${pressure.toFixed(0)} Pa`, '#9ca3af', '20px', new THREE.Vector3(0, 2.5, 0));
+    matterGroup.add(pressureLabel);
+}
+
+// ─── DENSITY MODE ───
+function buildDensity(mass, volume, density) {
+    const size = 0.8 + volume * 0.3;
+    const mat = new THREE.MeshStandardMaterial({
+        color: 0x14b8a6,
+        emissive: 0x14b8a6,
+        emissiveIntensity: 0.1,
+        metalness: 0.2,
+        roughness: 0.3,
+        transparent: true,
+        opacity: 0.9
+    });
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
+    cube.position.set(0, size/2, 0);
+    cube.castShadow = true;
+    matterGroup.add(cube);
+
+    // Glow aura
+    const glowMat = new THREE.MeshBasicMaterial({
+        color: 0x14b8a6,
+        transparent: true,
+        opacity: 0.05
+    });
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(size * 0.8, 16, 16), glowMat);
+    glow.position.set(0, size/2, 0);
+    matterGroup.add(glow);
+
+    // Mass label on cube
+    const massLabel = createLabel(`${mass.toFixed(1)} kg`, '#ffffff', '18px', new THREE.Vector3(0, size + 0.2, 0));
+    matterGroup.add(massLabel);
+
+    // Volume label
+    const volLabel = createLabel(`V = ${volume.toFixed(1)} m³`, '#94a3b8', '16px', new THREE.Vector3(0, -0.3, 0));
+    matterGroup.add(volLabel);
+
+    // Formula label
+    const formulaLabel = createLabel(`ρ = m / V = ${density.toFixed(1)} kg/m³`, '#fbbf24', '22px', new THREE.Vector3(0, -1.0, 0));
+    matterGroup.add(formulaLabel);
+
+    // Title
+    const title = createLabel('📊 Density', '#e2e8f0', '24px', new THREE.Vector3(-3.5, 3.5, 0));
+    matterGroup.add(title);
+}
+
+// ─── UPTHRUST MODE ───
+function buildUpthrust(mass, volume, fluidDensity, upthrust, density) {
+    const size = 0.6 + volume * 0.2;
+    const objectDensity = density;
+    const floats = objectDensity < fluidDensity;
+    const waterLevel = floats ? 0.2 : 0.5;
+
+    // ── Fluid container ──
+    const containerMat = new THREE.MeshPhysicalMaterial({
+        color: 0x14b8a6,
+        transparent: true,
+        opacity: 0.08,
+        metalness: 0.0,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+    });
+    const container = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.0, 1.5), containerMat);
+    container.position.set(0, 1.0, 0);
+    matterGroup.add(container);
+
+    // Water fill (with wave surface)
+    const waterMat = new THREE.MeshPhysicalMaterial({
+        color: 0x14b8a6,
+        transparent: true,
+        opacity: 0.15,
+        metalness: 0.0,
+        roughness: 0.3,
+        side: THREE.DoubleSide,
+    });
+    const waterHeight = 1.6;
+    const water = new THREE.Mesh(new THREE.BoxGeometry(3.2, waterHeight, 1.2), waterMat);
+    water.position.set(0, waterHeight/2 + 0.2, 0);
+    matterGroup.add(water);
+
+    // Water surface wave (line)
+    const wavePoints = [];
+    for (let i = 0; i <= 40; i++) {
+        const x = -1.6 + (i / 40) * 3.2;
+        const y = waterHeight + 0.2 + 0.08 * Math.sin(x * 1.5 + time * 1.2);
+        wavePoints.push(new THREE.Vector3(x, y, 0));
+    }
+    const waveGeo = new THREE.BufferGeometry().setFromPoints(wavePoints);
+    const waveMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.3 });
+    const waveLine = new THREE.Line(waveGeo, waveMat);
+    matterGroup.add(waveLine);
+
+    // ── Object ──
+    const objY = waterHeight + 0.2 - size/2 - (floats ? 0.1 : 0.5);
+    const objMat = new THREE.MeshStandardMaterial({
+        color: floats ? 0x14b8a6 : 0x6b7280,
+        emissive: floats ? 0x14b8a6 : 0x4b5563,
+        emissiveIntensity: 0.1,
+        metalness: 0.3,
+        roughness: 0.4
+    });
+    const obj = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), objMat);
+    obj.position.set(0, objY + size/2, 0);
+    obj.castShadow = true;
+    matterGroup.add(obj);
+
+    // ── Force arrows ──
+    // Upthrust (green, upward)
+    const upDir = new THREE.Vector3(0, 1, 0);
+    const upLen = Math.min(1.2, upthrust / 20);
+    const upArrow = new THREE.ArrowHelper(upDir, new THREE.Vector3(0, objY, 0), upLen, 0x10b981, 0.15, 0.1);
+    matterGroup.add(upArrow);
+    const upLabel = createLabel(`Fᵦ = ${upthrust.toFixed(2)} N`, '#10b981', '16px', new THREE.Vector3(0.4, objY + upLen + 0.2, 0));
+    matterGroup.add(upLabel);
+
+    // Weight (red, downward)
+    const weight = mass * g;
+    const wLen = Math.min(1.2, weight / 20);
+    const wArrow = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, objY, 0), wLen, 0xef4444, 0.15, 0.1);
+    matterGroup.add(wArrow);
+    const wLabel = createLabel(`W = ${weight.toFixed(2)} N`, '#ef4444', '16px', new THREE.Vector3(0.4, objY - wLen - 0.2, 0));
+    matterGroup.add(wLabel);
+
+    // ── Status ──
+    const statusText = floats ? '✅ Floats! (ρ_obj < ρ_fluid)' : '❌ Sinks! (ρ_obj > ρ_fluid)';
+    const statusColor = floats ? '#10b981' : '#ef4444';
+    const statusLabel = createLabel(statusText, statusColor, '20px', new THREE.Vector3(0, -1.2, 0));
+    matterGroup.add(statusLabel);
+
+    const infoLabel = createLabel(`ρ_obj = ${objectDensity.toFixed(1)} kg/m³  |  ρ_fluid = ${fluidDensity.toFixed(0)} kg/m³`, '#94a3b8', '16px', new THREE.Vector3(0, -1.6, 0));
+    matterGroup.add(infoLabel);
+
+    // Title
+    const title = createLabel('⬆️ Archimedes\' Principle (Upthrust)', '#e2e8f0', '24px', new THREE.Vector3(-3.5, 3.5, 0));
+    matterGroup.add(title);
+}
+
+// ─── VISCOSITY MODE ───
+function buildViscosity(fluidDensity) {
+    // ── Container ──
+    const containerMat = new THREE.MeshPhysicalMaterial({
+        color: 0x14b8a6,
+        transparent: true,
+        opacity: 0.05,
+        metalness: 0.0,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+    });
+    const container = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.5, 1.5), containerMat);
+    container.position.set(0, 1.25, 0);
+    matterGroup.add(container);
+
+    // ── Layers with particles ──
+    const layerCount = 8;
+    const particleMat = new THREE.MeshBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.3 });
+
+    for (let i = 0; i < layerCount; i++) {
+        const yPos = 0.2 + i * 0.28;
+        const vel = (i / layerCount) * 0.8 + 0.2;
+        const offset = (time * vel * 1.5) % 3.0;
+
+        // Layer line
+        const pts = [];
+        for (let x = -1.5; x <= 1.5; x += 0.05) {
+            const dx = (x + offset) % 3.0;
+            const y = yPos + 0.04 * Math.sin(dx * 2.0 + i * 0.5);
+            pts.push(new THREE.Vector3(x, y, 0));
+        }
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        const lineMat = new THREE.LineBasicMaterial({
+            color: 0x818cf8,
+            transparent: true,
+            opacity: 0.05 + i * 0.02
+        });
+        const line = new THREE.Line(lineGeo, lineMat);
+        matterGroup.add(line);
+
+        // Particles on layer
+        const numParticles = 6;
+        for (let p = 0; p < numParticles; p++) {
+            const px = -1.4 + (p / numParticles) * 2.8 + offset % 0.3;
+            const py = yPos + 0.03 * Math.sin(px * 3.0 + time * 0.5 + i);
+            const particle = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), particleMat);
+            particle.position.set(px, py, 0);
+            matterGroup.add(particle);
+        }
+
+        // Velocity label
+        const vLabel = createLabel(`v${i}`, 'rgba(255,255,255,0.12)', '12px', new THREE.Vector3(1.8, yPos, 0));
+        matterGroup.add(vLabel);
+    }
+
+    // ── Formula ──
+    const formula1 = createLabel('η = Viscosity', '#fbbf24', '22px', new THREE.Vector3(0, 2.2, 0));
+    matterGroup.add(formula1);
+    const formula2 = createLabel('F = η · A · (dv/dy)', '#94a3b8', '18px', new THREE.Vector3(0, 1.8, 0));
+    matterGroup.add(formula2);
+    const formula3 = createLabel('Internal friction in fluids', '#9ca3af', '16px', new THREE.Vector3(0, 1.4, 0));
+    matterGroup.add(formula3);
+
+    // Title
+    const title = createLabel('🔄 Viscosity (Internal Friction)', '#e2e8f0', '24px', new THREE.Vector3(-3.5, 3.5, 0));
+    matterGroup.add(title);
+}
+
+// ─── SURFACE TENSION MODE ───
+function buildSurfaceTension() {
+    // ── Water surface ──
+    const surfaceMat = new THREE.MeshPhysicalMaterial({
+        color: 0x14b8a6,
+        transparent: true,
+        opacity: 0.05,
+        metalness: 0.0,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+    });
+    const surface = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.5), surfaceMat);
+    surface.position.set(0, 1.2, 0);
+    surface.rotation.x = -Math.PI / 2;
+    matterGroup.add(surface);
+
+    // ── Surface film (wavy line) ──
+    const filmPoints = [];
+    for (let i = 0; i <= 60; i++) {
+        const x = -2.2 + (i / 60) * 4.4;
+        const y = 1.2 + 0.1 * Math.sin(x * 1.2 + time * 0.8);
+        filmPoints.push(new THREE.Vector3(x, y, 0));
+    }
+    const filmGeo = new THREE.BufferGeometry().setFromPoints(filmPoints);
+    const filmMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, linewidth: 2 });
+    const filmLine = new THREE.Line(filmGeo, filmMat);
+    matterGroup.add(filmLine);
+
+    // ── Surface molecules ──
+    const molMat = new THREE.MeshBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.4 });
+    const molPositions = [];
+    for (let i = 0; i < 18; i++) {
+        const x = -2.0 + (i / 17) * 4.0;
+        const y = 1.2 + 0.08 * Math.sin(x * 1.2 + time * 0.8);
+        molPositions.push({ x, y });
+        const mol = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), molMat);
+        mol.position.set(x, y, 0);
+        matterGroup.add(mol);
+    }
+
+    // ── Bonds between molecules ──
+    const bondMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.1 });
+    for (let i = 0; i < molPositions.length - 1; i++) {
+        const p1 = molPositions[i];
+        const p2 = molPositions[i + 1];
+        const pts = [
+            new THREE.Vector3(p1.x, p1.y, 0),
+            new THREE.Vector3(p2.x, p2.y, 0)
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(geo, bondMat);
+        matterGroup.add(line);
+    }
+
+    // ── Force arrows (inward) ──
+    const arrowMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.5 });
+    // Left arrow
+    const lPts = [
+        new THREE.Vector3(-2.0, 1.4, 0),
+        new THREE.Vector3(-2.4, 1.4, 0)
+    ];
+    const lGeo = new THREE.BufferGeometry().setFromPoints(lPts);
+    const lLine = new THREE.Line(lGeo, arrowMat);
+    matterGroup.add(lLine);
+    const lHead = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.1, 6), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+    lHead.position.set(-2.4, 1.4, 0);
+    lHead.rotation.z = Math.PI / 2;
+    matterGroup.add(lHead);
+
+    // Right arrow
+    const rPts = [
+        new THREE.Vector3(2.0, 1.4, 0),
+        new THREE.Vector3(2.4, 1.4, 0)
+    ];
+    const rGeo = new THREE.BufferGeometry().setFromPoints(rPts);
+    const rLine = new THREE.Line(rGeo, arrowMat);
+    matterGroup.add(rLine);
+    const rHead = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.1, 6), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+    rHead.position.set(2.4, 1.4, 0);
+    rHead.rotation.z = -Math.PI / 2;
+    matterGroup.add(rHead);
+
+    // ── Surface tension label ──
+    const stLabel = createLabel('Surface Tension', '#f59e0b', '20px', new THREE.Vector3(0, 1.8, 0));
+    matterGroup.add(stLabel);
+
+    // ── Formula ──
+    const formula1 = createLabel('γ = F / L', '#fbbf24', '22px', new THREE.Vector3(0, -0.5, 0));
+    matterGroup.add(formula1);
+    const formula2 = createLabel('γ = 0.072 N/m (water at 20°C)', '#94a3b8', '16px', new THREE.Vector3(0, -0.9, 0));
+    matterGroup.add(formula2);
+
+    // Title
+    const title = createLabel('💧 Surface Tension', '#e2e8f0', '24px', new THREE.Vector3(-3.5, 3.5, 0));
+    matterGroup.add(title);
+}
+
+// ─── PRESSURE MODE ───
+function buildPressure(fluidDensity, depth, pressure) {
+    // ── Fluid column ──
+    const colWidth = 0.8;
+    const colHeight = 0.5 + depth * 0.4;
+    const colX = -0.4;
+    const colY = 0.05;
+
+    // Column body with gradient (using multiple layers)
+    for (let i = 0; i < 20; i++) {
+        const yPos = colY + (i / 20) * colHeight;
+        const alpha = 0.05 + (i / 20) * 0.6;
+        const layerMat = new THREE.MeshBasicMaterial({
+            color: 0x14b8a6,
+            transparent: true,
+            opacity: alpha * 0.3
+        });
+        const layer = new THREE.Mesh(new THREE.BoxGeometry(colWidth, colHeight / 20, colWidth), layerMat);
+        layer.position.set(colX + colWidth/2, yPos, 0);
+        matterGroup.add(layer);
+    }
+
+    // Column outline
+    const outlineMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.2 });
+    const corners = [
+        [colX, colY, -colWidth/2],
+        [colX + colWidth, colY, -colWidth/2],
+        [colX + colWidth, colY + colHeight, -colWidth/2],
+        [colX, colY + colHeight, -colWidth/2],
+        [colX, colY, colWidth/2],
+        [colX + colWidth, colY, colWidth/2],
+        [colX + colWidth, colY + colHeight, colWidth/2],
+        [colX, colY + colHeight, colWidth/2]
+    ];
+    const edges = [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+    ];
+    for (const e of edges) {
+        const pts = [
+            new THREE.Vector3(corners[e[0]][0], corners[e[0]][1], corners[e[0]][2]),
+            new THREE.Vector3(corners[e[1]][0], corners[e[1]][1], corners[e[1]][2])
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(geo, outlineMat);
+        matterGroup.add(line);
+    }
+
+    // ── Depth markers ──
+    for (let i = 0; i <= 5; i++) {
+        const yPos = colY + (i / 5) * colHeight;
+        const depthVal = depth * (1 - i / 5);
+        const markerLabel = createLabel(`${depthVal.toFixed(1)}m`, 'rgba(255,255,255,0.15)', '12px', new THREE.Vector3(colX - 0.4, yPos, 0));
+        matterGroup.add(markerLabel);
+        // Tick mark
+        const tickMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.1 });
+        const tickPts = [
+            new THREE.Vector3(colX - 0.05, yPos, 0),
+            new THREE.Vector3(colX + 0.05, yPos, 0)
+        ];
+        const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPts);
+        const tick = new THREE.Line(tickGeo, tickMat);
+        matterGroup.add(tick);
+    }
+
+    // ── Pressure arrows (inward at bottom) ──
+    const numArrows = 5;
+    const arrowMat = new THREE.LineBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.6 });
+    for (let i = 0; i < numArrows; i++) {
+        const xPos = colX + 0.1 + (i / (numArrows - 1)) * (colWidth - 0.2);
+        const len = 0.2 + 0.15 * (1 - i / numArrows);
+        const pts = [
+            new THREE.Vector3(xPos, colY, 0),
+            new THREE.Vector3(xPos, colY - len, 0)
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(geo, arrowMat);
+        matterGroup.add(line);
+        // Arrowhead
+        const head = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.08, 6), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+        head.position.set(xPos, colY - len, 0);
+        head.rotation.x = 0;
+        matterGroup.add(head);
+    }
+
+    // ── Pressure value ──
+    const pressureLabel = createLabel(`P = ${pressure.toFixed(0)} Pa`, '#ef4444', '26px', new THREE.Vector3(colX + colWidth/2, colY - 0.5, 0));
+    matterGroup.add(pressureLabel);
+
+    // ── Formula ──
+    const formulaLabel = createLabel(`P = ρgh = ${fluidDensity.toFixed(0)} × 9.8 × ${depth.toFixed(1)}`, '#94a3b8', '18px', new THREE.Vector3(colX + colWidth/2, colY - 0.9, 0));
+    matterGroup.add(formulaLabel);
+
+    // Title
+    const title = createLabel('📏 Pressure in Fluids', '#e2e8f0', '24px', new THREE.Vector3(-3.5, 3.5, 0));
+    matterGroup.add(title);
+}
+
+// ─── Mode switching ───
+function setMatterMode(mode) {
+    matterMode = mode;
+    document.querySelectorAll('.matter-mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.matter-mode-btn[onclick="setMatterMode('${mode}')"]`).classList.add('active');
+
+    document.getElementById('massContainer').style.display = (mode === 'density' || mode === 'upthrust') ? 'block' : 'none';
+    document.getElementById('volumeContainer').style.display = (mode === 'density' || mode === 'upthrust') ? 'block' : 'none';
+    document.getElementById('fluidDensityContainer').style.display = (mode === 'upthrust' || mode === 'pressure') ? 'block' : 'none';
+    document.getElementById('depthContainer').style.display = (mode === 'pressure') ? 'block' : 'none';
+
+    updateMatter();
+}
+
+// ─── Update parameters ───
+function updateMatter() {
+    userStats.configurations++;
+    const mass = parseFloat(document.getElementById('massSlider').value);
+    const volume = parseFloat(document.getElementById('volumeSlider').value);
+    const fluidDensity = parseFloat(document.getElementById('fluidDensitySlider').value);
+    const depth = parseFloat(document.getElementById('depthSlider').value);
+
+    document.getElementById('massValue').textContent = mass.toFixed(1);
+    document.getElementById('volumeValue').textContent = volume.toFixed(1);
+    document.getElementById('fluidDensityValue').textContent = fluidDensity.toFixed(0);
+    document.getElementById('depthValue').textContent = depth.toFixed(1);
+
+    const density = mass / volume;
+    const upthrust = fluidDensity * volume * g;
+    const pressure = fluidDensity * g * depth;
+    const viscousForce = 0.5 * fluidDensity * 0.1 * 0.1;
+    const surfaceTension = 0.072;
+
+    document.getElementById('displayDensity').textContent = density.toFixed(1) + ' kg/m³';
+    document.getElementById('displayUpthrust').textContent = upthrust.toFixed(2) + ' N';
+    document.getElementById('displayPressure').textContent = pressure.toFixed(0) + ' Pa';
+    document.getElementById('displayViscous').textContent = viscousForce.toFixed(4) + ' N';
+    document.getElementById('displaySurface').textContent = surfaceTension.toFixed(3) + ' N/m';
+
+    // Scene will be rebuilt in the main loop
+}
+
+function resetMatter() {
+    document.getElementById('massSlider').value = 2;
+    document.getElementById('volumeSlider').value = 1;
+    document.getElementById('fluidDensitySlider').value = 1000;
+    document.getElementById('depthSlider').value = 2;
+    time = 0;
+    updateMatter();
+}
+
+function toggleMatterAnimation() {
+    isAnimating = !isAnimating;
+}
+
+// ─── Fullscreen toggle ───
+function toggleFullscreen() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        if (container.requestFullscreen) container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+        else if (container.msRequestFullscreen) container.msRequestFullscreen();
+        container.classList.add('fullscreen');
+        main.classList.add('fullscreen-mode');
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+}
+document.addEventListener('fullscreenchange', function() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// 2. AI SYSTEM – (unchanged from original)
+// ─────────────────────────────────────────────────────────────
+
+let currentLang = 'english';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+    const labels = {
+        english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+        twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+        ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+        ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+        dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+    };
+    const l = labels[lang] || labels.english;
+    document.getElementById('btnQuiz').innerHTML = l.quiz;
+    document.getElementById('btnPred').innerHTML = l.pred;
+    document.getElementById('btnExp').innerHTML = l.exp;
+
+    const placeholders = {
+        english: 'Ask about density, upthrust, viscosity, surface tension...',
+        twi: 'Bisa physics asɛm biara...',
+        ga: 'Bi lɛɛlɛŋ sane...',
+        ewe: 'Bia nya...',
+        dagbani: 'Bɔhi yɛltɔɣa...'
+    };
+    document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+}
+
+function toggleAI() {
+    document.getElementById('aiAssistant').classList.toggle('active');
+    if (document.getElementById('aiAssistant').classList.contains('active')) {
+        document.getElementById('aiInput').focus();
+    }
+}
+
+function addAIMessage(msg, isUser = false) {
+    const c = document.getElementById('aiMessages');
+    let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+    c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+    const c = document.getElementById('aiMessages');
+    const t = document.createElement('div');
+    t.className = 'ai-message bot';
+    t.id = 'typingIndicator';
+    t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    c.appendChild(t);
+    c.scrollTop = c.scrollHeight;
+}
+
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+async function sendAIMessage() {
+    const input = document.getElementById('aiInput');
+    const q = input.value.trim();
+    if (!q) return;
+
+    addAIMessage(q, true);
+    input.value = '';
+    showTyping();
+
+    await new Promise(r => setTimeout(r, 600));
+    removeTyping();
+
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse(q, 'properties-matter');
+    } else {
+        response = "⚠️ AI content is still loading. Please try again in a moment.";
+    }
+
+    addAIMessage(response, false);
+    speakAI(response);
+}
+
+function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+function speakAI(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+        clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = currentLang==='english'?'en-US':'en-GB';
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+    }
+}
+
+let isListening = false, recognition = null;
+function toggleVoice() {
+    const btn = document.getElementById('voiceBtn');
+    if (isListening) {
+        recognition?.stop();
+        btn.classList.remove('listening');
+        isListening = false;
+    } else if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = currentLang==='english'?'en-US':'en-GH';
+        recognition.onstart = () => {
+            btn.classList.add('listening');
+            isListening = true;
+        };
+        recognition.onresult = (e) => {
+            const cmd = e.results[0][0].transcript;
+            if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+            addAIMessage(cmd, true);
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse(cmd, 'properties-matter');
+            } else {
+                response = "⚠️ AI content is loading. Please try again.";
+            }
+            addAIMessage(response, false);
+            speakAI(response);
+        };
+        recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+        recognition.start();
+    }
+}
+
+function showModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('generalModal').classList.add('active');
+}
+function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+const matterQuiz = [
+    { q: "What is the formula for density?", o: ["ρ = m/V", "ρ = V/m", "ρ = m×V", "ρ = g/V"], a: "ρ = m/V" },
+    { q: "What is Archimedes' Principle?", o: ["Buoyant force = weight of displaced fluid", "Buoyant force = weight of object", "Buoyant force = mass × g", "Buoyant force = pressure × area"], a: "Buoyant force = weight of displaced fluid" },
+    { q: "What is the SI unit of density?", o: ["kg/m³", "g/cm³", "kg/L", "g/mL"], a: "kg/m³" },
+    { q: "What is viscosity?", o: ["Internal friction in fluids", "Surface tension", "Buoyant force", "Pressure"], a: "Internal friction in fluids" },
+    { q: "What is surface tension?", o: ["Force per unit length", "Force per unit area", "Pressure per unit length", "Energy per unit volume"], a: "Force per unit length" },
+    { q: "What is the formula for pressure in fluids?", o: ["P = ρgh", "P = ρg/h", "P = mgh", "P = ρVg"], a: "P = ρgh" },
+    { q: "If an object floats, its density is...", o: ["Less than fluid density", "Greater than fluid density", "Equal to fluid density", "Zero"], a: "Less than fluid density" },
+    { q: "What is the unit of surface tension?", o: ["N/m", "N/m²", "J/m", "Pa"], a: "N/m" },
+    { q: "What does viscosity depend on?", o: ["Temperature", "Pressure", "Volume", "Mass"], a: "Temperature" },
+    { q: "What is the upthrust force also called?", o: ["Buoyant force", "Gravitational force", "Frictional force", "Normal force"], a: "Buoyant force" }
+];
+
+function showQuiz() {
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;">
+            <h2 style="color:white;margin:0;font-size:1.5rem;">📝 Properties of Matter Quiz</h2>
+            <span style="background:#14b8a6;color:white;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;">10 Questions</span>
+        </div>
+        <div class="modal-scroll">
+    `;
+    matterQuiz.forEach((item, idx) => {
+        html += `<div class="quiz-question"><p><strong>${idx+1}. ${item.q}</strong></p><div class="quiz-options">${item.o.map(opt => `<label><input type="radio" name="q${idx}" value="${opt}"><span>${opt}</span></label>`).join('')}</div></div>`;
+    });
+    html += `</div><div style="display:flex;gap:12px;margin-top:20px;flex-shrink:0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);"><button class="btn-secondary" style="flex:1;padding:14px;font-size:1rem;" onclick="closeModal()">✕ Cancel</button><button class="lab-action-btn" style="flex:2;padding:14px;font-size:1rem;" onclick="submitQuiz()">Submit & Grade</button></div>`;
+    showModal(html);
+}
+
+function submitQuiz() {
+    let score = 0;
+    matterQuiz.forEach((item, idx) => {
+        const s = document.querySelector(`input[name="q${idx}"]:checked`);
+        if (s && s.value === item.a) score += 10;
+    });
+    userStats.quizScores.push(score);
+    showModal(`<div style="text-align:center;padding:30px 10px;"><div style="font-size:5rem;font-weight:900;background:linear-gradient(135deg,#6b7280,#14b8a6);-webkit-background-clip:text;color:transparent;text-shadow:0 10px 30px rgba(20,184,166,0.3);margin-bottom:10px;line-height:1.2;">${score}%</div><h3 style="color:white;margin-bottom:30px;font-size:1.3rem;font-weight:400;">Quiz Completed!</h3><button class="lab-action-btn" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Continue</button></div>`);
+}
+
+function showPrediction() {
+    let avg = 0;
+    if (userStats.quizScores.length > 0) {
+        const s = userStats.quizScores.reduce((a,b)=>a+b,0);
+        avg = s / userStats.quizScores.length;
+    }
+    const labScore = Math.min(100, userStats.configurations * 5);
+    const overall = avg > 0 ? Math.round((labScore * 0.4) + (avg * 0.6)) : labScore;
+    const msg = overall >= 80 ? "Outstanding! You've mastered all properties of matter — density, upthrust, viscosity, surface tension, and pressure." :
+                overall >= 50 ? "Good progress! Keep exploring how matter behaves in different states." :
+                "Just getting started! Experiment with the different modes to learn about matter's properties.";
+    showModal(`<h2 style="color:white;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-top:0;font-size:1.5rem;">🔮 AI Mastery Prediction</h2>
+        <div style="display:flex;justify-content:space-around;text-align:center;margin:24px 0;background:rgba(0,0,0,0.2);padding:20px;border-radius:16px;">
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#6b7280;">${userStats.configurations}</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Adjustments</div></div>
+            <div style="width:1px;background:rgba(255,255,255,0.08);"></div>
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#14b8a6;">${Math.round(avg)}%</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Quiz Avg</div></div>
+        </div>
+        <div style="text-align:center;margin:20px 0;">
+            <div style="font-size:0.9rem;color:#94a3b8;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Overall AI Mastery</div>
+            <div style="font-size:4rem;font-weight:900;color:#14b8a6;text-shadow:0 10px 30px rgba(20,184,166,0.4);line-height:1.2;">${overall}%</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.25);padding:18px;border-left:4px solid #14b8a6;border-radius:12px;color:#cbd5e1;margin-bottom:24px;line-height:1.6;">
+            <strong style="color:white;display:block;margin-bottom:6px;">🧠 Analysis:</strong>${msg}
+        </div>
+        <button class="btn-primary" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Close</button>
+    `);
+}
+
+function showExperiment() {
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse("Give me an experiment on properties of matter", 'properties-matter');
+    } else {
+        response = "🧪 **Experiment:** Try the Upthrust mode. Change the object's volume and observe how the buoyant force changes. What relationship do you see?";
+    }
+    addAIMessage(response, false);
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. INIT
+// ─────────────────────────────────────────────────────────────
+window.onload = () => {
+    initThree();
+    setTimeout(() => {
+        updateMatter();
+        setLanguage('english');
+        if (window.innerWidth > 768) {
+            setTimeout(() => {
+                document.getElementById('aiAssistant').classList.add('active');
+            }, 1000);
+        }
+        // Check if global AI is loaded
+        setTimeout(() => {
+            if (typeof getAIResponse === 'function') {
+                console.log('✅ Global AI loaded for Properties of Matter Lab');
+            } else {
+                console.log('⏳ Global AI not yet loaded');
+            }
+        }, 500);
+    }, 300);
+};
+</script>
+
+<script src="/js/ai-content.js"></script>
+<script src="/js/global.js"></script>
+</body>
+</html>

@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atomic Physics Lab | Adusei Labs AI</title>
+  <link rel="stylesheet" href="/css_global.css" />
+  <style>
+    /* ── all original styles – only #three-container gets a loading overlay ── */
+    :root {
+      --bg-color: #050a12;
+      --bg-gradient-1: rgba(20, 184, 166, 0.06);
+      --bg-gradient-2: rgba(6, 182, 212, 0.06);
+      --glass-bg: rgba(5, 10, 18, 0.55);
+      --glass-blur: 24px;
+      --glass-blur-light: 16px;
+      --glass-border: rgba(20, 184, 166, 0.15);
+      --glass-shine: rgba(255, 255, 255, 0.03);
+      --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03);
+      --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      --primary: #14b8a6;
+      --primary-glow: rgba(20, 184, 166, 0.4);
+      --secondary: #06b6d4;
+      --secondary-glow: rgba(6, 182, 212, 0.4);
+      --accent: #fbbf24;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-color);
+      background-image:
+        radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+        radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+    header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+    .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+    .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+    h1 {
+      font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, #14b8a6, #06b6d4, #14b8a6);
+      background-size: 200% auto;
+      color: transparent; -webkit-background-clip: text; background-clip: text;
+      animation: gradientText 5s linear infinite;
+    }
+    @keyframes gradientText { to { background-position: 200% center; } }
+    .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+    .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+    .lang-btn { background: rgba(5, 10, 18, 0.7); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+    .lang-btn:hover { color: white; border-color: rgba(20, 184, 166, 0.4); transform: translateY(-2px); }
+    .lang-btn.active { background: rgba(20, 184, 166, 0.18); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+    .atom-mode-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+    .atom-mode-btn { background: rgba(5, 10, 18, 0.6); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.95rem; box-shadow: var(--glass-inner-shadow); }
+    .atom-mode-btn:hover { color: white; border-color: rgba(20, 184, 166, 0.4); transform: translateY(-2px); }
+    .atom-mode-btn.active { background: linear-gradient(135deg, #14b8a6, #06b6d4); color: white; border-color: transparent; box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+    .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+    .canvas-container, .controls-panel {
+      flex: 1; min-width: 320px;
+      background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+      border-radius: 24px; padding: 25px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+      position: relative; overflow: hidden;
+      transition: box-shadow 0.3s;
+    }
+    .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+    .canvas-container::before, .controls-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+      pointer-events: none; border-radius: 24px 24px 0 0;
+    }
+    .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+    #three-container {
+      width: 100%; height: 500px; min-height: 400px; max-height: 520px;
+      border-radius: 16px; overflow: hidden;
+      background: #050a12;
+      border: 1px solid rgba(20,184,166,0.08);
+      cursor: grab;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #three-container:active { cursor: grabbing; }
+    #three-container:hover { border-color: rgba(20,184,166,0.2); }
+    #three-container .loading {
+      color: #94a3b8;
+      font-size: 1.2rem;
+      animation: pulse 1.5s infinite;
+    }
+    #three-container .error {
+      color: #ef4444;
+      font-size: 1rem;
+      padding: 20px;
+      text-align: center;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    .canvas-controls { margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .slider-container { margin-bottom: 22px; }
+    .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+    .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--primary-glow); }
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--primary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #2dd4bf; }
+    input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; }
+    input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--primary-glow); }
+
+    .data-display { background: rgba(2, 6, 12, 0.7); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.5), var(--glass-inner-shadow); }
+    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+    .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+    .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+    .data-value { color: var(--primary); font-weight: bold; text-shadow: 0 0 10px var(--primary-glow); }
+
+    .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+    .lab-action-btn {
+      background: linear-gradient(135deg, #14b8a6, #06b6d4);
+      border: 1px solid rgba(255,255,255,0.12); padding: 12px 24px; border-radius: 30px;
+      color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow);
+    }
+    .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); background: linear-gradient(135deg, #2dd4bf, #22d3ee); }
+
+    .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+    .btn-primary { background: linear-gradient(135deg, #14b8a6, #0d9488); box-shadow: 0 4px 20px rgba(20,184,166,0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(20,184,166,0.5); }
+    .btn-secondary { background: linear-gradient(135deg, #475569, #334155); box-shadow: var(--glass-inner-shadow); }
+    .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+
+    .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+    details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+    details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+    summary { font-size: 1.2rem; font-weight: 700; color: var(--primary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+    .distinction-box { background: rgba(20,184,166,0.08); backdrop-filter: blur(4px); border-left: 4px solid var(--primary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+    .distinction-box strong { color: white; }
+
+    footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+    footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+    footer .brand span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+    footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+    .voice-btn, .ai-fab {
+      position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+      backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glass-inner-shadow);
+    }
+    .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+    .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+    .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+    .ai-fab { right: 25px; background: linear-gradient(135deg, #14b8a6, #06b6d4); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(20,184,166,0.4), var(--glass-inner-shadow); }
+    .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(20,184,166,0.6); }
+    @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+    .ai-window {
+      position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+      height: 600px; max-height: calc(100vh - 140px);
+      background: rgba(2, 6, 12, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+      border-radius: 28px; overflow: hidden;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), var(--glass-inner-shadow);
+      display: flex; flex-direction: column; z-index: 999;
+      visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+      transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+      border: 1px solid var(--glass-border);
+    }
+    .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+    .ai-header { background: linear-gradient(135deg, rgba(20,184,166,0.9), rgba(6,182,212,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+    .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+    .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+    .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+    .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+    .ai-messages::-webkit-scrollbar { width: 5px; }
+    .ai-messages::-webkit-scrollbar-thumb { background: rgba(20,184,166,0.3); border-radius: 10px; }
+    .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .ai-message-content { background: rgba(5, 10, 18, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .ai-message.user .ai-message-content { background: linear-gradient(135deg, #14b8a6, #06b6d4); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(20,184,166,0.3); }
+    .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(2,6,12,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+    .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); background: rgba(5,10,18,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+    .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--primary-glow); background: rgba(5,10,18,0.9); }
+    .ai-input-area input::placeholder { color: #64748b; }
+    .ai-input-area button { background: linear-gradient(135deg, #14b8a6, #06b6d4); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--primary-glow); flex-shrink: 0; }
+    .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+    .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+    .ai-typing span { width: 8px; height: 8px; background: white; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+    .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+    .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+    .modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: all 0.4s;
+      padding: 20px;
+      cursor: pointer; /* lets backdrop click close */
+    }
+    .modal.active { opacity: 1; visibility: visible; }
+    .modal-content {
+      background: linear-gradient(135deg, rgba(5,10,18,0.95), rgba(2,6,12,0.95));
+      backdrop-filter: blur(30px);
+      border-radius: 32px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: hidden;
+      padding: 32px;
+      border: 1px solid rgba(20,184,166,0.2);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow);
+      transform: translateY(20px) scale(0.95);
+      transition: 0.4s;
+      display: flex;
+      flex-direction: column;
+      cursor: default; /* prevent clicking content from closing */
+    }
+    .modal.active .modal-content { transform: translateY(0) scale(1); }
+    .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+    .modal-scroll::-webkit-scrollbar { width: 5px; }
+    .modal-scroll::-webkit-scrollbar-thumb { background: rgba(20,184,166,0.3); border-radius: 10px; }
+    .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+    .quiz-question:hover { border-color: rgba(20,184,166,0.15); }
+    .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+    .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+    .quiz-options label:hover { background: rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.15); }
+    .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #14b8a6; flex-shrink: 0; cursor: pointer; }
+    .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--primary); }
+
+    @media (max-width: 768px) {
+      .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+      .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+      .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+      footer { padding: 30px 15px 90px 15px; }
+      h1 { font-size: 2.2rem; margin-top: 20px; }
+      .atom-mode-btn { padding: 10px 18px; font-size: 0.8rem; }
+      #three-container { min-height: 320px; max-height: 380px; height: 380px; }
+      .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+      .modal-content { padding: 22px; max-height: 90vh; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 12px; }
+      h1 { font-size: 1.8rem; }
+      .atom-mode-btn { padding: 8px 14px; font-size: 0.75rem; }
+      .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+      .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+      .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+    <h1>⚛️ Atomic Physics Lab</h1>
+    <p class="subtitle">Explore Bohr Model, Energy Levels &amp; Atomic Spectra | WAEC Modern Physics</p>
+  </header>
+
+  <div class="language-selector">
+    <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+    <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+    <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+    <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+    <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+  </div>
+
+  <div class="atom-mode-selector">
+    <button class="atom-mode-btn active" onclick="setAtomMode('bohr')">⚛️ Bohr Model</button>
+    <button class="atom-mode-btn" onclick="setAtomMode('energy')">📊 Energy Levels</button>
+    <button class="atom-mode-btn" onclick="setAtomMode('spectra')">🌈 Atomic Spectra</button>
+  </div>
+
+  <div class="sim-container">
+    <div class="canvas-container">
+      <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+      <div class="canvas-controls">
+        <button class="btn-secondary" onclick="resetAtom()">🔄 Reset</button>
+        <button id="playPauseBtn" class="btn-secondary" onclick="toggleAnimation()">⏸️ Pause</button>
+      </div>
+    </div>
+    <div class="controls-panel">
+      <div class="slider-container">
+        <label>⚛️ Atomic Number (Z): <span id="zValue">1</span></label>
+        <input type="range" id="zSlider" min="1" max="20" step="1" value="1" oninput="updateAtom()">
+      </div>
+      <div class="slider-container" id="nSliderContainer">
+        <label>📊 Energy Level (n): <span id="nValue">1</span></label>
+        <input type="range" id="nSlider" min="1" max="5" step="1" value="1" oninput="updateAtom()">
+      </div>
+      <div class="slider-container" id="transitionContainer" style="display:none;">
+        <label>🔄 Transition: n₁ <span id="transitionLabel">2</span> → n₂ <span id="transitionLabel2">1</span></label>
+        <input type="range" id="transitionFrom" min="2" max="5" step="1" value="2" oninput="updateAtom()">
+        <input type="range" id="transitionTo" min="1" max="4" step="1" value="1" oninput="updateAtom()">
+      </div>
+
+      <div class="data-display">
+        <div class="data-row"><span>Element:</span><span id="displayElement" class="data-value" style="color:#14b8a6;">Hydrogen</span></div>
+        <div class="data-row"><span>Electron Config:</span><span id="displayConfig" class="data-value" style="color:#06b6d4;">1s¹</span></div>
+        <div class="data-row"><span>Energy (Eₙ):</span><span id="displayEnergy" class="data-value" style="color:#fbbf24;">-13.6 eV</span></div>
+        <div class="data-row"><span>Photon λ:</span><span id="displayWavelength" class="data-value" style="color:#f472b6;">--- nm</span></div>
+        <div class="data-row"><span>Series:</span><span id="displaySeries" class="data-value" style="color:#a78bfa;">Lyman</span></div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+        <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+        <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <details>
+      <summary>📖 Understanding Atomic Physics</summary>
+      <div class="theory-content">
+        <div class="distinction-box"><p><strong>Bohr Model:</strong> Electrons orbit the nucleus in discrete energy levels (n=1,2,3...). Energy is quantized.</p></div>
+        <div class="distinction-box" style="border-left-color:#06b6d4;"><p><strong>Energy Levels:</strong> Eₙ = -13.6 / n² eV. Higher n means higher energy (less negative). Ionization occurs at E=0 eV.</p></div>
+        <div class="distinction-box" style="border-left-color:#fbbf24;"><p><strong>Atomic Spectra:</strong> When electrons transition between levels, photons are emitted or absorbed. λ = hc / ΔE.</p></div>
+        <div class="distinction-box" style="border-left-color:#f472b6;"><p><strong>Spectral Series:</strong> Lyman (UV, n≥2→1), Balmer (Visible, n≥3→2), Paschen (IR, n≥4→3).</p></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<footer>
+  <div class="brand">⚛️ <span>Adusei Labs</span> | Powered by bksolutions</div>
+  <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+</footer>
+
+<button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+<button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+<div id="aiAssistant" class="ai-window">
+  <div class="ai-header">
+    <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Atomic Physics AI Tutor <span class="ai-badge">Ultra</span></div>
+    <button class="ai-close" onclick="toggleAI()">✕</button>
+  </div>
+  <div class="ai-body">
+    <div class="ai-messages" id="aiMessages">
+      <div class="ai-message bot">
+        <div class="ai-message-icon">🤖</div>
+        <div class="ai-message-content">⚛️ **Adusei AI Tutor Activated.**<br><br>I can help you with the Bohr model, energy levels, atomic spectra, and WAEC questions. Try asking:<br>• "Explain the Bohr model"<br>• "Show me WAEC questions on atomic physics"<br>• "What is the Lyman series?"</div>
+      </div>
+    </div>
+    <div class="ai-input-area">
+      <input type="text" id="aiInput" placeholder="Ask about Bohr model, energy levels, spectra..." onkeypress="handleAIKeypress(event)">
+      <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+    <div class="ai-disclaimer">💡 Try: "What is the Bohr model?" | "Explain energy levels" | "Show WAEC questions"</div>
+  </div>
+</div>
+
+<div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<!-- ─── Three.js & add‑ons ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// 1. ATOMIC PHYSICS ENGINE – 3D RENDERER (FIXED)
+// ─────────────────────────────────────────────────────────────
+let atomMode = 'bohr';
+let isAnimating = true;
+let animFrame = null;
+let time = 0;
+let userStats = { configurations: 0, quizScores: [] };
+
+const elements = [
+    { Z: 1, symbol: 'H', name: 'Hydrogen', config: '1s¹' },
+    { Z: 2, symbol: 'He', name: 'Helium', config: '1s²' },
+    { Z: 3, symbol: 'Li', name: 'Lithium', config: '1s² 2s¹' },
+    { Z: 4, symbol: 'Be', name: 'Beryllium', config: '1s² 2s²' },
+    { Z: 5, symbol: 'B', name: 'Boron', config: '1s² 2s² 2p¹' },
+    { Z: 6, symbol: 'C', name: 'Carbon', config: '1s² 2s² 2p²' },
+    { Z: 7, symbol: 'N', name: 'Nitrogen', config: '1s² 2s² 2p³' },
+    { Z: 8, symbol: 'O', name: 'Oxygen', config: '1s² 2s² 2p⁴' },
+    { Z: 9, symbol: 'F', name: 'Fluorine', config: '1s² 2s² 2p⁵' },
+    { Z: 10, symbol: 'Ne', name: 'Neon', config: '1s² 2s² 2p⁶' },
+    { Z: 11, symbol: 'Na', name: 'Sodium', config: '1s² 2s² 2p⁶ 3s¹' },
+    { Z: 12, symbol: 'Mg', name: 'Magnesium', config: '1s² 2s² 2p⁶ 3s²' },
+    { Z: 13, symbol: 'Al', name: 'Aluminum', config: '1s² 2s² 2p⁶ 3s² 3p¹' },
+    { Z: 14, symbol: 'Si', name: 'Silicon', config: '1s² 2s² 2p⁶ 3s² 3p²' },
+    { Z: 15, symbol: 'P', name: 'Phosphorus', config: '1s² 2s² 2p⁶ 3s² 3p³' },
+    { Z: 16, symbol: 'S', name: 'Sulfur', config: '1s² 2s² 2p⁶ 3s² 3p⁴' },
+    { Z: 17, symbol: 'Cl', name: 'Chlorine', config: '1s² 2s² 2p⁶ 3s² 3p⁵' },
+    { Z: 18, symbol: 'Ar', name: 'Argon', config: '1s² 2s² 2p⁶ 3s² 3p⁶' },
+    { Z: 19, symbol: 'K', name: 'Potassium', config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹' },
+    { Z: 20, symbol: 'Ca', name: 'Calcium', config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s²' }
+];
+
+// ─── Three.js globals ───
+let scene, camera, renderer, controls, composer;
+let bohrGroup, energyGroup, spectraGroup;
+let electronMeshes = [];
+let container = document.getElementById('three-container');
+let clock = new THREE.Clock();
+let threeReady = false;
+
+// ─── Init Three.js with error handling ───
+function initThree() {
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js library not loaded. Check your internet connection.');
+        }
+
+        const rect = container.getBoundingClientRect();
+        const width = rect.width || container.clientWidth || 800;
+        const height = rect.height || container.clientHeight || 500;
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050a12);
+
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(6, 4, 10);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.innerHTML = ''; // remove loading message
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambient);
+        const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+        scene.add(hemi);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 30;
+        mainLight.shadow.camera.left = -10;
+        mainLight.shadow.camera.right = 10;
+        mainLight.shadow.camera.top = 10;
+        mainLight.shadow.camera.bottom = -10;
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+        fillLight.position.set(-5, 0, 5);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+        rimLight.position.set(0, -5, 5);
+        scene.add(rimLight);
+
+        // Grid
+        const grid = new THREE.GridHelper(12, 12, 0x14b8a6, 0x0a4a4a);
+        grid.position.y = -3.5;
+        scene.add(grid);
+
+        // Groups
+        bohrGroup = new THREE.Group();
+        energyGroup = new THREE.Group();
+        spectraGroup = new THREE.Group();
+        scene.add(bohrGroup);
+        scene.add(energyGroup);
+        scene.add(spectraGroup);
+        bohrGroup.visible = false;
+        energyGroup.visible = false;
+        spectraGroup.visible = false;
+
+        // Bloom (optional, fallback if not available)
+        try {
+            composer = new THREE.EffectComposer(renderer);
+            const renderPass = new THREE.RenderPass(scene, camera);
+            composer.addPass(renderPass);
+            const bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(width, height),
+                0.3, 0.4, 0.85
+            );
+            composer.addPass(bloomPass);
+        } catch (e) {
+            console.warn('Bloom disabled:', e);
+            composer = null;
+        }
+
+        threeReady = true;
+        window.addEventListener('resize', onResize);
+        onResize();
+
+        // Start animation loop
+        animate();
+    } catch (e) {
+        container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+        console.error(e);
+    }
+}
+
+function onResize() {
+    if (!threeReady) return;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width || container.clientWidth || 800;
+    const h = rect.height || container.clientHeight || 500;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    if (composer) composer.setSize(w, h);
+}
+
+function animate() {
+    animFrame = requestAnimationFrame(animate);
+    if (!threeReady) return;
+
+    const delta = clock.getDelta();
+    if (atomMode === 'bohr' && isAnimating) {
+        time += delta * 1.2;
+        electronMeshes.forEach(e => {
+            const data = e.userData;
+            data.angle += delta * data.speed * 1.5;
+            const x = data.radius * Math.cos(data.angle);
+            const z = data.radius * Math.sin(data.angle);
+            e.position.set(x, 0, z);
+            const pulse = 1 + 0.1 * Math.sin(data.angle * 3);
+            e.scale.set(pulse, pulse, pulse);
+        });
+    }
+
+    controls.update();
+    if (composer) {
+        composer.render();
+    } else {
+        renderer.render(scene, camera);
+    }
+}
+
+// ─── Clear group ───
+function clearGroup(group) {
+    while(group.children.length > 0) {
+        const child = group.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+        }
+        group.remove(child);
+    }
+}
+
+// ─── Create label (canvas sprite) ───
+function createLabel(text, color = '#ffffff', fontSize = '16px', position = new THREE.Vector3(0,0,0)) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 64;
+    ctx.clearRect(0, 0, 256, 64);
+    // background
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    if (ctx.roundRect) {
+        ctx.roundRect(0, 0, 256, 64, 8);
+        ctx.fill();
+    } else {
+        ctx.fillRect(0, 0, 256, 64);
+    }
+    ctx.font = `bold ${fontSize} Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(text, 128, 32);
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+    const sprite = new THREE.Sprite(material);
+    sprite.position.copy(position);
+    sprite.scale.set(2, 0.5, 1);
+    return sprite;
+}
+
+// ─── Main update ───
+function updateAtom() {
+    if (!threeReady) return;
+    userStats.configurations++;
+    const Z = parseInt(document.getElementById('zSlider').value);
+    const n = parseInt(document.getElementById('nSlider').value);
+    const n1 = parseInt(document.getElementById('transitionFrom').value);
+    const n2 = parseInt(document.getElementById('transitionTo').value);
+
+    document.getElementById('zValue').textContent = Z;
+    document.getElementById('nValue').textContent = n;
+    document.getElementById('transitionLabel').textContent = n1;
+    document.getElementById('transitionLabel2').textContent = n2;
+
+    const element = elements.find(e => e.Z === Z) || elements[0];
+
+    const E_n = -13.6 * (Z * Z) / (n * n);
+    const E_n1 = -13.6 * (Z * Z) / (n1 * n1);
+    const E_n2 = -13.6 * (Z * Z) / (n2 * n2);
+    const deltaE = Math.abs(E_n1 - E_n2);
+    const wavelength = (1240 / deltaE).toFixed(1);
+
+    let series = '';
+    if (n2 === 1) series = 'Lyman (UV)';
+    else if (n2 === 2) series = 'Balmer (Visible)';
+    else if (n2 === 3) series = 'Paschen (IR)';
+    else if (n2 === 4) series = 'Brackett (IR)';
+    else series = 'Unknown';
+
+    document.getElementById('displayElement').textContent = element.name + ' (' + element.symbol + ')';
+    document.getElementById('displayConfig').textContent = element.config;
+    document.getElementById('displayEnergy').textContent = E_n.toFixed(2) + ' eV';
+    document.getElementById('displayWavelength').textContent = (atomMode === 'spectra' ? wavelength : '---') + ' nm';
+    document.getElementById('displaySeries').textContent = (atomMode === 'spectra' ? series : '---');
+
+    updateThreeScene(Z, n, n1, n2, element, E_n, E_n1, E_n2, deltaE, wavelength, series);
+}
+
+function updateThreeScene(Z, n, n1, n2, element, E_n, E_n1, E_n2, deltaE, wavelength, series) {
+    const mode = atomMode;
+    bohrGroup.visible = (mode === 'bohr');
+    energyGroup.visible = (mode === 'energy');
+    spectraGroup.visible = (mode === 'spectra');
+
+    if (mode === 'bohr') {
+        clearGroup(bohrGroup);
+        drawBohr3D(bohrGroup, Z, n, element);
+    } else if (mode === 'energy') {
+        clearGroup(energyGroup);
+        drawEnergy3D(energyGroup, Z, n, element, E_n);
+    } else if (mode === 'spectra') {
+        clearGroup(spectraGroup);
+        drawSpectra3D(spectraGroup, Z, n1, n2, element, wavelength, series);
+    }
+}
+
+// ─── Bohr 3D ───
+function drawBohr3D(group, Z, n, element) {
+    const cx = 0, cy = 0, cz = 0;
+    const maxShells = Math.min(4, Math.ceil(Z / 8) + 1);
+    const shellRadii = [1.8, 3.0, 4.2, 5.4];
+    const shellCapacities = [2, 8, 18, 32];
+    const shellColors = [0x22d3ee, 0x06b6d4, 0x0d9488, 0x14b8a6];
+
+    // Nucleus cluster
+    const nucleonCount = Math.min(Z + Math.floor(Z * 0.3), 40);
+    for (let i = 0; i < nucleonCount; i++) {
+        const isProton = i < Z;
+        const r = (isProton ? 0.35 : 0.3) * (0.8 + 0.4 * Math.random());
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const dist = 0.2 + Math.random() * 0.4;
+        const x = cx + dist * Math.sin(phi) * Math.cos(theta);
+        const y = cy + dist * Math.sin(phi) * Math.sin(theta);
+        const z = cz + dist * Math.cos(phi);
+        const geo = new THREE.SphereGeometry(r, 16, 16);
+        const mat = new THREE.MeshStandardMaterial({
+            color: isProton ? 0xfbbf24 : 0x94a3b8,
+            emissive: isProton ? 0xf59e0b : 0x000000,
+            emissiveIntensity: isProton ? 0.4 : 0,
+            metalness: 0.3,
+            roughness: 0.4
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        group.add(mesh);
+    }
+
+    // Glow aura
+    const glowGeo = new THREE.SphereGeometry(0.6 + Math.min(Z,20)*0.02, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.2 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.set(cx, cy, cz);
+    group.add(glow);
+
+    // Label: symbol (using sprite)
+    const label = createLabel(`${element.symbol} (Z=${Z})`, '#ffffff', '20px', new THREE.Vector3(cx, cy + 0.8, cz));
+    group.add(label);
+
+    // Shells and electrons
+    const electrons = Math.min(Z, 20);
+    const shellElectrons = [0,0,0,0];
+    let remaining = electrons;
+    for (let i = 0; i < maxShells && remaining > 0; i++) {
+        shellElectrons[i] = Math.min(remaining, shellCapacities[i]);
+        remaining -= shellElectrons[i];
+    }
+
+    electronMeshes = [];
+
+    for (let s = 0; s < maxShells; s++) {
+        const count = shellElectrons[s];
+        const radius = shellRadii[s];
+        if (count === 0) continue;
+
+        // Ring
+        const ringGeo = new THREE.TorusGeometry(radius, 0.04, 16, 64);
+        const ringMat = new THREE.MeshStandardMaterial({
+            color: shellColors[s % shellColors.length],
+            transparent: true,
+            opacity: 0.3,
+            emissive: shellColors[s % shellColors.length],
+            emissiveIntensity: 0.2
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(cx, cy, cz);
+        group.add(ring);
+
+        // Secondary tilted ring
+        const ring2Geo = new THREE.TorusGeometry(radius, 0.02, 16, 64);
+        const ring2Mat = new THREE.MeshStandardMaterial({
+            color: shellColors[s % shellColors.length],
+            transparent: true,
+            opacity: 0.15,
+            emissive: shellColors[s % shellColors.length],
+            emissiveIntensity: 0.1
+        });
+        const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+        ring2.rotation.x = Math.PI / 3;
+        ring2.rotation.z = 0.5;
+        ring2.position.set(cx, cy, cz);
+        group.add(ring2);
+
+        // Electrons
+        for (let e = 0; e < count; e++) {
+            const angleOffset = (e / count) * Math.PI * 2;
+            const speed = 0.6 + s * 0.15;
+            const angle = angleOffset + time * speed;
+            const x = radius * Math.cos(angle);
+            const z = radius * Math.sin(angle);
+            const electronGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            const electronMat = new THREE.MeshStandardMaterial({
+                color: 0x22d3ee,
+                emissive: 0x06b6d4,
+                emissiveIntensity: 0.7,
+                metalness: 0.1,
+                roughness: 0.2
+            });
+            const electron = new THREE.Mesh(electronGeo, electronMat);
+            electron.position.set(x, cy, z);
+            electron.castShadow = true;
+            electron.userData = {
+                radius: radius,
+                angle: angleOffset + time * speed,
+                speed: speed
+            };
+            group.add(electron);
+            electronMeshes.push(electron);
+
+            // Trail
+            const trailGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const trailMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.4 });
+            const trail = new THREE.Mesh(trailGeo, trailMat);
+            const trailAngle = angle - 0.3;
+            trail.position.set(radius * Math.cos(trailAngle), cy, radius * Math.sin(trailAngle));
+            group.add(trail);
+        }
+    }
+
+    // Shell labels
+    for (let s = 0; s < maxShells; s++) {
+        if (shellElectrons[s] === 0) continue;
+        const radius = shellRadii[s];
+        const lbl = createLabel(`n=${s+1} (${shellElectrons[s]}e)`, '#94a3b8', '14px', new THREE.Vector3(radius + 0.9, 0.6, 0));
+        group.add(lbl);
+    }
+}
+
+// ─── Energy Levels 3D ───
+function drawEnergy3D(group, Z, n, element, E_n) {
+    const levels = 5;
+    const levelHeight = 0.9;
+    const baseY = -1.8;
+    const barLength = 2.0;
+    const barDepth = 0.3;
+
+    for (let i = 1; i <= levels; i++) {
+        const y = baseY + (i - 1) * levelHeight;
+        const E_i = -13.6 * (Z * Z) / (i * i);
+        const isSelected = (i === n);
+        const color = new THREE.Color().setHSL(0.55 - (i-1)*0.08, 0.8, 0.5 + (levels - i) * 0.05);
+        const geo = new THREE.BoxGeometry(barLength, 0.3, barDepth);
+        const mat = new THREE.MeshStandardMaterial({
+            color: isSelected ? 0x14b8a6 : color,
+            emissive: isSelected ? 0x14b8a6 : 0x000000,
+            emissiveIntensity: isSelected ? 0.5 : 0,
+            metalness: 0.4,
+            roughness: 0.3,
+            transparent: true,
+            opacity: isSelected ? 1.0 : 0.8
+        });
+        const bar = new THREE.Mesh(geo, mat);
+        bar.position.set(0, y, 0);
+        bar.castShadow = true;
+        group.add(bar);
+
+        // Labels
+        const lbl = createLabel(`n=${i}`, isSelected ? '#fbbf24' : '#94a3b8', '18px', new THREE.Vector3(-1.2, y, 0));
+        group.add(lbl);
+        const val = createLabel(`${E_i.toFixed(2)} eV`, isSelected ? '#22d3ee' : '#94a3b8', '16px', new THREE.Vector3(1.3, y, 0));
+        group.add(val);
+
+        if (isSelected) {
+            const ringGeo = new THREE.TorusGeometry(0.7, 0.05, 16, 32);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x14b8a6, emissive: 0x14b8a6, emissiveIntensity: 0.5, transparent: true, opacity: 0.7 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.set(0, y, 0);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+        }
+    }
+
+    // Transition arrow
+    if (n > 1 && n <= levels) {
+        const yHigh = baseY + (n - 1) * levelHeight;
+        const yLow = baseY + 0;
+        const midY = (yHigh + yLow) / 2;
+        const shaftGeo = new THREE.CylinderGeometry(0.05, 0.05, yHigh - yLow - 0.2, 8);
+        const shaftMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, emissive: 0xf472b6, emissiveIntensity: 0.4 });
+        const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+        shaft.position.set(1.8, midY, 0);
+        group.add(shaft);
+        const headGeo = new THREE.ConeGeometry(0.18, 0.25, 8);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, emissive: 0xf472b6, emissiveIntensity: 0.4 });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.set(1.8, yLow + 0.12, 0);
+        group.add(head);
+
+        const E_diff = -13.6 * (Z * Z) * (1/(n*n) - 1);
+        const deltaLbl = createLabel(`ΔE = ${E_diff.toFixed(2)} eV`, '#f472b6', '16px', new THREE.Vector3(2.8, midY, 0));
+        group.add(deltaLbl);
+        const wl = (1240 / Math.abs(E_diff)).toFixed(1);
+        const wlLbl = createLabel(`λ = ${wl} nm`, '#f472b6', '14px', new THREE.Vector3(2.8, midY - 0.5, 0));
+        group.add(wlLbl);
+    }
+
+    const title = createLabel(`📊 Energy Levels (Z=${Z})`, '#e2e8f0', '22px', new THREE.Vector3(-3.5, baseY + levels * levelHeight + 1.0, 0));
+    group.add(title);
+}
+
+// ─── Spectra 3D ───
+function drawSpectra3D(group, Z, n1, n2, element, wavelength, series) {
+    let activeSeries = 'Balmer';
+    if (series === 'Lyman (UV)') activeSeries = 'Lyman';
+    else if (series === 'Balmer (Visible)') activeSeries = 'Balmer';
+    else if (series === 'Paschen (IR)') activeSeries = 'Paschen';
+    else activeSeries = 'Balmer';
+
+    const sStart = activeSeries === 'Lyman' ? 2 : activeSeries === 'Balmer' ? 3 : 4;
+    const sEnd = activeSeries === 'Lyman' ? 1 : activeSeries === 'Balmer' ? 2 : 3;
+
+    const numLines = 6;
+    const baseY = -1.8;
+    const lineSpacing = 0.6;
+    const maxHeight = 1.8;
+
+    const getColor = (wl) => {
+        if (wl < 400) return 0x9966ff;
+        else if (wl < 500) return 0x4488ff;
+        else if (wl < 600) return 0x44ff88;
+        else if (wl < 700) return 0xffcc44;
+        else return 0xff6644;
+    };
+
+    for (let i = 1; i <= numLines; i++) {
+        const n_high = sStart + i - 1;
+        if (n_high > 6) break;
+        const E_high = -13.6 * (Z * Z) / (n_high * n_high);
+        const E_low = -13.6 * (Z * Z) / (sEnd * sEnd);
+        const deltaE_spectra = Math.abs(E_high - E_low);
+        const lambda = 1240 / deltaE_spectra;
+        const heightFactor = 0.5 + 0.5 * (1 - i / numLines);
+        const h = heightFactor * maxHeight;
+        const x = (i - 1) * lineSpacing - (numLines - 1) * lineSpacing / 2;
+
+        const geo = new THREE.BoxGeometry(0.1, h, 0.1);
+        const color = getColor(lambda);
+        const mat = new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 0.5,
+            metalness: 0.1,
+            roughness: 0.2,
+            transparent: true,
+            opacity: 0.9
+        });
+        const line = new THREE.Mesh(geo, mat);
+        line.position.set(x, baseY + h/2, 0);
+        line.castShadow = true;
+        group.add(line);
+
+        if (i <= 2) {
+            const lbl = createLabel(`${lambda.toFixed(0)} nm`, '#94a3b8', '12px', new THREE.Vector3(x, baseY - 0.4, 0));
+            group.add(lbl);
+        }
+    }
+
+    // Highlight current transition
+    const currentIndex = n1 - sStart + 1;
+    if (currentIndex >= 1 && currentIndex <= numLines) {
+        const x = (currentIndex - 1) * lineSpacing - (numLines - 1) * lineSpacing / 2;
+        const hlGeo = new THREE.BoxGeometry(0.2, maxHeight * 1.2, 0.2);
+        const hlMat = new THREE.MeshStandardMaterial({
+            color: 0xfbbf24,
+            emissive: 0xfbbf24,
+            emissiveIntensity: 0.8,
+            transparent: true,
+            opacity: 0.25
+        });
+        const hl = new THREE.Mesh(hlGeo, hlMat);
+        hl.position.set(x, baseY + maxHeight/2, 0);
+        group.add(hl);
+
+        // Photon
+        const photonGeo = new THREE.SphereGeometry(0.15, 16, 16);
+        const photonMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 1.0 });
+        const photon = new THREE.Mesh(photonGeo, photonMat);
+        photon.position.set(x, baseY - 0.5, 0);
+        group.add(photon);
+
+        const lbl = createLabel(`n=${n1} → n=${n2}`, '#fbbf24', '16px', new THREE.Vector3(x, baseY + maxHeight + 0.5, 0));
+        group.add(lbl);
+        const wlLbl = createLabel(`${wavelength} nm`, '#f472b6', '14px', new THREE.Vector3(x, baseY + maxHeight + 0.9, 0));
+        group.add(wlLbl);
+    }
+
+    const title = createLabel(`🌈 ${element.name} (Z=${Z}) Spectra`, '#e2e8f0', '22px', new THREE.Vector3(-3.5, baseY + maxHeight + 1.8, 0));
+    group.add(title);
+    const seriesLbl = createLabel(`Series: ${activeSeries}`, '#94a3b8', '18px', new THREE.Vector3(2.5, baseY + maxHeight + 1.8, 0));
+    group.add(seriesLbl);
+}
+
+// ─── Reset & Toggle ───
+function resetAtom() {
+    document.getElementById('zSlider').value = 1;
+    document.getElementById('nSlider').value = 1;
+    document.getElementById('transitionFrom').value = 2;
+    document.getElementById('transitionTo').value = 1;
+    time = 0;
+    updateAtom();
+}
+
+function toggleAnimation() {
+    isAnimating = !isAnimating;
+    const btn = document.getElementById('playPauseBtn');
+    btn.innerHTML = isAnimating ? '⏸️ Pause' : '▶ Play';
+}
+
+function setAtomMode(mode) {
+    atomMode = mode;
+    document.querySelectorAll('.atom-mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.atom-mode-btn[onclick="setAtomMode('${mode}')"]`).classList.add('active');
+
+    document.getElementById('nSliderContainer').style.display = (mode === 'bohr' || mode === 'energy') ? 'block' : 'none';
+    document.getElementById('transitionContainer').style.display = (mode === 'spectra') ? 'block' : 'none';
+
+    updateAtom();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. AI, LANGUAGE, QUIZ, VOICE – with close button fixes
+// ─────────────────────────────────────────────────────────────
+let currentLang = 'english';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+    const labels = {
+        english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+        twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+        ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+        ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+        dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+    };
+    const l = labels[lang] || labels.english;
+    document.getElementById('btnQuiz').innerHTML = l.quiz;
+    document.getElementById('btnPred').innerHTML = l.pred;
+    document.getElementById('btnExp').innerHTML = l.exp;
+
+    const placeholders = {
+        english: 'Ask about Bohr model, energy levels, spectra...',
+        twi: 'Bisa physics asɛm biara...',
+        ga: 'Bi lɛɛlɛŋ sane...',
+        ewe: 'Bia nya...',
+        dagbani: 'Bɔhi yɛltɔɣa...'
+    };
+    document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+}
+
+function toggleAI() {
+    document.getElementById('aiAssistant').classList.toggle('active');
+    if(document.getElementById('aiAssistant').classList.contains('active')) {
+        document.getElementById('aiInput').focus();
+    }
+}
+
+function addAIMessage(msg, isUser = false) {
+    const c = document.getElementById('aiMessages');
+    let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+    c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+    const c = document.getElementById('aiMessages');
+    const t = document.createElement('div');
+    t.className = 'ai-message bot';
+    t.id = 'typingIndicator';
+    t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    c.appendChild(t);
+    c.scrollTop = c.scrollHeight;
+}
+
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+async function sendAIMessage() {
+    const input = document.getElementById('aiInput');
+    const q = input.value.trim();
+    if (!q) return;
+
+    addAIMessage(q, true);
+    input.value = '';
+    showTyping();
+
+    await new Promise(r => setTimeout(r, 600));
+    removeTyping();
+
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse(q, 'atomic-physics');
+    } else {
+        response = "⚠️ AI content is still loading. Please try again in a moment.";
+    }
+
+    addAIMessage(response, false);
+    speakAI(response);
+}
+
+function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+function speakAI(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+        clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = currentLang==='english'?'en-US':'en-GB';
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+    }
+}
+
+let isListening = false, recognition = null;
+function toggleVoice() {
+    const btn = document.getElementById('voiceBtn');
+    if (isListening) {
+        recognition?.stop();
+        btn.classList.remove('listening');
+        isListening = false;
+    } else if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = currentLang==='english'?'en-US':'en-GH';
+        recognition.onstart = () => {
+            btn.classList.add('listening');
+            isListening = true;
+        };
+        recognition.onresult = (e) => {
+            const cmd = e.results[0][0].transcript;
+            if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+            addAIMessage(cmd, true);
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse(cmd, 'atomic-physics');
+            } else {
+                response = "⚠️ AI content is loading. Please try again.";
+            }
+            addAIMessage(response, false);
+            speakAI(response);
+        };
+        recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+        recognition.start();
+    }
+}
+
+// ─── Modal with backdrop click close ───
+function showModal(html) {
+    const modal = document.getElementById('generalModal');
+    document.getElementById('modalContent').innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('generalModal').classList.remove('active');
+}
+
+// Close modal when clicking on backdrop
+document.getElementById('generalModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+const atomicQuiz = [
+    { q: "What is the formula for energy levels in the Bohr model?", o: ["Eₙ = -13.6/n² eV", "Eₙ = -13.6·n² eV", "Eₙ = 13.6/n² eV", "Eₙ = -13.6/n eV"], a: "Eₙ = -13.6/n² eV" },
+    { q: "Which spectral series lies in the visible region?", o: ["Lyman", "Balmer", "Paschen", "Brackett"], a: "Balmer" },
+    { q: "What is the ground state energy of Hydrogen?", o: ["-13.6 eV", "-3.4 eV", "-1.5 eV", "0 eV"], a: "-13.6 eV" },
+    { q: "What does the principal quantum number (n) determine?", o: ["Energy level", "Spin", "Orbital shape", "Magnetic moment"], a: "Energy level" },
+    { q: "What happens when an electron jumps from a higher to a lower energy level?", o: ["Photon is emitted", "Photon is absorbed", "Electron is ejected", "Nothing"], a: "Photon is emitted" },
+    { q: "What is the maximum number of electrons in the K-shell (n=1)?", o: ["2", "8", "18", "32"], a: "2" },
+    { q: "What is ionization energy?", o: ["Energy to remove an electron", "Energy to add an electron", "Energy to excite an electron", "Energy to split the nucleus"], a: "Energy to remove an electron" },
+    { q: "What is the wavelength of a photon with energy 3.4 eV?", o: ["365 nm", "124 nm", "656 nm", "12.4 nm"], a: "365 nm" },
+    { q: "What is the Lyman series?", o: ["Transitions to n=1", "Transitions to n=2", "Transitions to n=3", "Transitions to n=4"], a: "Transitions to n=1" },
+    { q: "What is the Bohr model primarily used for?", o: ["Hydrogen-like atoms", "Complex molecules", "Solid state physics", "Nuclear fission"], a: "Hydrogen-like atoms" }
+];
+
+function showQuiz() {
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;">
+            <h2 style="color:white;margin:0;font-size:1.5rem;">📝 Atomic Physics Quiz</h2>
+            <button onclick="closeModal()" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-scroll">
+    `;
+    atomicQuiz.forEach((item, idx) => {
+        html += `<div class="quiz-question"><p><strong>${idx+1}. ${item.q}</strong></p><div class="quiz-options">${item.o.map(opt => `<label><input type="radio" name="q${idx}" value="${opt}"><span>${opt}</span></label>`).join('')}</div></div>`;
+    });
+    html += `</div><div style="display:flex;gap:12px;margin-top:20px;flex-shrink:0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
+        <button class="btn-secondary" style="flex:1;padding:14px;font-size:1rem;" onclick="closeModal()">✕ Cancel</button>
+        <button class="lab-action-btn" style="flex:2;padding:14px;font-size:1rem;" onclick="submitQuiz()">Submit & Grade</button>
+    </div>`;
+    showModal(html);
+}
+
+function submitQuiz() {
+    let score = 0;
+    atomicQuiz.forEach((item, idx) => {
+        const s = document.querySelector(`input[name="q${idx}"]:checked`);
+        if (s && s.value === item.a) score += 10;
+    });
+    userStats.quizScores.push(score);
+    showModal(`<div style="text-align:center;padding:30px 10px;">
+        <div style="font-size:5rem;font-weight:900;background:linear-gradient(135deg,#14b8a6,#06b6d4);-webkit-background-clip:text;color:transparent;text-shadow:0 10px 30px rgba(20,184,166,0.3);margin-bottom:10px;line-height:1.2;">${score}%</div>
+        <h3 style="color:white;margin-bottom:30px;font-size:1.3rem;font-weight:400;">Quiz Completed!</h3>
+        <button class="lab-action-btn" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Continue</button>
+    </div>`);
+}
+
+function showPrediction() {
+    let avg = 0;
+    if (userStats.quizScores.length > 0) {
+        const s = userStats.quizScores.reduce((a,b)=>a+b,0);
+        avg = s / userStats.quizScores.length;
+    }
+    const labScore = Math.min(100, userStats.configurations * 5);
+    const overall = avg > 0 ? Math.round((labScore * 0.4) + (avg * 0.6)) : labScore;
+    const msg = overall >= 80 ? "Outstanding! You've mastered atomic structure and quantum physics." :
+                overall >= 50 ? "Good progress! Keep exploring the Bohr model and energy transitions." :
+                "Just getting started! Experiment with different atomic numbers and observe energy levels.";
+
+    showModal(`
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;">
+            <h2 style="color:white;margin:0;font-size:1.5rem;">🔮 AI Mastery Prediction</h2>
+            <button onclick="closeModal()" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;justify-content:space-around;text-align:center;margin:24px 0;background:rgba(0,0,0,0.2);padding:20px;border-radius:16px;">
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#14b8a6;">${userStats.configurations}</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Adjustments</div></div>
+            <div style="width:1px;background:rgba(255,255,255,0.08);"></div>
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#06b6d4;">${Math.round(avg)}%</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Quiz Avg</div></div>
+        </div>
+        <div style="text-align:center;margin:20px 0;">
+            <div style="font-size:0.9rem;color:#94a3b8;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Overall AI Mastery</div>
+            <div style="font-size:4rem;font-weight:900;color:#14b8a6;text-shadow:0 10px 30px rgba(20,184,166,0.4);line-height:1.2;">${overall}%</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.25);padding:18px;border-left:4px solid #14b8a6;border-radius:12px;color:#cbd5e1;margin-bottom:24px;line-height:1.6;">
+            <strong style="color:white;display:block;margin-bottom:6px;">🧠 Analysis:</strong>${msg}
+        </div>
+        <button class="btn-primary" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Close</button>
+    `);
+}
+
+function showExperiment() {
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse("Give me an experiment on atomic physics", 'atomic-physics');
+    } else {
+        response = "🧪 **Experiment:** Set Z=1 (Hydrogen). Observe the energy levels. Increase Z to 2 (Helium). What happens to the energy values?";
+    }
+    addAIMessage(response, false);
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. INIT
+// ─────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+    initThree();
+    setTimeout(() => {
+        updateAtom();
+        setLanguage('english');
+    }, 100);
+    if (window.innerWidth > 768) {
+        setTimeout(() => {
+            document.getElementById('aiAssistant').classList.add('active');
+        }, 1500);
+    }
+});
+</script>
+
+<!-- External scripts (if any) – keep as is -->
+<script src="/js/ai-content.js"></script>
+<script src="/js/global.js"></script>
+</body>
+</html>

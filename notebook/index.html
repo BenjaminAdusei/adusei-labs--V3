@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Notebook | Adusei Labs</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── Notebook Styles ─── */
+        .notebook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .notebook-header h1 {
+            margin: 0;
+        }
+        .notebook-header .sub {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* ─── Note Editor ─── */
+        .note-editor {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow);
+            margin: 20px 0 30px 0;
+        }
+        .note-editor .editor-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .note-editor select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(4px);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            outline: none;
+            transition: all var(--transition-med);
+            box-shadow: var(--glass-inner-shadow);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .note-editor select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        .note-editor textarea {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(4px);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 140px;
+            transition: all var(--transition-med);
+            box-sizing: border-box;
+            box-shadow: var(--glass-inner-shadow);
+        }
+        .note-editor textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+            outline: none;
+        }
+        .note-editor .editor-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+        .note-editor .note-status {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 10px;
+            min-height: 24px;
+        }
+
+        /* ─── Notes Grid ─── */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .note-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow);
+            transition: all var(--transition-med);
+        }
+        .note-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+        }
+        .note-card .note-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .note-card .note-date {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+        .note-card .note-preview {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 80px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 12px;
+            padding-right: 4px;
+        }
+        .note-card .note-preview::-webkit-scrollbar {
+            width: 3px;
+        }
+        .note-card .note-preview::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        .note-card .note-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .note-card .note-actions button {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(4px);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+        .note-card .note-actions button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .note-card .note-actions button.danger:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        .empty-state h3 {
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        /* ─── Toast ─── */
+        .toast-msg {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            padding: 14px 28px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            color: var(--text-main);
+            font-weight: 600;
+            z-index: 9999;
+            font-size: 0.95rem;
+            max-width: 90%;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 600px) {
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+            .notebook-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .note-editor .editor-row {
+                flex-direction: column;
+            }
+            .note-editor select {
+                min-width: unset;
+                width: 100%;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            .note-editor {
+                background: rgba(30,15,25,0.7);
+            }
+            .note-card {
+                background: rgba(30,15,25,0.7);
+            }
+            .note-editor select {
+                background: rgba(30,15,25,0.7);
+            }
+            .note-editor textarea {
+                background: rgba(30,15,25,0.7);
+            }
+            .note-card .note-actions button {
+                background: rgba(30,15,25,0.6);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── GLOBAL HEADER ─── -->
+    <div id="global-header"></div>
+
+    <div class="container">
+
+        <!-- ─── HEADER ─── -->
+        <div class="notebook-header">
+            <div>
+                <h1>📓 Lab Notebook</h1>
+                <div class="sub">Save and organize your experiment notes for all 19 labs</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn-secondary btn-sm" onclick="exportAllNotes()">📤 Export All</button>
+                <button class="btn-secondary btn-sm" onclick="clearAllNotes()">🗑️ Clear All</button>
+            </div>
+        </div>
+
+        <!-- ─── NOTE EDITOR ─── -->
+        <div class="note-editor">
+            <div class="editor-row">
+                <select id="noteLabSelect">
+                    <option value="">📋 Select a lab...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
+            </div>
+            <textarea id="noteContent" placeholder="Write your experiment notes here... Include observations, data, and conclusions."></textarea>
+            <div class="editor-actions">
+                <button class="btn-primary btn-sm" onclick="saveNote()">💾 Save Note</button>
+                <button class="btn-secondary btn-sm" onclick="loadNote()">📂 Load Note</button>
+                <button class="btn-secondary btn-sm" onclick="clearEditor()">🗑️ Clear</button>
+            </div>
+            <div class="note-status" id="noteStatus">💡 Select a lab and start writing your notes</div>
+        </div>
+
+        <!-- ─── NOTES GRID ─── -->
+        <h3 style="margin-bottom:4px;">📚 Your Saved Notes</h3>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">Each note is saved automatically in your browser</p>
+        <div class="notes-grid" id="notesGrid"></div>
+
+    </div>
+
+    <!-- ─── GLOBAL FOOTER ─── -->
+    <div id="global-footer"></div>
+
+    <!-- ─── SCRIPTS ─── -->
+    <script src="/js/global.js"></script>
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        // LAB NOTEBOOK JAVASCRIPT
+        // ─────────────────────────────────────────────────────────────
+
+        let currentLabId = '';
+
+        // ─── POPULATE LAB SELECTOR ───
+        function populateLabSelector() {
+            const select = document.getElementById('noteLabSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">📋 Select a lab...</option>';
+            for (const lab of LABS) {
+                select.innerHTML += `
+                    <option value="${lab.id}">${lab.icon} ${lab.name}</option>
+                `;
+            }
+        }
+
+        // ─── RENDER NOTES ───
+        function renderNotes() {
+            const container = document.getElementById('notesGrid');
+            if (!container) return;
+
+            const allNotes = getStorage('notebook', {});
+            const labMap = {};
+            for (const lab of LABS) labMap[lab.id] = lab;
+
+            const entries = Object.entries(allNotes);
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <div class="icon">📓</div>
+                        <h3>No notes yet</h3>
+                        <p>Select a lab and write your first experiment note!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by most recent first
+            entries.sort((a, b) => {
+                return new Date(b[1].updated) - new Date(a[1].updated);
+            });
+
+            let html = '';
+            for (const [labId, data] of entries) {
+                const lab = labMap[labId];
+                const date = new Date(data.updated);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const preview = data.content || 'No content';
+                const previewShort = preview.length > 120 ? preview.substring(0, 120) + '...' : preview;
+
+                html += `
+                    <div class="note-card">
+                        <div class="note-title">
+                            ${lab ? lab.icon : '📝'} ${lab ? lab.name : labId}
+                        </div>
+                        <div class="note-date">📅 ${formattedDate}</div>
+                        <div class="note-preview">${previewShort}</div>
+                        <div class="note-actions">
+                            <button onclick="loadNoteById('${labId}')">📂 Load</button>
+                            <button onclick="exportNote('${labId}')">📤 Export</button>
+                            <button class="danger" onclick="deleteNote('${labId}')">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ─── SAVE NOTE ───
+        function saveNote() {
+            const labId = document.getElementById('noteLabSelect').value;
+            const content = document.getElementById('noteContent').value;
+
+            if (!labId) {
+                document.getElementById('noteStatus').textContent = '⚠️ Please select a lab first';
+                document.getElementById('noteStatus').style.color = '#ef4444';
+                return;
+            }
+
+            if (!content.trim()) {
+                document.getElementById('noteStatus').textContent = '⚠️ Please write some notes before saving';
+                document.getElementById('noteStatus').style.color = '#ef4444';
+                return;
+            }
+
+            saveNoteToLab(labId, content);
+            currentLabId = labId;
+            document.getElementById('noteStatus').textContent = '✅ Note saved successfully!';
+            document.getElementById('noteStatus').style.color = '#10b981';
+            renderNotes();
+        }
+
+        function saveNoteToLab(labId, content) {
+            const notes = getStorage('notebook', {});
+            notes[labId] = {
+                content: content,
+                updated: new Date().toISOString()
+            };
+            setStorage('notebook', notes);
+        }
+
+        // ─── LOAD NOTE ───
+        function loadNote() {
+            const labId = document.getElementById('noteLabSelect').value;
+            if (!labId) {
+                document.getElementById('noteStatus').textContent = '⚠️ Please select a lab first';
+                document.getElementById('noteStatus').style.color = '#ef4444';
+                return;
+            }
+            loadNoteById(labId);
+        }
+
+        function loadNoteById(labId) {
+            const notes = getStorage('notebook', {});
+            const data = notes[labId];
+
+            if (data) {
+                document.getElementById('noteLabSelect').value = labId;
+                document.getElementById('noteContent').value = data.content;
+                currentLabId = labId;
+                document.getElementById('noteStatus').textContent = `📂 Loaded note from ${getLabName(labId)}`;
+                document.getElementById('noteStatus').style.color = '#3b82f6';
+            } else {
+                document.getElementById('noteStatus').textContent = `📭 No note found for this lab`;
+                document.getElementById('noteStatus').style.color = '#f59e0b';
+            }
+        }
+
+        // ─── CLEAR EDITOR ───
+        function clearEditor() {
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteStatus').textContent = '🗑️ Editor cleared';
+            document.getElementById('noteStatus').style.color = 'var(--text-dim)';
+        }
+
+        // ─── DELETE NOTE ───
+        function deleteNote(labId) {
+            const labName = getLabName(labId);
+            if (confirm(`Delete note for "${labName}"?`)) {
+                const notes = getStorage('notebook', {});
+                delete notes[labId];
+                setStorage('notebook', notes);
+                renderNotes();
+                // Clear editor if this lab was loaded
+                if (document.getElementById('noteLabSelect').value === labId) {
+                    clearEditor();
+                }
+                document.getElementById('noteStatus').textContent = '🗑️ Note deleted';
+                document.getElementById('noteStatus').style.color = '#ef4444';
+                showToast(`🗑️ Deleted note for ${labName}`);
+            }
+        }
+
+        // ─── EXPORT NOTE ───
+        function exportNote(labId) {
+            const notes = getStorage('notebook', {});
+            const data = notes[labId];
+            const labName = getLabName(labId);
+
+            if (data) {
+                const content = `📓 Adusei Labs — Lab Notebook\n\n` +
+                    `Lab: ${labName}\n` +
+                    `Date: ${new Date(data.updated).toLocaleString()}\n` +
+                    `─────────────────────────────\n\n` +
+                    `${data.content}\n\n` +
+                    `─────────────────────────────\n` +
+                    `Exported from Adusei Labs`;
+
+                const blob = new Blob([content], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `adusei-note-${labId}-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+
+                showToast(`📤 Exported note for ${labName}`);
+            } else {
+                showToast('⚠️ No note found to export');
+            }
+        }
+
+        // ─── EXPORT ALL NOTES ───
+        function exportAllNotes() {
+            const allNotes = getStorage('notebook', {});
+            const entries = Object.entries(allNotes);
+
+            if (entries.length === 0) {
+                showToast('📭 No notes to export');
+                return;
+            }
+
+            let content = '📓 Adusei Labs — All Lab Notes\n';
+            content += `Exported: ${new Date().toLocaleString()}\n`;
+            content += `─────────────────────────────────────────────\n\n`;
+
+            for (const [labId, data] of entries) {
+                const labName = getLabName(labId);
+                content += `📚 ${labName}\n`;
+                content += `📅 ${new Date(data.updated).toLocaleString()}\n`;
+                content += `─────────────────────────────\n`;
+                content += `${data.content}\n\n`;
+            }
+
+            content += `─────────────────────────────────────────────\n`;
+            content += `Total notes: ${entries.length}\n`;
+            content += `Exported from Adusei Labs`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `adusei-all-notes-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            showToast(`📤 Exported ${entries.length} notes`);
+        }
+
+        // ─── CLEAR ALL NOTES ───
+        function clearAllNotes() {
+            const allNotes = getStorage('notebook', {});
+            const count = Object.keys(allNotes).length;
+
+            if (count === 0) {
+                showToast('📭 No notes to clear');
+                return;
+            }
+
+            if (confirm(`⚠️ Delete all ${count} notes? This cannot be undone!`)) {
+                if (confirm('Are you sure?')) {
+                    setStorage('notebook', {});
+                    renderNotes();
+                    clearEditor();
+                    showToast(`🗑️ Deleted ${count} notes`);
+                }
+            }
+        }
+
+        // ─── HELPER FUNCTIONS ───
+        function getLabName(labId) {
+            for (const lab of LABS) {
+                if (lab.id === labId) return lab.icon + ' ' + lab.name;
+            }
+            return labId;
+        }
+
+        // ─── TOAST NOTIFICATION ───
+        function showToast(message) {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ─── AUTO-SAVE ON LAB CHANGE ───
+        document.addEventListener('DOMContentLoaded', function() {
+            populateLabSelector();
+
+            // Auto-load note when lab is selected
+            document.getElementById('noteLabSelect').addEventListener('change', function() {
+                const labId = this.value;
+                if (labId) {
+                    loadNoteById(labId);
+                } else {
+                    clearEditor();
+                    document.getElementById('noteStatus').textContent = '💡 Select a lab to load or create notes';
+                    document.getElementById('noteStatus').style.color = 'var(--text-dim)';
+                }
+            });
+
+            renderNotes();
+
+            // Auto-save shortcut (Ctrl+S)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveNote();
+                }
+            });
+        });
+
+        // Re-render when returning to the page
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                renderNotes();
+            }
+        });
+    </script>
+
+</body>
+</html>

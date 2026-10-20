@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electromagnetic Induction Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── ROOT: Gray/Silver Theme ─── */
+        :root {
+            --bg-color: #0a0a0a;
+            --bg-gradient-1: rgba(107, 114, 128, 0.06);
+            --bg-gradient-2: rgba(156, 163, 175, 0.06);
+            --glass-bg: rgba(16, 16, 18, 0.55);
+            --glass-blur: 24px;
+            --glass-blur-light: 16px;
+            --glass-border: rgba(107, 114, 128, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.03);
+            --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --primary: #6b7280;
+            --primary-glow: rgba(107, 114, 128, 0.4);
+            --secondary: #9ca3af;
+            --secondary-glow: rgba(156, 163, 175, 0.4);
+            --accent: #d1d5db;
+            --accent-glow: rgba(209, 213, 219, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --highlight: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+                radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        h1 {
+            font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #9ca3af, #d1d5db, #9ca3af);
+            background-size: 200% auto;
+            color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(16, 16, 18, 0.7); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+        .lang-btn:hover { color: white; border-color: rgba(107, 114, 128, 0.4); transform: translateY(-2px); }
+        .lang-btn.active { background: rgba(107, 114, 128, 0.18); border-color: var(--primary); color: var(--highlight); box-shadow: 0 0 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+        .induction-mode-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .induction-mode-btn { background: rgba(16, 16, 18, 0.6); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.95rem; box-shadow: var(--glass-inner-shadow); }
+        .induction-mode-btn:hover { color: white; border-color: rgba(107, 114, 128, 0.4); transform: translateY(-2px); }
+        .induction-mode-btn.active { background: linear-gradient(135deg, #6b7280, #9ca3af); color: white; border-color: transparent; box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+        .canvas-container, .controls-panel {
+            flex: 1; min-width: 320px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: 24px; padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+        .canvas-container::before, .controls-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+            pointer-events: none; border-radius: 24px 24px 0 0;
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        /* 3D container – replaces the old canvas */
+        #three-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #0a0a0a;
+            cursor: grab;
+            position: relative;
+            border: 1px solid rgba(107,114,128,0.08);
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Full‑screen button styling */
+        .fullscreen-btn {
+            background: rgba(16, 16, 18, 0.7);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(4px);
+        }
+        .fullscreen-btn:hover {
+            background: rgba(107, 114, 128, 0.2);
+            border-color: var(--primary);
+        }
+
+        .canvas-controls { margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--primary-glow); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--primary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #9ca3af; }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .data-display { background: rgba(8, 8, 10, 0.7); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.5), var(--glass-inner-shadow); }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+        .data-value { color: var(--highlight); font-weight: bold; text-shadow: 0 0 10px var(--primary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .lab-action-btn {
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+            border: 1px solid rgba(255,255,255,0.12); padding: 12px 24px; border-radius: 30px;
+            color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow);
+        }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); background: linear-gradient(135deg, #9ca3af, #d1d5db); }
+
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+        .btn-primary { background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 4px 20px rgba(107,114,128,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(107,114,128,0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #374151, #1f2937); box-shadow: var(--glass-inner-shadow); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #4b5563, #374151); }
+
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+        details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--primary-glow), var(--glass-inner-shadow); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--primary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .distinction-box { background: rgba(107,114,128,0.08); backdrop-filter: blur(4px); border-left: 4px solid var(--primary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+        .distinction-box strong { color: white; }
+
+        footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+        footer .brand span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glass-inner-shadow);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #6b7280, #9ca3af); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(107,114,128,0.4), var(--glass-inner-shadow); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(107,114,128,0.6); }
+        @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+        .ai-window {
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+            height: 600px; max-height: calc(100vh - 140px);
+            background: rgba(8, 8, 10, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 28px; overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), var(--glass-inner-shadow);
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            border: 1px solid var(--glass-border);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+        .ai-header { background: linear-gradient(135deg, rgba(107,114,128,0.9), rgba(156,163,175,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 5px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(107,114,128,0.3); border-radius: 10px; }
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { background: rgba(16, 16, 18, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .ai-message.user .ai-message-content { background: linear-gradient(135deg, #6b7280, #9ca3af); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(107,114,128,0.3); }
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(8,8,10,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+        .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); background: rgba(16,16,18,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--primary-glow); background: rgba(16,16,18,0.9); }
+        .ai-input-area input::placeholder { color: #6b7280; }
+        .ai-input-area button { background: linear-gradient(135deg, #6b7280, #9ca3af); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--primary-glow); flex-shrink: 0; }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+        .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+        .ai-typing span { width: 8px; height: 8px; background: white; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s; padding: 20px; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: linear-gradient(135deg, rgba(16,16,18,0.95), rgba(8,8,10,0.95)); backdrop-filter: blur(30px); border-radius: 32px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: hidden; padding: 32px; border: 1px solid rgba(107,114,128,0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow); transform: translateY(20px) scale(0.95); transition: 0.4s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+        .modal-scroll::-webkit-scrollbar { width: 5px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(107,114,128,0.3); border-radius: 10px; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question:hover { border-color: rgba(107,114,128,0.15); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(107,114,128,0.08); border-color: rgba(107,114,128,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #6b7280; flex-shrink: 0; cursor: pointer; }
+        .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--primary); }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            .induction-mode-btn { padding: 10px 18px; font-size: 0.8rem; }
+            #three-container { height: 320px; }
+            .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+            .modal-content { padding: 22px; max-height: 90vh; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .induction-mode-btn { padding: 8px 14px; font-size: 0.75rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+        <h1>⚡ Electromagnetic Induction Lab</h1>
+        <p class="subtitle">Explore Faraday's Law, Lenz's Law, Generators &amp; Transformers | WAEC Electricity &amp; Magnetism</p>
+    </header>
+
+    <div class="language-selector">
+        <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+        <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+        <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+        <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+        <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+    </div>
+
+    <div class="induction-mode-selector">
+        <button class="induction-mode-btn active" onclick="setInductionMode('faraday')">🧲 Faraday's Law</button>
+        <button class="induction-mode-btn" onclick="setInductionMode('generator')">🔄 Generator</button>
+        <button class="induction-mode-btn" onclick="setInductionMode('transformer')">⚡ Transformer</button>
+    </div>
+
+    <div class="sim-container">
+        <div class="canvas-container">
+            <!-- 3D container replaces canvas -->
+            <div id="three-container"></div>
+            <div class="canvas-controls">
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                <button class="btn-secondary" onclick="resetInduction()">🔄 Reset</button>
+                <button class="btn-secondary" id="playPauseBtn" onclick="toggleInductionAnimation()">⏸️ Pause</button>
+            </div>
+        </div>
+        <div class="controls-panel">
+            <div class="slider-container" id="magnetSpeedContainer">
+                <label>🧲 Magnet Speed: <span id="speedValue">2.0</span> m/s</label>
+                <input type="range" id="speedSlider" min="0.5" max="5" step="0.1" value="2" oninput="updateInduction()">
+            </div>
+            <div class="slider-container" id="coilTurnsContainer">
+                <label>🔄 Coil Turns (N): <span id="turnsValue">10</span></label>
+                <input type="range" id="turnsSlider" min="5" max="30" step="1" value="10" oninput="updateInduction()">
+            </div>
+            <div class="slider-container" id="fieldStrengthContainer">
+                <label>🧲 Field Strength (B): <span id="fieldValue">1.0</span> T</label>
+                <input type="range" id="fieldSlider" min="0.2" max="3" step="0.1" value="1" oninput="updateInduction()">
+            </div>
+            <div class="slider-container" id="transformerRatioContainer" style="display:none;">
+                <label>⚡ Turns Ratio (Nₛ/Nₚ): <span id="ratioValue">2.0</span></label>
+                <input type="range" id="ratioSlider" min="0.5" max="5" step="0.1" value="2" oninput="updateInduction()">
+            </div>
+
+            <div class="data-display">
+                <div class="data-row"><span>Magnetic Flux (Φ):</span><span id="displayFlux" class="data-value" style="color:#9ca3af;">--- Wb</span></div>
+                <div class="data-row"><span>Induced EMF (ε):</span><span id="displayEMF" class="data-value" style="color:#d1d5db;">--- V</span></div>
+                <div class="data-row"><span>Induced Current (I):</span><span id="displayCurrent" class="data-value" style="color:#e5e7eb;">--- A</span></div>
+                <div class="data-row"><span>Power Output:</span><span id="displayPower" class="data-value" style="color:#fbbf24;">--- W</span></div>
+                <div class="data-row"><span>Lenz's Law:</span><span id="displayLenz" class="data-value" style="color:#34d399;">Opposes change ✓</span></div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <details>
+            <summary>📖 Understanding Electromagnetic Induction</summary>
+            <div class="theory-content">
+                <div class="distinction-box">
+                    <p><strong>Faraday's Law:</strong> ε = -N × dΦ/dt<br>
+                    The induced EMF is proportional to the rate of change of magnetic flux.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#9ca3af;">
+                    <p><strong>Lenz's Law:</strong> The induced current flows in a direction that opposes the change that produced it. The negative sign in Faraday's Law.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#d1d5db;">
+                    <p><strong>Generator:</strong> Converts mechanical energy to electrical energy. Rotating coil in a magnetic field produces alternating current (AC).</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#e5e7eb;">
+                    <p><strong>Transformer:</strong> Vₛ/Vₚ = Nₛ/Nₚ (voltage ratio equals turns ratio). Step-up: Nₛ > Nₚ, Step-down: Nₛ < Nₚ.</p>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<footer>
+    <div class="brand">⚡ <span>Adusei Labs</span> | Powered by bksolutions</div>
+    <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+</footer>
+
+<button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+<button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+<div id="aiAssistant" class="ai-window">
+    <div class="ai-header">
+        <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Induction AI Tutor <span class="ai-badge">Ultra</span></div>
+        <button class="ai-close" onclick="toggleAI()">✕</button>
+    </div>
+    <div class="ai-body">
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message bot">
+                <div class="ai-message-icon">🤖</div>
+                <div class="ai-message-content">⚡ **Adusei AI Tutor Activated.**<br><br>I can help you with Faraday's Law, generators, transformers, and WAEC questions. Try asking:<br>• "Explain Faraday's Law"<br>• "Show me WAEC questions on induction"<br>• "What is Lenz's Law?"</div>
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Ask about Faraday's Law, generators, transformers..." onkeypress="handleAIKeypress(event)">
+            <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+        <div class="ai-disclaimer">💡 Try: "What is Faraday's Law?" | "Explain Lenz's Law" | "Show WAEC questions"</div>
+    </div>
+</div>
+
+<div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<!-- ====== THREE.JS (via CDN) ====== -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    // ============================================================
+    //  3D INDUCTION RENDERER – replaces the 2D canvas
+    // ============================================================
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ---- References ----
+    const container = document.getElementById('three-container');
+    let scene, camera, renderer, controls;
+    let sceneGroup = null;           // holds all dynamic objects for the current mode
+    let magnetMesh = null;
+    let coilGroup = null;
+    let fluxLines = [];
+    let arrowHelpers = [];
+    let transformerPrim = null;
+    let transformerSec = null;
+
+    let currentMode = 'faraday';
+    let time = 0;
+    let isAnimating = true;
+
+    // ---- Init Three.js ----
+    function initThree() {
+        const width = container.clientWidth;
+        const height = container.clientHeight || 500;
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(8, 5, 12);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+        const fill = new THREE.DirectionalLight(0x4488ff, 0.4);
+        fill.position.set(-5, 0, 5);
+        scene.add(fill);
+        const back = new THREE.DirectionalLight(0xff8844, 0.2);
+        back.position.set(0, -5, -10);
+        scene.add(back);
+
+        // Grid
+        const grid = new THREE.GridHelper(12, 12, 0x1e293b, 0x1e293b);
+        grid.position.y = -1.5;
+        scene.add(grid);
+
+        // Resize
+        window.addEventListener('resize', onResize);
+
+        animate();
+    }
+
+    function onResize() {
+        const width = container.clientWidth;
+        const height = container.clientHeight || 500;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (isAnimating) {
+            time += 0.02;
+        }
+        // Update scene based on current mode and time
+        updateScene3D();
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // ---- Scene builders ----
+    function buildFaraday(speed, turns, field, flux, emf, current) {
+        clearScene();
+
+        const group = new THREE.Group();
+        sceneGroup = group;
+
+        // --- Magnet ---
+        const magnetMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.3, metalness: 0.5 });
+        const magnet = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.8), magnetMat);
+        const magnetPos = -2.5 + 1.5 * Math.sin(time * speed * 0.3); // range -1.0 to -4.0
+        magnet.position.set(magnetPos, 0, 0);
+        magnet.castShadow = true;
+        group.add(magnet);
+
+        // Magnet labels (N/S) via sprites
+        const makeLabel = (text, yOffset, color) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(0,0,64,64);
+            ctx.fillStyle = color;
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 32, 36);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.set(magnetPos, yOffset, 0);
+            sprite.scale.set(0.6, 0.6, 1);
+            return sprite;
+        };
+        group.add(makeLabel('N', 1.2, '#ffffff'));
+        group.add(makeLabel('S', -1.2, '#6b7280'));
+
+        // --- Coil (turns) ---
+        const coilGroupObj = new THREE.Group();
+        const coilR = 1.8;
+        for (let i = 0; i < Math.min(turns, 20); i++) {
+            const r = coilR + i * 0.08;
+            const geom = new THREE.TorusGeometry(r, 0.03, 8, 24);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xd1d5db,
+                emissive: 0x6b7280,
+                emissiveIntensity: 0.1 + Math.abs(emf) * 0.02,
+                transparent: true,
+                opacity: 0.5 + i * 0.02,
+            });
+            const ring = new THREE.Mesh(geom, mat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.set(1.5, 0, 0);
+            coilGroupObj.add(ring);
+        }
+        // Coil axis
+        const axis = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.02, 0.02, 2.5, 6),
+            new THREE.MeshStandardMaterial({ color: 0x6b7280 })
+        );
+        axis.rotation.z = Math.PI / 2;
+        axis.position.set(1.5, 0, 0);
+        coilGroupObj.add(axis);
+
+        group.add(coilGroupObj);
+
+        // --- Flux lines (magnetic field) ---
+        const fluxColor = 0x6b7280;
+        for (let i = -2; i <= 2; i++) {
+            const yOff = i * 0.6;
+            const points = [];
+            for (let t = 0; t <= 1; t += 0.02) {
+                const x = -3 + t * 6;
+                const y = yOff + 0.5 * Math.sin(x * 0.5 + time * speed * 0.2) * Math.sin(flux * 2);
+                points.push(new THREE.Vector3(x, y, 0));
+            }
+            const geom = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = new THREE.LineBasicMaterial({
+                color: fluxColor,
+                transparent: true,
+                opacity: 0.2 + Math.abs(flux) * 0.3,
+            });
+            const line = new THREE.Line(geom, mat);
+            group.add(line);
+        }
+
+        // --- Induced current arrows (if current > threshold) ---
+        if (Math.abs(current) > 0.001) {
+            const arrowColor = current > 0 ? 0xd1d5db : 0x9ca3af;
+            const radius = coilR + 0.4;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + time * Math.sign(current) * 2;
+                const x = 1.5 + radius * Math.cos(angle);
+                const z = radius * Math.sin(angle);
+                const dir = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle)).normalize();
+                const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, 0, z), 0.5, arrowColor, 0.2, 0.1);
+                group.add(arrow);
+            }
+        }
+
+        // --- EMF and flux labels (sprites) ---
+        const infoCanvas = document.createElement('canvas');
+        infoCanvas.width = 256;
+        infoCanvas.height = 100;
+        const ctx = infoCanvas.getContext('2d');
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,256,100);
+        ctx.fillStyle = '#d1d5db';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText(`Φ = ${flux.toFixed(3)} Wb`, 10, 30);
+        ctx.fillStyle = '#e5e7eb';
+        ctx.fillText(`ε = ${emf.toFixed(2)} V`, 10, 60);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`I = ${Math.abs(current).toFixed(3)} A`, 10, 90);
+        const tex = new THREE.CanvasTexture(infoCanvas);
+        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false });
+        const sprite = new THREE.Sprite(mat);
+        sprite.position.set(4, 2, 0);
+        sprite.scale.set(2, 0.8, 1);
+        group.add(sprite);
+
+        scene.add(group);
+    }
+
+    function buildGenerator(speed, turns, field, emf, current) {
+        clearScene();
+
+        const group = new THREE.Group();
+        sceneGroup = group;
+
+        // --- Magnets (N and S) ---
+        const magnetMatN = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.3, metalness: 0.5 });
+        const magnetN = new THREE.Mesh(new THREE.BoxGeometry(0.6, 2.5, 0.8), magnetMatN);
+        magnetN.position.set(-2.8, 0, 0);
+        group.add(magnetN);
+        const magnetS = new THREE.Mesh(new THREE.BoxGeometry(0.6, 2.5, 0.8), new THREE.MeshStandardMaterial({ color: 0x6b7280 }));
+        magnetS.position.set(2.8, 0, 0);
+        group.add(magnetS);
+
+        // Labels
+        const makeLabel = (text, pos, color) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,64,64);
+            ctx.fillStyle = color; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 32, 36);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.set(pos.x, pos.y, pos.z);
+            sprite.scale.set(0.6, 0.6, 1);
+            return sprite;
+        };
+        group.add(makeLabel('N', new THREE.Vector3(-2.8, 1.5, 0), '#ffffff'));
+        group.add(makeLabel('S', new THREE.Vector3(2.8, 1.5, 0), '#6b7280'));
+
+        // --- Rotating coil ---
+        const coilGroupObj = new THREE.Group();
+        const coilR = 1.2;
+        const angle = time * speed * 0.5;
+        coilGroupObj.rotation.x = angle;
+
+        for (let i = 0; i < Math.min(turns, 15); i++) {
+            const r = coilR + i * 0.06;
+            const geom = new THREE.TorusGeometry(r, 0.02, 8, 24);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xd1d5db,
+                emissive: 0x6b7280,
+                emissiveIntensity: 0.1 + Math.abs(emf) * 0.02,
+            });
+            const ring = new THREE.Mesh(geom, mat);
+            ring.position.set(0, 0, 0);
+            coilGroupObj.add(ring);
+        }
+        // Axis
+        const axis = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.03, 0.03, 2.6, 6),
+            new THREE.MeshStandardMaterial({ color: 0x6b7280 })
+        );
+        axis.rotation.z = Math.PI / 2;
+        axis.position.set(0, 0, 0);
+        coilGroupObj.add(axis);
+
+        group.add(coilGroupObj);
+
+        // --- Output waveform (AC) displayed as a 3D line on the right ---
+        const wavePoints = [];
+        for (let i = 0; i <= 100; i++) {
+            const t = i / 100;
+            const x = 3.5 + t * 2.5;
+            const val = Math.sin(t * 4 * Math.PI + time * speed * 0.5);
+            const y = val * 1.2;
+            wavePoints.push(new THREE.Vector3(x, y, 0));
+        }
+        const waveGeom = new THREE.BufferGeometry().setFromPoints(wavePoints);
+        const waveMat = new THREE.LineBasicMaterial({ color: 0xd1d5db, transparent: true, opacity: 0.8 });
+        const waveLine = new THREE.Line(waveGeom, waveMat);
+        group.add(waveLine);
+
+        // Dot on waveform
+        const dotVal = Math.sin(time * speed * 0.5);
+        const dotPos = new THREE.Vector3(4.75, dotVal * 1.2, 0);
+        const dotMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, emissive: 0xe5e7eb, emissiveIntensity: 0.5 });
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), dotMat);
+        dot.position.copy(dotPos);
+        group.add(dot);
+
+        // --- Labels ---
+        const infoCanvas = document.createElement('canvas');
+        infoCanvas.width = 256;
+        infoCanvas.height = 80;
+        const ctx = infoCanvas.getContext('2d');
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,256,80);
+        ctx.fillStyle = '#e5e7eb';
+        ctx.font = 'bold 22px Arial';
+        ctx.fillText(`ε = ${emf.toFixed(2)} V`, 10, 30);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`I = ${Math.abs(current).toFixed(3)} A`, 10, 65);
+        const tex = new THREE.CanvasTexture(infoCanvas);
+        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false });
+        const sprite = new THREE.Sprite(mat);
+        sprite.position.set(3.5, -2.2, 0);
+        sprite.scale.set(2, 0.7, 1);
+        group.add(sprite);
+
+        scene.add(group);
+    }
+
+    function buildTransformer(ratio, Vs, Is, Vp, Ip) {
+        clearScene();
+
+        const group = new THREE.Group();
+        sceneGroup = group;
+
+        // --- Core (iron) ---
+        const coreMat = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.4, metalness: 0.2 });
+        const core = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 0.8), coreMat);
+        core.position.set(0, 0, 0);
+        group.add(core);
+
+        // --- Primary coil (left side) ---
+        const primGroup = new THREE.Group();
+        for (let i = 0; i < 8; i++) {
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(0.8 + i*0.03, 0.02, 6, 16),
+                new THREE.MeshStandardMaterial({ color: 0x9ca3af, emissive: 0x6b7280, emissiveIntensity: 0.1 })
+            );
+            ring.rotation.x = Math.PI / 2;
+            ring.position.set(-0.8, -1.2 + i * 0.3, 0);
+            primGroup.add(ring);
+        }
+        group.add(primGroup);
+
+        // --- Secondary coil (right side) ---
+        const secGroup = new THREE.Group();
+        const secTurns = Math.round(8 * ratio);
+        for (let i = 0; i < secTurns; i++) {
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(0.8 + i*0.02, 0.02, 6, 16),
+                new THREE.MeshStandardMaterial({ color: 0xd1d5db, emissive: 0x9ca3af, emissiveIntensity: 0.1 })
+            );
+            ring.rotation.x = Math.PI / 2;
+            ring.position.set(0.8, -1.2 + i * (2.4 / secTurns), 0);
+            secGroup.add(ring);
+        }
+        group.add(secGroup);
+
+        // --- Labels: Vp, Vs ---
+        const makeLabel = (text, pos, color) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(0,0,128,64);
+            ctx.fillStyle = color;
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 64, 34);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.set(pos.x, pos.y, pos.z);
+            sprite.scale.set(1.2, 0.6, 1);
+            return sprite;
+        };
+        group.add(makeLabel(`Vₚ = ${Vp}V`, new THREE.Vector3(-0.8, -1.8, 0), '#9ca3af'));
+        group.add(makeLabel(`Vₛ = ${Vs.toFixed(1)}V`, new THREE.Vector3(0.8, -1.8, 0), '#d1d5db'));
+
+        // --- Turns ratio label ---
+        const ratioText = ratio > 1 ? '🔺 Step-Up' : ratio < 1 ? '🔻 Step-Down' : '⚖️ 1:1';
+        const ratioCanvas = document.createElement('canvas');
+        ratioCanvas.width = 128; ratioCanvas.height = 64;
+        const rctx = ratioCanvas.getContext('2d');
+        rctx.fillStyle = 'rgba(0,0,0,0.4)';
+        rctx.fillRect(0,0,128,64);
+        rctx.fillStyle = '#fbbf24';
+        rctx.font = 'bold 22px Arial';
+        rctx.textAlign = 'center';
+        rctx.textBaseline = 'middle';
+        rctx.fillText(ratioText, 64, 34);
+        const rtex = new THREE.CanvasTexture(ratioCanvas);
+        const rmat = new THREE.SpriteMaterial({ map: rtex, depthTest: false, depthWrite: false });
+        const rsprite = new THREE.Sprite(rmat);
+        rsprite.position.set(0, 2.2, 0);
+        rsprite.scale.set(1.2, 0.6, 1);
+        group.add(rsprite);
+
+        scene.add(group);
+    }
+
+    function clearScene() {
+        if (sceneGroup) {
+            scene.remove(sceneGroup);
+            sceneGroup = null;
+        }
+        // Also remove any leftover objects (should be in group)
+        // We'll just rely on group removal.
+    }
+
+    // ---- Main update function called from the UI ----
+    window.updateScene3D = function() {
+        // This is called every frame; we rebuild if needed, but we want to avoid full rebuild each frame.
+        // We'll rebuild only when parameters change? Currently we rebuild every frame because the 2D version did.
+        // For performance, we can update positions instead of rebuilding.
+        // For simplicity, we'll rebuild each frame (similar to 2D). But we need to keep references.
+        // To avoid flicker, we'll clear and rebuild each frame.
+        // We'll use a flag to decide when to rebuild.
+        // Actually, we'll rebuild every frame because the scene changes with time.
+        // The build functions create new objects; we clear and add.
+        // We'll call the appropriate build function with current values.
+
+        const speed = parseFloat(document.getElementById('speedSlider')?.value || 2);
+        const turns = parseInt(document.getElementById('turnsSlider')?.value || 10);
+        const field = parseFloat(document.getElementById('fieldSlider')?.value || 1);
+        const ratio = parseFloat(document.getElementById('ratioSlider')?.value || 2);
+
+        // Get calculated values from the global scope (they are updated by updateInduction)
+        // We'll just read them from the display elements? Better to recalc here.
+        // We'll recalc using the same formulas as in the original JS.
+
+        let flux = 0, emf = 0, current = 0, power = 0;
+
+        if (currentMode === 'faraday') {
+            const fluxAmplitude = field * 0.5;
+            const angularFreq = speed * 0.5;
+            flux = fluxAmplitude * Math.sin(time * angularFreq);
+            const dPhi = fluxAmplitude * angularFreq * Math.cos(time * angularFreq);
+            emf = turns * dPhi;
+            current = emf / 10;
+            power = emf * current;
+            buildFaraday(speed, turns, field, flux, emf, current);
+        } else if (currentMode === 'generator') {
+            const amplitude = field * turns * 0.8;
+            const omega = speed * 0.6;
+            emf = amplitude * Math.sin(time * omega);
+            current = emf / 8;
+            power = emf * current;
+            buildGenerator(speed, turns, field, emf, current);
+        } else { // transformer
+            const Vp = 120;
+            const Vs = Vp * ratio;
+            const Ip = 1;
+            const Is = Ip / ratio;
+            const powerOut = Vs * Is;
+            buildTransformer(ratio, Vs, Is, Vp, Ip);
+        }
+    };
+
+    // ---- Expose to global for mode switching and fullscreen ----
+    window.toggleFullscreen = function() {
+        const el = container;
+        if (!document.fullscreenElement) {
+            el.requestFullscreen().catch(err => {});
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+    };
+
+    // ---- Override setInductionMode to update currentMode and rebuild ----
+    const originalSetMode = window.setInductionMode;
+    window.setInductionMode = function(mode) {
+        currentMode = mode;
+        if (originalSetMode) originalSetMode(mode);
+        // The original setInductionMode calls updateInduction, which will trigger rebuild.
+    };
+
+    // ---- Init ----
+    initThree();
+    // Force initial build
+    setTimeout(() => window.updateScene3D(), 100);
+    console.log('3D Induction Lab ready');
+</script>
+
+<!-- ====== ORIGINAL JAVASCRIPT (UI, AI, calculations) – only the drawing functions replaced ====== -->
+<script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. ELECTROMAGNETIC INDUCTION ENGINE (with 3D integration)
+    // ─────────────────────────────────────────────────────────────
+    let inductionMode = 'faraday';
+    let userStats = { configurations: 0, quizScores: [] };
+    let isAnimating = true;
+
+    function setInductionMode(mode) {
+        inductionMode = mode;
+        document.querySelectorAll('.induction-mode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.induction-mode-btn[onclick="setInductionMode('${mode}')"]`).classList.add('active');
+
+        document.getElementById('magnetSpeedContainer').style.display = (mode === 'faraday' || mode === 'generator') ? 'block' : 'none';
+        document.getElementById('coilTurnsContainer').style.display = (mode === 'faraday' || mode === 'generator' || mode === 'transformer') ? 'block' : 'none';
+        document.getElementById('fieldStrengthContainer').style.display = (mode === 'faraday' || mode === 'generator') ? 'block' : 'none';
+        document.getElementById('transformerRatioContainer').style.display = (mode === 'transformer') ? 'block' : 'none';
+
+        updateInduction();
+    }
+
+    function updateInduction() {
+        userStats.configurations++;
+        const speed = parseFloat(document.getElementById('speedSlider').value);
+        const turns = parseInt(document.getElementById('turnsSlider').value);
+        const field = parseFloat(document.getElementById('fieldSlider').value);
+        const ratio = parseFloat(document.getElementById('ratioSlider').value);
+
+        document.getElementById('speedValue').textContent = speed.toFixed(1);
+        document.getElementById('turnsValue').textContent = turns;
+        document.getElementById('fieldValue').textContent = field.toFixed(1);
+        document.getElementById('ratioValue').textContent = ratio.toFixed(1);
+
+        let flux, emf, current, power, lenzText;
+
+        if (inductionMode === 'faraday') {
+            const fluxAmplitude = field * 0.5;
+            const angularFreq = speed * 0.5;
+            // We need time from the 3D module, but we can't access it directly.
+            // Instead, we'll let the 3D module handle the animation and update these values.
+            // We'll set dummy values for now, but the 3D module will override them.
+            // However, we must update the displayed values. We'll compute them using the same time variable.
+            // We'll use a global time that is updated by the 3D module.
+            // For now, we'll just call the 3D update which will recalc everything.
+            // We'll just update the display after the 3D module updates.
+            // Actually, we'll let the 3D module update the display via the data-display elements.
+            // But we need to set them here as well for initial load.
+            // We'll compute using current time (if available) else 0.
+            const t = window.time !== undefined ? window.time : 0;
+            const fluxVal = fluxAmplitude * Math.sin(t * angularFreq);
+            const dPhi = fluxAmplitude * angularFreq * Math.cos(t * angularFreq);
+            const emfVal = turns * dPhi;
+            const currVal = emfVal / 10;
+            const powVal = emfVal * currVal;
+            lenzText = emfVal > 0 ? 'Opposes increase ✓' : 'Opposes decrease ✓';
+
+            document.getElementById('displayFlux').textContent = fluxVal.toFixed(3) + ' Wb';
+            document.getElementById('displayEMF').textContent = emfVal.toFixed(2) + ' V';
+            document.getElementById('displayCurrent').textContent = Math.abs(currVal).toFixed(3) + ' A';
+            document.getElementById('displayPower').textContent = Math.abs(powVal).toFixed(2) + ' W';
+            document.getElementById('displayLenz').textContent = lenzText;
+
+        } else if (inductionMode === 'generator') {
+            const t = window.time !== undefined ? window.time : 0;
+            const amplitude = field * turns * 0.8;
+            const omega = speed * 0.6;
+            const emfVal = amplitude * Math.sin(t * omega);
+            const currVal = emfVal / 8;
+            const powVal = emfVal * currVal;
+            document.getElementById('displayFlux').textContent = '--- Wb';
+            document.getElementById('displayEMF').textContent = emfVal.toFixed(2) + ' V';
+            document.getElementById('displayCurrent').textContent = Math.abs(currVal).toFixed(3) + ' A';
+            document.getElementById('displayPower').textContent = Math.abs(powVal).toFixed(2) + ' W';
+            document.getElementById('displayLenz').textContent = 'AC Output ✓';
+
+        } else { // transformer
+            const Vp = 120;
+            const Vs = Vp * ratio;
+            const Ip = 1;
+            const Is = Ip / ratio;
+            const powerOut = Vs * Is;
+            document.getElementById('displayFlux').textContent = '--- Wb';
+            document.getElementById('displayEMF').textContent = Vs.toFixed(1) + ' V';
+            document.getElementById('displayCurrent').textContent = Is.toFixed(3) + ' A';
+            document.getElementById('displayPower').textContent = powerOut.toFixed(2) + ' W';
+            document.getElementById('displayLenz').textContent = ratio > 1 ? 'Step-Up ✓' : 'Step-Down ✓';
+        }
+
+        // Trigger 3D update (if available)
+        if (typeof window.updateScene3D === 'function') {
+            window.updateScene3D();
+        }
+    }
+
+    function resetInduction() {
+        document.getElementById('speedSlider').value = 2;
+        document.getElementById('turnsSlider').value = 10;
+        document.getElementById('fieldSlider').value = 1;
+        document.getElementById('ratioSlider').value = 2;
+        window.time = 0;
+        updateInduction();
+    }
+
+    function toggleInductionAnimation() {
+        isAnimating = !isAnimating;
+        const btn = document.getElementById('playPauseBtn');
+        btn.innerHTML = isAnimating ? '⏸️ Pause' : '▶ Play';
+        // We need to propagate this to the 3D module
+        window.isAnimating = isAnimating;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI SYSTEM — UNCHANGED
+    // ─────────────────────────────────────────────────────────────
+    let currentLang = 'english';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+        
+        const labels = {
+            english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+            twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+            ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+            ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+            dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+        };
+        const l = labels[lang] || labels.english;
+        document.getElementById('btnQuiz').innerHTML = l.quiz;
+        document.getElementById('btnPred').innerHTML = l.pred;
+        document.getElementById('btnExp').innerHTML = l.exp;
+    }
+
+    function toggleAI() { 
+        document.getElementById('aiAssistant').classList.toggle('active'); 
+        if(document.getElementById('aiAssistant').classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+
+    function addAIMessage(msg, isUser = false) {
+        const c = document.getElementById('aiMessages');
+        let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+        c.scrollTop = c.scrollHeight;
+    }
+
+    function showTyping() {
+        const c = document.getElementById('aiMessages');
+        const t = document.createElement('div');
+        t.className = 'ai-message bot';
+        t.id = 'typingIndicator';
+        t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+        c.appendChild(t);
+        c.scrollTop = c.scrollHeight;
+    }
+
+    function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput');
+        const q = input.value.trim();
+        if (!q) return;
+        
+        addAIMessage(q, true);
+        input.value = '';
+        showTyping();
+        
+        await new Promise(r => setTimeout(r, 600));
+        removeTyping();
+        
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse(q, 'electromagnetic-induction');
+        } else {
+            response = "⚠️ AI content is still loading. Please try again in a moment.";
+        }
+        
+        addAIMessage(response, false);
+        speakAI(response);
+    }
+
+    function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+            clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = currentLang==='english'?'en-US':'en-GB';
+            u.rate = 1.05;
+            window.speechSynthesis.speak(u);
+        }
+    }
+
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) { 
+            recognition?.stop(); 
+            btn.classList.remove('listening'); 
+            isListening = false; 
+        } else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang==='english'?'en-US':'en-GH';
+            recognition.onstart = () => { 
+                btn.classList.add('listening'); 
+                isListening = true; 
+            };
+            recognition.onresult = (e) => {
+                const cmd = e.results[0][0].transcript;
+                if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true);
+                let response;
+                if (typeof getAIResponse === 'function') {
+                    response = getAIResponse(cmd, 'electromagnetic-induction');
+                } else {
+                    response = "⚠️ AI content is loading. Please try again.";
+                }
+                addAIMessage(response, false);
+                speakAI(response);
+            };
+            recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+            recognition.start();
+        }
+    }
+
+    function showModal(html) { 
+        document.getElementById('modalContent').innerHTML = html; 
+        document.getElementById('generalModal').classList.add('active'); 
+    }
+    function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+    const inductionQuiz = [
+        { q: "What is Faraday's Law?", o: ["ε = -N·dΦ/dt", "ε = N·dΦ/dt", "ε = -dΦ/dt", "ε = N·Φ/t"], a: "ε = -N·dΦ/dt" },
+        { q: "What does Lenz's Law state?", o: ["Opposes change", "Supports change", "No effect", "Doubles change"], a: "Opposes change" },
+        { q: "What is the unit of magnetic flux?", o: ["Weber", "Tesla", "Henry", "Farad"], a: "Weber" },
+        { q: "What does a generator convert?", o: ["Mechanical to electrical", "Electrical to mechanical", "Heat to electrical", "Light to electrical"], a: "Mechanical to electrical" },
+        { q: "What is the transformer equation?", o: ["Vₛ/Vₚ = Nₛ/Nₚ", "Vₛ/Vₚ = Nₚ/Nₛ", "Vₛ·Vₚ = Nₛ·Nₚ", "Vₛ = Vₚ"], a: "Vₛ/Vₚ = Nₛ/Nₚ" },
+        { q: "What is a step-up transformer?", o: ["Nₛ > Nₚ", "Nₛ < Nₚ", "Nₛ = Nₚ", "Nₛ = 0"], a: "Nₛ > Nₚ" },
+        { q: "What is induced EMF?", o: ["Voltage from changing flux", "Current from changing flux", "Power from flux", "Resistance from flux"], a: "Voltage from changing flux" },
+        { q: "What does AC stand for?", o: ["Alternating Current", "Always Current", "Amplified Current", "Active Current"], a: "Alternating Current" },
+        { q: "What is the SI unit of induced EMF?", o: ["Volt", "Ampere", "Watt", "Ohm"], a: "Volt" },
+        { q: "What happens when flux increases through a coil?", o: ["EMF induced", "No EMF", "Resistance increases", "Current stops"], a: "EMF induced" }
+    ];
+
+    function showQuiz() {
+        let html = `
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;">
+                <h2 style="color:white;margin:0;font-size:1.5rem;">📝 Induction Quiz</h2>
+                <span style="background:#6b7280;color:white;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;">10 Questions</span>
+            </div>
+            <div class="modal-scroll">
+        `;
+        inductionQuiz.forEach((item, idx) => {
+            html += `<div class="quiz-question"><p><strong>${idx+1}. ${item.q}</strong></p><div class="quiz-options">${item.o.map(opt => `<label><input type="radio" name="q${idx}" value="${opt}"><span>${opt}</span></label>`).join('')}</div></div>`;
+        });
+        html += `</div><div style="display:flex;gap:12px;margin-top:20px;flex-shrink:0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);"><button class="btn-secondary" style="flex:1;padding:14px;font-size:1rem;" onclick="closeModal()">✕ Cancel</button><button class="lab-action-btn" style="flex:2;padding:14px;font-size:1rem;" onclick="submitQuiz()">Submit & Grade</button></div>`;
+        showModal(html);
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        inductionQuiz.forEach((item, idx) => { 
+            const s = document.querySelector(`input[name="q${idx}"]:checked`); 
+            if (s && s.value === item.a) score += 10; 
+        });
+        userStats.quizScores.push(score);
+        showModal(`<div style="text-align:center;padding:30px 10px;"><div style="font-size:5rem;font-weight:900;background:linear-gradient(135deg,#6b7280,#9ca3af);-webkit-background-clip:text;color:transparent;text-shadow:0 10px 30px rgba(107,114,128,0.3);margin-bottom:10px;line-height:1.2;">${score}%</div><h3 style="color:white;margin-bottom:30px;font-size:1.3rem;font-weight:400;">Quiz Completed!</h3><button class="lab-action-btn" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Continue</button></div>`);
+    }
+
+    function showPrediction() {
+        let avg = 0; 
+        if (userStats.quizScores.length > 0) { 
+            const s = userStats.quizScores.reduce((a,b)=>a+b,0); 
+            avg = s / userStats.quizScores.length; 
+        }
+        const labScore = Math.min(100, userStats.configurations * 5);
+        const overall = avg > 0 ? Math.round((labScore * 0.4) + (avg * 0.6)) : labScore;
+        const msg = overall >= 80 ? "Outstanding! You've mastered electromagnetic induction and its applications." : 
+                    overall >= 50 ? "Good progress! Keep exploring Faraday's Law and transformers." : 
+                    "Just getting started! Experiment with the magnet speed and coil turns.";
+        showModal(`<h2 style="color:white;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-top:0;font-size:1.5rem;">🔮 AI Mastery Prediction</h2>
+            <div style="display:flex;justify-content:space-around;text-align:center;margin:24px 0;background:rgba(0,0,0,0.2);padding:20px;border-radius:16px;">
+                <div><div style="font-size:2.2rem;font-weight:bold;color:#9ca3af;">${userStats.configurations}</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Adjustments</div></div>
+                <div style="width:1px;background:rgba(255,255,255,0.08);"></div>
+                <div><div style="font-size:2.2rem;font-weight:bold;color:#d1d5db;">${Math.round(avg)}%</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Quiz Avg</div></div>
+            </div>
+            <div style="text-align:center;margin:20px 0;">
+                <div style="font-size:0.9rem;color:#94a3b8;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Overall AI Mastery</div>
+                <div style="font-size:4rem;font-weight:900;color:#9ca3af;text-shadow:0 10px 30px rgba(107,114,128,0.4);line-height:1.2;">${overall}%</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.25);padding:18px;border-left:4px solid #9ca3af;border-radius:12px;color:#cbd5e1;margin-bottom:24px;line-height:1.6;">
+                <strong style="color:white;display:block;margin-bottom:6px;">🧠 Analysis:</strong>${msg}
+            </div>
+            <button class="btn-primary" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Close</button>
+        `);
+    }
+
+    function showExperiment() { 
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse("Give me an experiment on electromagnetic induction", 'electromagnetic-induction');
+        } else {
+            response = "🧪 **Experiment:** Try Faraday's Law mode. Increase the magnet speed and observe the induced EMF. How does EMF change with speed?";
+        }
+        addAIMessage(response, false); 
+        if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI(); 
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.onload = () => {
+        // Expose time to global so updateInduction can use it
+        window.time = 0;
+        // Override the 3D module's time update to keep sync
+        // We'll update window.time in the animation loop via a setInterval or by exposing a function.
+        // The 3D module will update window.time.
+        // We'll also update the data display periodically.
+        setInterval(() => {
+            // Update the display values based on current time and parameters
+            // This is done by updateInduction, but we need to call it with the current time.
+            // However, updateInduction computes values using its own time.
+            // We'll let the 3D module update the display directly.
+            // But we need to call updateInduction to sync sliders etc.
+            // We'll call updateInduction on slider changes, and the 3D module will update display.
+            // For now, we'll just rely on the 3D module's update.
+        }, 100);
+
+        updateInduction();
+        setLanguage('english');
+        
+        if (window.innerWidth > 768) {
+            setTimeout(() => {
+                document.getElementById('aiAssistant').classList.add('active');
+            }, 1000);
+        }
+    };
+</script>
+
+<script src="/js/ai-content.js"></script>
+<script src="/js/global.js"></script>
+</body>
+</html>

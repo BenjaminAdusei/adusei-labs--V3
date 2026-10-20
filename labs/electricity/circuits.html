@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Series & Parallel Circuits | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ===== All your original styles – untouched ===== */
+        :root {
+            --bg-color: #080f1e;
+            --panel-bg: rgba(15, 23, 42, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #06b6d4;
+            --primary-glow: rgba(6, 182, 212, 0.4);
+            --secondary: #3b82f6;
+            --secondary-glow: rgba(59, 130, 246, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 10% 40%, rgba(6, 182, 212, 0.05), transparent 30%),
+                radial-gradient(circle at 90% 60%, rgba(59, 130, 246, 0.05), transparent 30%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 25px; margin-top: 10px; position: relative;}
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #06b6d4, #60a5fa, #06b6d4);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        .circuit-type-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .circuit-type-btn { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border: 1px solid var(--panel-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 0.95rem; }
+        .circuit-type-btn:hover { color: white; border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .circuit-type-btn.active { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; border-color: transparent; box-shadow: 0 4px 15px var(--primary-glow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; min-width: 320px; 
+            background: var(--panel-bg); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+        
+        /* 3D container – replaces the old canvas */
+        #three-container {
+            width: 100%;
+            height: 450px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0f172a;
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Full‑screen button styling */
+        .fullscreen-btn {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--panel-border);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .fullscreen-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* ---- rest of your styles (sliders, cards, etc.) unchanged ---- */
+        .slider-container { margin-bottom: 18px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #1e293b; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #22d3ee; }
+
+        .resistor-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin: 15px 0; }
+        .resistor-card { background: rgba(15, 23, 42, 0.7); border-radius: 16px; padding: 15px; text-align: center; border: 1px solid var(--panel-border); box-shadow: inset 0 2px 10px rgba(0,0,0,0.3); transition: 0.3s; }
+        .resistor-card:hover { border-color: rgba(6, 182, 212, 0.3); background: rgba(30, 41, 59, 0.7); }
+        .resistor-card strong { color: white; display: block; margin-bottom: 10px; font-size: 1.1rem; }
+        .resistor-card input { width: 100%; margin: 8px 0; }
+        .resistor-value { font-family: monospace; font-size: 1.1rem; color: #f8fafc; font-weight: bold; }
+        .resistor-current { font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 5px; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        .data-display { 
+            background: rgba(8, 15, 30, 0.8); padding: 18px; border-radius: 14px; 
+            border: 1px solid var(--panel-border); margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600;}
+        .data-value { color: var(--secondary); font-weight: bold; text-shadow: 0 0 8px var(--secondary-glow); }
+        
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px;}
+        .lab-action-btn { background: linear-gradient(135deg, #06b6d4, #2563eb); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #22d3ee, #3b82f6); }
+        
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #06b6d4, #0284c7); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #334155); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(6, 182, 212, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #06b6d4, #2563eb); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(6, 182, 212, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0); } }
+
+        footer {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(6,182,212,0.9), rgba(59,130,246,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        
+        .ai-messages::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(51, 65, 85, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #06b6d4, #2563eb); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(30, 41, 59, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px var(--primary-glow); background: rgba(30, 41, 59, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #06b6d4, #2563eb); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(6, 182, 212, 0.3); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top:20px;}
+            .circuit-type-btn { padding: 10px 18px; font-size: 0.85rem;}
+            #three-container { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>⚡ Series & Parallel Circuits Lab</h1>
+            <p class="subtitle">Explore Ohm's Law, Equivalent Resistance & Power</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="circuit-type-selector">
+            <button class="circuit-type-btn active" onclick="setCircuitType('series')">🔗 Series Circuit</button>
+            <button class="circuit-type-btn" onclick="setCircuitType('parallel')">⚡ Parallel Circuit</button>
+            <button class="circuit-type-btn" onclick="setCircuitType('combination')">🔀 Combination Circuit</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container">
+                <!-- REPLACED canvas with 3D container -->
+                <div id="three-container"></div>
+                <div class="canvas-controls" style="margin-top: 20px;">
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                    <button id="updateBtn" class="btn-primary" onclick="updateCircuit()">🔄 Refresh Flow</button>
+                    <button id="resetBtn" class="btn-secondary" onclick="resetCircuit()">🔄 Reset All</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="slider-container">
+                    <label>🔋 Source Voltage (V): <span id="voltageValue">12.0 V</span></label>
+                    <input type="range" id="voltageSlider" min="0" max="24" step="0.5" value="12" oninput="updateCircuit()">
+                </div>
+
+                <div class="resistor-group">
+                    <div class="resistor-card">
+                        <strong>R₁</strong>
+                        <input type="range" id="r1Slider" min="10" max="500" step="5" value="100" oninput="updateCircuit()">
+                        <div class="resistor-value"><span id="r1Value">100</span> Ω</div>
+                        <div class="resistor-current" id="i1Display">--- A</div>
+                    </div>
+                    <div class="resistor-card">
+                        <strong>R₂</strong>
+                        <input type="range" id="r2Slider" min="10" max="500" step="5" value="100" oninput="updateCircuit()">
+                        <div class="resistor-value"><span id="r2Value">100</span> Ω</div>
+                        <div class="resistor-current" id="i2Display">--- A</div>
+                    </div>
+                    <div class="resistor-card">
+                        <strong>R₃</strong>
+                        <input type="range" id="r3Slider" min="10" max="500" step="5" value="100" oninput="updateCircuit()">
+                        <div class="resistor-value"><span id="r3Value">100</span> Ω</div>
+                        <div class="resistor-current" id="i3Display">--- A</div>
+                    </div>
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Total Equivalent Resistance (R_eq):</span><span id="totalResistance" class="data-value">--- Ω</span></div>
+                    <div class="data-row"><span>Total Current (I):</span><span id="totalCurrent" class="data-value" style="color: #06b6d4;">--- A</span></div>
+                    <div class="data-row"><span>Total Power Dissipated (P):</span><span id="totalPower" class="data-value" style="color: #3b82f6;">--- W</span></div>
+                    <div class="data-row"><span>Ohm's Law Verify (V = IR):</span><span id="ohmsCheck" class="data-value" style="color: #10b981;">---</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">⚡ <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> Circuits AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages">
+                <div class="ai-message bot">
+                    <div class="ai-message-icon">🤖</div>
+                    <div class="ai-message-content">⚡ **Adusei AI Tutor Activated.**<br><br>I can help you with circuits, Ohm's Law, and WAEC questions. Try asking:<br>• "Explain Ohm's Law"<br>• "Show me WAEC questions on circuits"<br>• "What is series circuit?"</div>
+                </div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about Ohm's law, series, parallel..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ====== THREE.JS (via CDN) ====== -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ============================================================
+        //  NEW 3D RENDERER – replaces the 2D canvas drawing
+        // ============================================================
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ---- References to DOM ----
+        const container = document.getElementById('three-container');
+
+        // ---- Three.js scene setup ----
+        let scene, camera, renderer, controls;
+        let circuitGroup = null;      // holds all static meshes (wires, components)
+        let particleGroup = null;     // holds current particles (spheres)
+        let flowPaths3D = [];         // array of Vector3 arrays (3D paths)
+        let flowParticles = [];       // array of { mesh, t, speed, pathIndex }
+        let lastTimestamp = 0;
+
+        // ---- Coordinate mapping (2D canvas coords -> 3D world) ----
+        // Original 2D canvas: 800x450, (0,0) top-left.
+        // We want 3D: x: -5..5, y: -3..3, z=0 (flat on XY plane)
+        function map2Dto3D(x, y) {
+            const cx = (x - 400) / 80;
+            const cy = -(y - 225) / 75;
+            return new THREE.Vector3(cx, cy, 0);
+        }
+
+        // ---- Generate 2D paths (exact copy of your original) ----
+        function generateFlowPaths2D(type) {
+            const startX = type === 'combination' ? 120 : 150;
+            const startY = type === 'series' ? 120 : (type === 'parallel' ? 80 : 120);
+            const w = type === 'combination' ? 600 : 500;
+            const h = type === 'series' ? 200 : (type === 'parallel' ? 280 : 200);
+
+            if (type === 'series') {
+                return [[
+                    {x: startX, y: startY + h/2 - 40},
+                    {x: startX, y: startY},
+                    {x: startX + w, y: startY},
+                    {x: startX + w, y: startY + h},
+                    {x: startX, y: startY + h},
+                    {x: startX, y: startY + h/2 + 40}
+                ]];
+            } else if (type === 'parallel') {
+                const spacing = w / 4;
+                const topRailY = startY;
+                const bottomRailY = startY + h;
+                const paths = [];
+                for (let i = 0; i < 3; i++) {
+                    const branchX = startX + spacing * (i+1);
+                    paths.push([
+                        {x: startX, y: startY + h/2 - 40},
+                        {x: startX, y: topRailY},
+                        {x: branchX, y: topRailY},
+                        {x: branchX, y: bottomRailY},
+                        {x: startX, y: bottomRailY},
+                        {x: startX, y: startY + h/2 + 40}
+                    ]);
+                }
+                return paths;
+            } else { // combination
+                return [[
+                    {x: startX, y: startY + h/2 - 40},
+                    {x: startX, y: startY},
+                    {x: startX + 100, y: startY},
+                    {x: startX + 100, y: startY - 50},
+                    {x: startX + 300, y: startY - 50},
+                    {x: startX + 300, y: startY},
+                    {x: startX + w, y: startY},
+                    {x: startX + w, y: startY + h},
+                    {x: startX, y: startY + h},
+                    {x: startX, y: startY + h/2 + 40}
+                ]];
+            }
+        }
+
+        // ---- Get 3D point on a path at progress t (0..1) ----
+        function getPointOnPath(pathIndex, t) {
+            const path = flowPaths3D[pathIndex];
+            if (!path || path.length < 2) return null;
+            const totalLen = path.length - 1;
+            const raw = t * totalLen;
+            const seg = Math.floor(raw);
+            const frac = raw - seg;
+            const i = Math.min(seg, totalLen - 1);
+            const p0 = path[i];
+            const p1 = path[i+1];
+            if (!p0 || !p1) return null;
+            return new THREE.Vector3().lerpVectors(p0, p1, frac);
+        }
+
+        // ---- Build the 3D circuit ----
+        function buildCircuit3D(type, V, r1, r2, r3, currents) {
+            // Remove old groups
+            if (circuitGroup) { scene.remove(circuitGroup); circuitGroup = null; }
+            if (particleGroup) { scene.remove(particleGroup); particleGroup = null; }
+            flowPaths3D = [];
+            flowParticles = [];
+
+            circuitGroup = new THREE.Group();
+            particleGroup = new THREE.Group();
+
+            // 1) Generate 2D paths and convert to 3D
+            const paths2D = generateFlowPaths2D(type);
+            paths2D.forEach(path2D => {
+                const path3D = path2D.map(p => map2Dto3D(p.x, p.y));
+                flowPaths3D.push(path3D);
+            });
+
+            // 2) Draw wires as tubes
+            flowPaths3D.forEach(path => {
+                const curve = new THREE.CatmullRomCurve3(path);
+                const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.06, 6, false);
+                const tubeMat = new THREE.MeshStandardMaterial({
+                    color: 0x06b6d4,
+                    emissive: 0x06b6d4,
+                    emissiveIntensity: 0.3,
+                    roughness: 0.3,
+                    metalness: 0.5,
+                });
+                const tube = new THREE.Mesh(tubeGeo, tubeMat);
+                circuitGroup.add(tube);
+
+                // Glowing overlay line
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(path);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.3 });
+                const line = new THREE.Line(lineGeo, lineMat);
+                circuitGroup.add(line);
+            });
+
+            // 3) Place components (battery and resistors)
+            // Helper: create a resistor box with bands
+            function placeResistor(x2D, y2D, label, value, current, vertical = false) {
+                const pos = map2Dto3D(x2D, y2D);
+                const w = vertical ? 0.3 : 0.9;
+                const h = vertical ? 0.9 : 0.3;
+                const d = 0.3;
+
+                const boxMat = new THREE.MeshStandardMaterial({
+                    color: 0x3b82f6,
+                    emissive: 0x1e40af,
+                    emissiveIntensity: 0.2,
+                });
+                const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), boxMat);
+                box.position.copy(pos);
+                box.castShadow = true;
+                circuitGroup.add(box);
+
+                // Color bands
+                const bandMat = new THREE.MeshStandardMaterial({ color: 0xfacc15 });
+                for (let i = -1; i <= 1; i++) {
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.35), bandMat);
+                    const offset = i * 0.25;
+                    if (!vertical) band.position.set(pos.x + offset, pos.y, pos.z);
+                    else band.position.set(pos.x, pos.y + offset, pos.z);
+                    circuitGroup.add(band);
+                }
+            }
+
+            function placeBattery(x2D, y2D, V) {
+                const pos = map2Dto3D(x2D, y2D);
+                // body
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6, metalness: 0.2 });
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.8, 12), bodyMat);
+                body.position.copy(pos);
+                body.position.y += 0.1;
+                body.castShadow = true;
+                circuitGroup.add(body);
+
+                // terminals
+                const termMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 0.2 });
+                const term = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.15, 6), termMat);
+                term.position.set(pos.x, pos.y + 0.5, pos.z);
+                circuitGroup.add(term);
+
+                const termMat2 = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x3b82f6, emissiveIntensity: 0.2 });
+                const term2 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.15, 6), termMat2);
+                term2.position.set(pos.x, pos.y - 0.5, pos.z);
+                circuitGroup.add(term2);
+
+                // Voltage label (using a sprite)
+                const canvas = document.createElement('canvas');
+                canvas.width = 128;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, 128, 64);
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = 'bold 28px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(V + 'V', 64, 32);
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.position.set(pos.x + 0.7, pos.y, pos.z);
+                sprite.scale.set(0.8, 0.4, 1);
+                circuitGroup.add(sprite);
+            }
+
+            // ---- Use the same coordinates as your original draw functions ----
+            const startX_series = 150, startY_series = 120, w_series = 500, h_series = 200;
+            const startX_parallel = 150, startY_parallel = 80, w_parallel = 500, h_parallel = 280;
+            const startX_comb = 120, startY_comb = 120, w_comb = 600, h_comb = 200;
+
+            if (type === 'series') {
+                placeBattery(startX_series, startY_series + h_series/2, V);
+                const spacing = w_series / 4;
+                const resistors = [
+                    {x: startX_series + spacing, y: startY_series, val: r1, cur: currents.I1},
+                    {x: startX_series + spacing*2, y: startY_series, val: r2, cur: currents.I2},
+                    {x: startX_series + spacing*3, y: startY_series, val: r3, cur: currents.I3}
+                ];
+                resistors.forEach((r, i) => placeResistor(r.x, r.y, `R${i+1}`, r.val, r.cur, false));
+            }
+            else if (type === 'parallel') {
+                placeBattery(startX_parallel, startY_parallel + h_parallel/2, V);
+                const spacing = w_parallel / 4;
+                for (let i = 0; i < 3; i++) {
+                    const rx = startX_parallel + spacing * (i+1);
+                    const vals = [r1, r2, r3];
+                    const curs = [currents.I1, currents.I2, currents.I3];
+                    placeResistor(rx, startY_parallel + h_parallel/2, `R${i+1}`, vals[i], curs[i], true);
+                }
+            }
+            else { // combination
+                placeBattery(startX_comb, startY_comb + h_comb/2, V);
+                placeResistor(startX_comb + 200, startY_comb - 50, 'R₁', r1, currents.I1, false);
+                placeResistor(startX_comb + 200, startY_comb + 50, 'R₂', r2, currents.I2, false);
+                placeResistor(startX_comb + 450, startY_comb, 'R₃', r3, currents.I3, false);
+            }
+
+            scene.add(circuitGroup);
+
+            // ---- Create particles (flow spheres) ----
+            const particleMat = new THREE.MeshStandardMaterial({
+                color: 0xfbbf24,
+                emissive: 0xfbbf24,
+                emissiveIntensity: 1.5,
+            });
+            const sphereGeo = new THREE.SphereGeometry(0.08, 8, 8);
+
+            if (type === 'series' || type === 'combination') {
+                const count = Math.max(6, Math.floor(currents.I_total * 12));
+                for (let i = 0; i < count; i++) {
+                    const t = i / count;
+                    const pos = getPointOnPath(0, t);
+                    if (pos) {
+                        const sphere = new THREE.Mesh(sphereGeo, particleMat);
+                        sphere.position.copy(pos);
+                        particleGroup.add(sphere);
+                        flowParticles.push({ mesh: sphere, t: t, speed: currents.I_total * 1.2, pathIndex: 0 });
+                    }
+                }
+            } else {
+                const branchCurrents = [currents.I1, currents.I2, currents.I3];
+                const totalBranch = branchCurrents.reduce((a, b) => a + b, 0) || 1;
+                branchCurrents.forEach((I, idx) => {
+                    const proportion = I / totalBranch;
+                    const count = Math.max(3, Math.floor(proportion * 12));
+                    for (let i = 0; i < count; i++) {
+                        const t = i / count;
+                        const pos = getPointOnPath(idx, t);
+                        if (pos) {
+                            const sphere = new THREE.Mesh(sphereGeo, particleMat);
+                            sphere.position.copy(pos);
+                            particleGroup.add(sphere);
+                            flowParticles.push({ mesh: sphere, t: t, speed: I * 1.2, pathIndex: idx });
+                        }
+                    }
+                });
+            }
+            scene.add(particleGroup);
+        }
+
+        // ---- Three.js initialisation ----
+        function initThree() {
+            const width = container.clientWidth;
+            const height = container.clientHeight || 450;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(6, 4, 10);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060);
+            scene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(5, 10, 7);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+            const fill = new THREE.DirectionalLight(0x4488ff, 0.5);
+            fill.position.set(-5, 0, 5);
+            scene.add(fill);
+
+            // Grid helper
+            const grid = new THREE.GridHelper(12, 12, 0x1e293b, 0x1e293b);
+            grid.position.y = -0.5;
+            scene.add(grid);
+
+            // Resize
+            window.addEventListener('resize', onResize);
+
+            animate();
+        }
+
+        function onResize() {
+            const width = container.clientWidth;
+            const height = container.clientHeight || 450;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() / 1000;
+            const dt = lastTimestamp ? (time - lastTimestamp) : 0.016;
+            lastTimestamp = time;
+
+            // Update particle positions
+            if (particleGroup) {
+                for (let i = 0; i < flowParticles.length; i++) {
+                    const p = flowParticles[i];
+                    if (p.speed > 0) {
+                        p.t += p.speed * dt;
+                        if (p.t > 1.0) p.t -= 1.0;
+                    }
+                    const pos = getPointOnPath(p.pathIndex, p.t);
+                    if (pos) p.mesh.position.copy(pos);
+                }
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // ---- Expose the build function to the global scope ----
+        window.buildCircuit3D = buildCircuit3D;
+
+        // ---- Full‑screen toggle (on the container) ----
+        window.toggleFullscreen = function() {
+            const el = container;
+            if (!document.fullscreenElement) {
+                el.requestFullscreen().catch(err => {});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        };
+
+        // ---- Initialise ----
+        initThree();
+        console.log('3D renderer ready');
+    </script>
+
+    <!-- ====== ORIGINAL JAVASCRIPT – only the drawing part replaced ====== -->
+    <script>
+        // ========== CIRCUITS ENGINE (unchanged, but updateCircuit now calls buildCircuit3D) ==========
+        let circuitType = 'series';
+        let lastCircuitType = null;
+        let userStats = { configurations: 0, quizScores: [] };
+        
+        // --- The flowParticles and flowPaths are now managed by the 3D module, so we keep them for compatibility.
+        // We'll store them in the global scope but the 3D module uses its own copies.
+        // For safety, we'll keep the original arrays but they won't be used for drawing.
+        let flowParticles = [];
+        let flowPaths = [];
+        let animationFrameId = null;
+        const PX_PER_AMP = 800; // not used in 3D but kept
+
+        function setCircuitType(type) { 
+            circuitType = type; 
+            document.querySelectorAll('.circuit-type-btn').forEach(btn => btn.classList.remove('active')); 
+            document.querySelector(`.circuit-type-btn[onclick="setCircuitType('${type}')"]`).classList.add('active'); 
+            updateCircuit(); 
+        }
+        
+        function calculateResistance() {
+            const r1 = parseFloat(document.getElementById('r1Slider').value);
+            const r2 = parseFloat(document.getElementById('r2Slider').value);
+            const r3 = parseFloat(document.getElementById('r3Slider').value);
+            
+            if (circuitType === 'series') return r1 + r2 + r3;
+            if (circuitType === 'parallel') return 1 / ((1/r1) + (1/r2) + (1/r3));
+            return (1 / ((1/r1) + (1/r2))) + r3;
+        }
+        
+        function calculateCurrents() {
+            const V = parseFloat(document.getElementById('voltageSlider').value);
+            const R_total = calculateResistance();
+            const I_total = R_total > 0 ? V / R_total : 0;
+            
+            const r1 = parseFloat(document.getElementById('r1Slider').value);
+            const r2 = parseFloat(document.getElementById('r2Slider').value);
+            const r3 = parseFloat(document.getElementById('r3Slider').value);
+            
+            if (circuitType === 'series') return { I_total, I1: I_total, I2: I_total, I3: I_total };
+            if (circuitType === 'parallel') {
+                const I1 = r1 > 0 ? V/r1 : 0;
+                const I2 = r2 > 0 ? V/r2 : 0;
+                const I3 = r3 > 0 ? V/r3 : 0;
+                return { I_total, I1, I2, I3 };
+            }
+            // combination
+            const parallelR = (r1 > 0 && r2 > 0) ? (r1 * r2) / (r1 + r2) : 0;
+            const V_parallel = R_total > 0 ? I_total * parallelR : 0;
+            const I1 = r1 > 0 ? V_parallel / r1 : 0;
+            const I2 = r2 > 0 ? V_parallel / r2 : 0;
+            return { I_total, I1, I2, I3: I_total };
+        }
+        
+        // ---- The main update function: now calls the 3D builder ----
+        function updateCircuit() {
+            userStats.configurations++;
+            
+            const V = parseFloat(document.getElementById('voltageSlider').value);
+            const r1 = parseFloat(document.getElementById('r1Slider').value);
+            const r2 = parseFloat(document.getElementById('r2Slider').value);
+            const r3 = parseFloat(document.getElementById('r3Slider').value);
+            
+            document.getElementById('r1Value').textContent = r1; 
+            document.getElementById('r2Value').textContent = r2; 
+            document.getElementById('r3Value').textContent = r3;
+            document.getElementById('voltageValue').textContent = V.toFixed(1) + ' V';
+            
+            const R_total = calculateResistance();
+            const currents = calculateCurrents();
+            const P_total = V * currents.I_total;
+            
+            document.getElementById('totalResistance').textContent = R_total.toFixed(1) + ' Ω';
+            document.getElementById('totalCurrent').textContent = currents.I_total.toFixed(3) + ' A';
+            document.getElementById('totalPower').textContent = P_total.toFixed(2) + ' W';
+            document.getElementById('ohmsCheck').innerHTML = `${V.toFixed(1)}V = ${(currents.I_total * R_total).toFixed(1)}V ✓`;
+            
+            document.getElementById('i1Display').textContent = `${currents.I1.toFixed(3)} A`;
+            document.getElementById('i2Display').textContent = `${currents.I2.toFixed(3)} A`;
+            document.getElementById('i3Display').textContent = `${currents.I3.toFixed(3)} A`;
+            
+            // Call the 3D builder (defined in the module above)
+            if (typeof buildCircuit3D === 'function') {
+                buildCircuit3D(circuitType, V, r1, r2, r3, currents);
+            }
+        }
+        
+        function resetCircuit() { 
+            document.getElementById('voltageSlider').value = 12; 
+            document.getElementById('r1Slider').value = 100; 
+            document.getElementById('r2Slider').value = 100; 
+            document.getElementById('r3Slider').value = 100; 
+            updateCircuit(); 
+        }
+        
+        // ========== AI, VOICE, QUIZ, ETC. (ALL ORIGINAL – UNCHANGED) ==========
+        // The rest of your JavaScript (language, AI chat, voice, quiz, prediction, experiment)
+        // is exactly as you provided. I'll include it below in full to avoid any missing parts.
+        // (Since it's long, I'll copy it verbatim from your original code.)
+        // =====================================================================
+
+        // --- Language ---
+        let currentLang = 'english';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+            
+            const labels = {
+                english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+                twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+                ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+                ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+                dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+            };
+            
+            const l = labels[lang] || labels.english;
+            document.getElementById('btnQuiz').innerHTML = l.quiz;
+            document.getElementById('btnPred').innerHTML = l.pred;
+            document.getElementById('btnExp').innerHTML = l.exp;
+        }
+
+        // --- AI Chat ---
+        function toggleAI() { 
+            const aiWindow = document.getElementById('aiAssistant');
+            aiWindow.classList.toggle('active'); 
+            if(aiWindow.classList.contains('active')) {
+                document.getElementById('aiInput').focus();
+            }
+        }
+        
+        function addAIMessage(msg, isUser=false) {
+            const container = document.getElementById('aiMessages');
+            let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const container = document.getElementById('aiMessages');
+            const typing = document.createElement('div');
+            typing.className = 'ai-message bot';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = `<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>`;
+            container.appendChild(typing);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTyping() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        async function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const q = input.value.trim();
+            if (!q) return;
+            
+            addAIMessage(q, true);
+            input.value = '';
+            showTyping();
+            
+            await new Promise(r => setTimeout(r, 600));
+            removeTyping();
+            
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse(q, 'circuits');
+            } else {
+                response = "⚠️ AI content is still loading. Please try again in a moment.";
+            }
+            
+            addAIMessage(response, false);
+            speakAI(response);
+        }
+        
+        function handleAIKeypress(e) { if(e.key === 'Enter') sendAIMessage(); }
+
+        function speakAI(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+                clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+                
+                const utterance = new SpeechSynthesisUtterance(clean);
+                utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB'; 
+                utterance.rate = 1.05;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        let isListening = false, recognition = null;
+        function toggleVoice() {
+            const btn = document.getElementById('voiceBtn');
+            if (isListening) { 
+                recognition?.stop(); 
+                btn.classList.remove('listening'); 
+                btn.innerHTML = '🎤';
+                addAIMessage("🎤 Voice control stopped.", false);
+                isListening = false; 
+            }
+            else if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH'; 
+                recognition.onstart = () => { 
+                    btn.classList.add('listening'); 
+                    btn.innerHTML = '🔴';
+                    addAIMessage("🎤 Voice control active! Say a command...", false);
+                    isListening = true; 
+                };
+                recognition.onresult = (e) => { 
+                    const cmd = e.results[0][0].transcript; 
+                    if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                    addAIMessage(cmd, true);
+                    
+                    let response;
+                    if (typeof getAIResponse === 'function') {
+                        response = getAIResponse(cmd, 'circuits');
+                    } else {
+                        response = "⚠️ AI content is loading. Please try again.";
+                    }
+                    addAIMessage(response, false); 
+                    speakAI(response);
+                };
+                recognition.onerror = () => { 
+                    btn.classList.remove('listening'); 
+                    btn.innerHTML = '🎤';
+                    addAIMessage("🎤 Voice error. Please try again.", false);
+                    isListening = false; 
+                };
+                recognition.start();
+            }
+        }
+
+        // --- Quiz ---
+        function showModal(htmlContent) {
+            document.getElementById('modalContent').innerHTML = htmlContent;
+            document.getElementById('generalModal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+        const circuitsQuiz = [
+            {q: "In a series circuit, which property is constant throughout all components?", o: ["Voltage", "Resistance", "Current", "Power"], a: "Current"},
+            {q: "In a parallel circuit, which property is constant across all branches?", o: ["Current", "Voltage", "Resistance", "Power"], a: "Voltage"},
+            {q: "What is the formula for Ohm's Law?", o: ["V = I/R", "I = V*R", "V = I*R", "P = V*I"], a: "V = I*R"},
+            {q: "If you have two 100Ω resistors in series, what is the total resistance?", o: ["50Ω", "100Ω", "200Ω", "0.02Ω"], a: "200Ω"},
+            {q: "If you have two 100Ω resistors in parallel, what is the total resistance?", o: ["200Ω", "100Ω", "50Ω", "0.5Ω"], a: "50Ω"},
+            {q: "What happens to the total resistance when you add more resistors in parallel?", o: ["It increases", "It decreases", "It stays the same", "It becomes zero"], a: "It decreases"},
+            {q: "How should an Ammeter be connected in a circuit to measure current?", o: ["In parallel", "In series", "Either works", "Outside the circuit"], a: "In series"},
+            {q: "How should a Voltmeter be connected to measure potential difference?", o: ["In series", "In parallel", "Inside the battery", "To ground only"], a: "In parallel"},
+            {q: "What is the standard formula for Electrical Power?", o: ["P = V/I", "P = I/V", "P = V*I", "P = R*I"], a: "P = V*I"},
+            {q: "In a series circuit, if one component breaks or blows out, what happens?", o: ["Others get brighter", "Others turn off", "Nothing changes", "Voltage increases"], a: "Others turn off"}
+        ];
+
+        function showQuiz() {
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                    <h2 style="color:white; margin:0;">📝 Circuits Quiz</h2>
+                    <span style="background:#06b6d4; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">10 Questions</span>
+                </div>
+                <div style="max-height: 55vh; overflow-y: auto; padding-right: 15px;">
+            `;
+            
+            circuitsQuiz.forEach((item, index) => {
+                html += `
+                <div style="margin-bottom:20px; padding:20px; background:rgba(0,0,0,0.25); border-radius:16px; border:1px solid rgba(255,255,255,0.05);">
+                    <p style="color:white; font-size:1.1rem; margin-top:0;"><strong>${index + 1}. ${item.q}</strong></p>
+                    ${item.o.map(opt => `
+                        <label style="display:flex; align-items:center; gap:12px; color:#cbd5e1; margin:10px 0; cursor:pointer; padding:10px; border-radius:10px; transition:0.2s; background:rgba(255,255,255,0.02);" 
+                               onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
+                               onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+                            <input type="radio" name="q${index}" value="${opt}" style="width:20px;height:20px;accent-color:#06b6d4;"> 
+                            <span style="font-size:1.05rem;">${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>`;
+            });
+
+            html += `
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                    <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+                </div>
+            `;
+            showModal(html);
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            circuitsQuiz.forEach((item, index) => {
+                const ans = document.querySelector(`input[name="q${index}"]:checked`);
+                if (ans && ans.value === item.a) score += 10; 
+            });
+            
+            userStats.quizScores.push(score);
+            
+            showModal(`
+                <div style="text-align:center; padding: 30px 10px;">
+                    <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #06b6d4, #3b82f6); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(6,182,212,0.3); margin-bottom:10px; line-height:1;">${score}%</div>
+                    <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Completed!</h3>
+                    <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+                </div>
+            `);
+        }
+
+        // --- Prediction ---
+        function showPrediction() {
+            let avgQuiz = 0;
+            if (userStats.quizScores.length > 0) {
+                const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+                avgQuiz = sum / userStats.quizScores.length;
+            }
+
+            let labScore = Math.min(100, userStats.configurations * 4);
+            let overallScore = (avgQuiz > 0) ? Math.round((labScore * 0.4) + (avgQuiz * 0.6)) : labScore;
+            
+            let txt = overallScore >= 80 ? "Outstanding! Your combined lab interactions and quiz results demonstrate deep mastery of circuit logic and Ohm's Law." : 
+                      overallScore >= 50 ? "Good progress! Keep adjusting the voltage and switching between Series and Parallel to observe current changes." : 
+                      "Just getting started! Use the sliders to change resistances and observe the live calculations, then try the 10-question quiz.";
+            
+            showModal(`
+                <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">🔮 AI Mastery Prediction</h2>
+                
+                <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                    <div>
+                        <div style="font-size:2.5rem; font-weight:bold; color:#06b6d4;">${userStats.configurations}</div>
+                        <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Circuit Inputs</div>
+                    </div>
+                    <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                    <div>
+                        <div style="font-size:2.5rem; font-weight:bold; color:#3b82f6;">${Math.round(avgQuiz)}%</div>
+                        <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Average</div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin:20px 0;">
+                    <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery Score</div>
+                    <div style="font-size:5rem; font-weight:900; color:#06b6d4; text-shadow: 0 10px 30px rgba(6,182,212,0.4); line-height:1;">
+                        ${overallScore}%
+                    </div>
+                </div>
+                
+                <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #06b6d4; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                    <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+                </div>
+                <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+            `);
+        }
+
+        // --- Experiment ---
+        function showExperiment() {
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse("Give me an experiment on circuits", 'circuits');
+            } else {
+                response = "🧪 **Custom AI Experiment:**\n\nSwitch to the Parallel circuit. Note the Total Resistance. Now increase R3 to 500Ω. Notice how the total resistance doesn't change much? In parallel, the smallest resistor dominates the total resistance!";
+            }
+            addAIMessage(response, false);
+            if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+        }
+
+        // ========== INIT ==========
+        window.onload = function() { 
+            lastCircuitType = null; // force rebuild on first load
+            updateCircuit();
+            setLanguage('english'); 
+            
+            if(window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        };
+    </script>
+    
+    <!-- Your original external scripts -->
+    <script src="/js/ai-content.js"></script>
+    <script src="/js/global.js"></script>
+</body>
+</html>

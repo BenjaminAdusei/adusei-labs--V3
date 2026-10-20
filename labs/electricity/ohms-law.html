@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Lab | Adusei Labs AI</title>
+    
+    <!-- ✅ CORRECTION 2: CSS link with leading slash -->
+    <link rel="stylesheet" href="/css_global.css">
+    
+    <style>
+        /* Base & UI Styles */
+        :root {
+            --bg-color: #0f0a0a;
+            --panel-bg: rgba(30, 20, 20, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #f59e0b; /* Plasma Gold */
+            --primary-glow: rgba(245, 158, 11, 0.4);
+            --secondary: #ef4444; /* Fiery Red */
+            --secondary-glow: rgba(239, 68, 68, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 10% 40%, rgba(245, 158, 11, 0.05), transparent 30%),
+                radial-gradient(circle at 90% 60%, rgba(239, 68, 68, 0.05), transparent 30%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        /* Header styling with animated gradient text */
+        header { text-align: center; margin-bottom: 25px; margin-top: 10px; position: relative;}
+        
+        /* ✅ CORRECTION 1: Home button points to root */
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #f59e0b, #fbcfe8, #ef4444);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        /* Layout - Glassmorphism Panels */
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; 
+            min-width: 320px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; 
+            padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+        
+        /* Custom Sliders */
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #fbbf24; }
+
+        /* Data Display */
+        .data-display { 
+            background: rgba(10, 5, 5, 0.8); 
+            padding: 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600;}
+        .data-value { color: var(--primary); font-weight: bold; text-shadow: 0 0 8px var(--primary-glow); }
+        
+        /* Buttons */
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px;}
+        .lab-action-btn { background: linear-gradient(135deg, #f59e0b, #ef4444); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #fbbf24, #f87171); }
+        
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #334155); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+
+        /* Languages */
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(30, 20, 20, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(245, 158, 11, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        /* Floating Action Buttons (FABs) */
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(245,158,11,0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(245,158,11,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #ef4444, #b91c1c); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(239, 68, 68, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0); } }
+
+        /* Theory Section */
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: rgba(30, 20, 20, 0.65); border: 1px solid var(--panel-border); border-radius: 16px; padding: 15px 25px; backdrop-filter: blur(10px); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--primary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; }
+        .theory-content h4 { color: white; margin-top: 20px; margin-bottom: 10px; }
+        .distinction-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--secondary); padding: 15px; border-radius: 8px; margin-top: 15px;}
+        .distinction-box strong { color: white; }
+
+        /* Natural Scroll Footer */
+        footer {
+            width: 100%;
+            background: rgba(20, 10, 10, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        /* AI Chat Window */
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(20, 10, 10, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(245,158,11,0.9), rgba(239,68,68,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        
+        .ai-messages::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(51, 30, 30, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #f59e0b, #ef4444); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(20, 10, 10, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(30, 20, 20, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px var(--primary-glow); background: rgba(30, 20, 20, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #f59e0b, #ef4444); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(40, 20, 20, 0.95), rgba(20, 10, 10, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(245, 158, 11, 0.3); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        
+        canvas {
+            border-radius: 12px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            background: linear-gradient(to bottom, #110808, #1a1010);
+            cursor: crosshair;
+        }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top:20px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <!-- ✅ CORRECTION 1: Home button points to root -->
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>⚡ Ohm's Law Lab</h1>
+            <p class="subtitle">Explore the Fundamental Component Relationship (V = I × R)</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container">
+                <canvas id="ohmCanvas" width="800" height="450" style="max-width: 100%; height: auto;"></canvas>
+                <div class="canvas-controls" style="margin-top: 20px;">
+                    <button id="toggleElectronsBtn" class="btn-primary" onclick="toggleElectrons()">⚛ Toggle Electrons</button>
+                    <button id="resetOhmBtn" class="btn-secondary" onclick="resetOhmCircuit()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="slider-container">
+                    <label>🔋 Source Voltage (V): <span id="voltageValue">12.0 V</span></label>
+                    <input type="range" id="voltageSlider" min="0.5" max="24" step="0.5" value="12" oninput="updateOhmCircuit()">
+                </div>
+                <div class="slider-container">
+                    <label>⚡ Resistance (R): <span id="resistanceValue">100 Ω</span></label>
+                    <input type="range" id="resistanceSlider" min="10" max="500" step="5" value="100" oninput="updateOhmCircuit()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Component Current (I):</span><span id="currentValue" class="data-value" style="color: #60a5fa;">0.120 A</span></div>
+                    <div class="data-row"><span>Power Dissipated (P):</span><span id="powerValue" class="data-value" style="color: #f59e0b;">1.44 W</span></div>
+                    <div class="data-row"><span>Ohm's Law Verify (V = IR):</span><span id="ohmsCheck" class="data-value" style="color: #10b981;">12.0V = 12.0V ✓</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <details>
+                <summary>📖 The Crucial Difference: Ohm's Law vs. Circuits</summary>
+                <div class="theory-content">
+                    <p>It is very common to confuse "Ohm's Law" with "Circuits", but they are entirely different concepts in physics.</p>
+                    
+                    <div class="distinction-box">
+                        <p><strong>Ohm's Law (V = I × R)</strong></p>
+                        <p>This is a <em>fundamental physical rule</em> for a specific material. It dictates how electricity behaves inside a <strong>single, isolated component</strong> (like the resistor above). It simply states that current is directly proportional to voltage.</p>
+                    </div>
+
+                    <div class="distinction-box" style="border-left-color: #3b82f6;">
+                        <p><strong>Circuits (Series & Parallel)</strong></p>
+                        <p>A circuit is the <em>physical structural layout</em> of the entire electrical system. It dictates how multiple components connect together (topology). You use Ohm's Law as a tool to solve a circuit, but the circuit itself is the pathway, not the law.</p>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">⚡ <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <!-- ✅ CORRECTION 7: Keep default welcome message -->
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> Ohm's AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages">
+                <div class="ai-message bot">
+                    <div class="ai-message-icon">🤖</div>
+                    <div class="ai-message-content">⚡ **Adusei AI Tutor Activated.**<br><br>I can help you with Ohm's Law, voltage, current, resistance, and WAEC questions. Try asking:<br>• "Explain Ohm's Law"<br>• "Show me WAEC questions on Ohm's Law"<br>• "What is the difference between Ohm's Law and circuits?"</div>
+                </div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about Voltage, Current, or Resistance..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <script>
+        // ========== OHM'S LAW ENGINE ==========
+        let ohmCanvas, ohmCtx;
+        let voltage = 12, resistance = 100, current = 0.12;
+        let showElectrons = true, electronAnimId = null, electrons = [];
+        
+        // Tracking for AI Analytics
+        let userStats = { configurations: 0, quizScores: [] };
+        
+        function updateOhmCircuit() {
+            voltage = parseFloat(document.getElementById('voltageSlider').value);
+            resistance = parseFloat(document.getElementById('resistanceSlider').value);
+            
+            current = voltage / resistance;
+            const power = voltage * current;
+            
+            document.getElementById('voltageValue').textContent = voltage.toFixed(1) + ' V';
+            document.getElementById('resistanceValue').textContent = resistance + ' Ω';
+            
+            document.getElementById('currentValue').textContent = current.toFixed(3) + ' A';
+            document.getElementById('powerValue').textContent = power.toFixed(2) + ' W';
+            document.getElementById('ohmsCheck').innerHTML = `${voltage.toFixed(1)}V = ${(current * resistance).toFixed(1)}V ✓`;
+            
+            userStats.configurations++;
+            
+            drawOhmCircuit();
+        }
+        
+        function resetOhmCircuit() { 
+            document.getElementById('voltageSlider').value = 12; 
+            document.getElementById('resistanceSlider').value = 100; 
+            updateOhmCircuit(); 
+        }
+
+        function toggleElectrons() { 
+            showElectrons = !showElectrons; 
+            if (!showElectrons) { electrons = []; }
+            drawOhmCircuit(); 
+        }
+        
+        function drawOhmCircuit() {
+            if (!ohmCanvas) { 
+                ohmCanvas = document.getElementById('ohmCanvas'); 
+                ohmCtx = ohmCanvas.getContext('2d'); 
+            }
+            
+            ohmCtx.clearRect(0, 0, 800, 450); 
+            
+            // Grid Background
+            let bgGradient = ohmCtx.createLinearGradient(0, 0, 0, 450);
+            bgGradient.addColorStop(0, '#110808');
+            bgGradient.addColorStop(1, '#1a1010');
+            ohmCtx.fillStyle = bgGradient; 
+            ohmCtx.fillRect(0, 0, 800, 450);
+            
+            ohmCtx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ohmCtx.lineWidth = 1;
+            for(let i=0; i<800; i+=40) { ohmCtx.beginPath(); ohmCtx.moveTo(i, 0); ohmCtx.lineTo(i, 450); ohmCtx.stroke(); }
+            for(let i=0; i<450; i+=40) { ohmCtx.beginPath(); ohmCtx.moveTo(0, i); ohmCtx.lineTo(800, i); ohmCtx.stroke(); }
+
+            // Circuit Geometry
+            const boxX = 150, boxY = 120, boxW = 500, boxH = 200;
+
+            // Wires (Glowing Gold)
+            ohmCtx.beginPath();
+            ohmCtx.moveTo(boxX, boxY + boxH/2 - 40); ohmCtx.lineTo(boxX, boxY); // Left up
+            ohmCtx.lineTo(boxX + boxW, boxY); // Top
+            ohmCtx.lineTo(boxX + boxW, boxY + boxH); // Right down
+            ohmCtx.lineTo(boxX, boxY + boxH); // Bottom left
+            ohmCtx.lineTo(boxX, boxY + boxH/2 + 40); // Left up to battery
+            
+            ohmCtx.strokeStyle = '#f59e0b';
+            ohmCtx.lineWidth = 4;
+            ohmCtx.shadowColor = '#f59e0b';
+            ohmCtx.shadowBlur = 10;
+            ohmCtx.lineJoin = 'round';
+            ohmCtx.stroke();
+            ohmCtx.shadowBlur = 0; // Reset shadow
+
+            // Battery (Left Center)
+            const batY = boxY + boxH/2;
+            ohmCtx.fillStyle = '#1e293b';
+            ohmCtx.fillRect(boxX - 35, batY - 45, 70, 90);
+            ohmCtx.strokeStyle = '#cbd5e1';
+            ohmCtx.lineWidth = 2;
+            ohmCtx.strokeRect(boxX - 35, batY - 45, 70, 90);
+            
+            ohmCtx.fillStyle = '#ef4444'; ohmCtx.fillRect(boxX - 25, batY - 55, 50, 10); // Positive terminal
+            ohmCtx.fillStyle = '#cbd5e1'; ohmCtx.font = 'bold 20px Inter'; 
+            ohmCtx.fillText('+', boxX - 6, batY - 20); 
+            ohmCtx.fillText('-', boxX - 5, batY + 30);
+            ohmCtx.fillStyle = '#f8fafc'; ohmCtx.font = 'bold 16px Inter';
+            ohmCtx.fillText(`${voltage.toFixed(1)}V`, boxX - 20, batY + 5);
+
+            // Resistor (Top Center)
+            const resX = boxX + boxW/2;
+            ohmCtx.fillStyle = 'rgba(20, 10, 10, 0.9)';
+            ohmCtx.fillRect(resX - 45, boxY - 20, 90, 40);
+            ohmCtx.strokeStyle = '#ef4444';
+            ohmCtx.lineWidth = 2;
+            ohmCtx.strokeRect(resX - 45, boxY - 20, 90, 40);
+            
+            // Resistor Zigzag
+            ohmCtx.beginPath();
+            ohmCtx.strokeStyle = '#f8fafc';
+            ohmCtx.moveTo(resX - 45, boxY);
+            for(let i=0; i<6; i++) {
+                ohmCtx.lineTo(resX - 45 + 15*(i+0.5), i%2===0 ? boxY-12 : boxY+12);
+            }
+            ohmCtx.lineTo(resX + 45, boxY);
+            ohmCtx.stroke();
+
+            ohmCtx.fillStyle = '#f8fafc'; ohmCtx.font = '14px Inter';
+            ohmCtx.fillText(`${resistance}Ω`, resX - 18, boxY - 30);
+
+            // Ammeter (Right Center)
+            const ampX = boxX + boxW;
+            const ampY = boxY + boxH/2;
+            ohmCtx.fillStyle = '#1e293b';
+            ohmCtx.beginPath(); ohmCtx.arc(ampX, ampY, 35, 0, Math.PI*2); ohmCtx.fill();
+            ohmCtx.strokeStyle = '#60a5fa'; ohmCtx.lineWidth = 3;
+            ohmCtx.stroke();
+            ohmCtx.fillStyle = '#60a5fa'; ohmCtx.font = 'bold 24px Inter';
+            ohmCtx.fillText('A', ampX - 8, ampY + 8);
+            ohmCtx.fillStyle = '#f8fafc'; ohmCtx.font = '14px Inter';
+            ohmCtx.fillText(`${current.toFixed(2)}A`, ampX + 45, ampY + 5);
+
+            // Voltmeter (Parallel to Resistor)
+            const voltY = boxY - 80;
+            // Wires for voltmeter
+            ohmCtx.beginPath();
+            ohmCtx.moveTo(resX - 70, boxY); ohmCtx.lineTo(resX - 70, voltY);
+            ohmCtx.lineTo(resX + 70, voltY); ohmCtx.lineTo(resX + 70, boxY);
+            ohmCtx.strokeStyle = '#10b981'; ohmCtx.lineWidth = 2; ohmCtx.stroke();
+
+            ohmCtx.fillStyle = '#1e293b';
+            ohmCtx.beginPath(); ohmCtx.arc(resX, voltY, 30, 0, Math.PI*2); ohmCtx.fill();
+            ohmCtx.strokeStyle = '#10b981'; ohmCtx.lineWidth = 3;
+            ohmCtx.stroke();
+            ohmCtx.fillStyle = '#10b981'; ohmCtx.font = 'bold 20px Inter';
+            ohmCtx.fillText('V', resX - 7, voltY + 7);
+            ohmCtx.fillStyle = '#f8fafc'; ohmCtx.font = '14px Inter';
+            ohmCtx.fillText(`${voltage.toFixed(1)}V`, resX - 15, voltY - 40);
+
+            // Current Arrow
+            ohmCtx.fillStyle = '#f59e0b';
+            ohmCtx.beginPath();
+            ohmCtx.moveTo(boxX + 100, boxY - 10);
+            ohmCtx.lineTo(boxX + 120, boxY - 10);
+            ohmCtx.lineTo(boxX + 115, boxY - 15);
+            ohmCtx.moveTo(boxX + 120, boxY - 10);
+            ohmCtx.lineTo(boxX + 115, boxY - 5);
+            ohmCtx.fill(); ohmCtx.stroke();
+            ohmCtx.fillText('Current (I)', boxX + 80, boxY + 25);
+
+            // Electrons Animation
+            if(showElectrons && current > 0) {
+                // Determine speed
+                const speed = Math.min(8, current * 15);
+                const electronCount = Math.min(30, Math.ceil(current * 10) + 5);
+
+                if(electrons.length < electronCount && Math.random() < 0.3) {
+                    electrons.push(0); // Add new electron
+                }
+
+                // Total path length
+                const pathLength = 2 * boxW + 2 * boxH;
+
+                for(let i=electrons.length-1; i>=0; i--) {
+                    electrons[i] += speed;
+                    if(electrons[i] >= pathLength) {
+                        electrons.splice(i, 1);
+                        continue;
+                    }
+
+                    let d = electrons[i];
+                    let ex, ey;
+
+                    if (d < boxH/2) { 
+                        ex = boxX; ey = (boxY + boxH/2) - d;
+                    } else if (d < boxH/2 + boxW) { 
+                        ex = boxX + (d - boxH/2); ey = boxY;
+                    } else if (d < boxH/2 + boxW + boxH) { 
+                        ex = boxX + boxW; ey = boxY + (d - (boxH/2 + boxW));
+                    } else if (d < boxH/2 + boxW*2 + boxH) { 
+                        ex = (boxX + boxW) - (d - (boxH/2 + boxW + boxH)); ey = boxY + boxH;
+                    } else { 
+                        ex = boxX; ey = (boxY + boxH) - (d - (boxH/2 + boxW*2 + boxH));
+                    }
+
+                    // Draw Electron
+                    ohmCtx.fillStyle = '#f8fafc';
+                    ohmCtx.shadowColor = '#60a5fa';
+                    ohmCtx.shadowBlur = 10;
+                    ohmCtx.beginPath();
+                    ohmCtx.arc(ex, ey, 4, 0, Math.PI*2);
+                    ohmCtx.fill();
+                    ohmCtx.shadowBlur = 0;
+                }
+            }
+
+            if(showElectrons && current > 0) {
+                if(!electronAnimId) electronAnimId = requestAnimationFrame(animate);
+            } else {
+                if(electronAnimId) cancelAnimationFrame(electronAnimId);
+                electronAnimId = null;
+            }
+        }
+
+        function animate() {
+            electronAnimId = null;
+            drawOhmCircuit();
+        }
+        
+        // ========== AI INTEGRATION — USING GLOBAL AI ==========
+        let currentLang = 'english';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+            
+            // Update button labels
+            const labels = {
+                english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+                twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+                ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+                ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+                dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+            };
+            
+            const l = labels[lang] || labels.english;
+            document.getElementById('btnQuiz').innerHTML = l.quiz;
+            document.getElementById('btnPred').innerHTML = l.pred;
+            document.getElementById('btnExp').innerHTML = l.exp;
+            
+            // Update placeholder
+            const placeholders = {
+                english: 'Ask about Voltage, Current, or Resistance...',
+                twi: 'Bisa physics asɛm biara...',
+                ga: 'Bi lɛɛlɛŋ sane...',
+                ewe: 'Bia nya...',
+                dagbani: 'Bɔhi yɛltɔɣa...'
+            };
+            document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+        }
+
+        // ========== AI CHAT CONTROLS ==========
+        function toggleAI() { 
+            const aiWindow = document.getElementById('aiAssistant');
+            aiWindow.classList.toggle('active'); 
+            if(aiWindow.classList.contains('active')) {
+                document.getElementById('aiInput').focus();
+            }
+        }
+        
+        function addAIMessage(msg, isUser=false) {
+            const container = document.getElementById('aiMessages');
+            let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const container = document.getElementById('aiMessages');
+            const typing = document.createElement('div');
+            typing.className = 'ai-message bot';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+            container.appendChild(typing);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTyping() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        // ✅ CORRECTION 3: Use global getAIResponse()
+        async function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const q = input.value.trim();
+            if (!q) return;
+            
+            addAIMessage(q, true);
+            input.value = '';
+            showTyping();
+            
+            await new Promise(r => setTimeout(r, 600));
+            removeTyping();
+            
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse(q, 'ohms-law');
+            } else {
+                response = "⚠️ AI content is still loading. Please try again in a moment.";
+            }
+            
+            addAIMessage(response, false);
+            speakAI(response);
+        }
+        
+        function handleAIKeypress(e) { if(e.key === 'Enter') sendAIMessage(); }
+
+        function speakAI(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+                clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+                
+                const utterance = new SpeechSynthesisUtterance(clean);
+                utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB'; 
+                utterance.rate = 1.05;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // ✅ CORRECTION 4: Voice control uses global AI
+        let isListening = false, recognition = null;
+        function toggleVoice() {
+            const btn = document.getElementById('voiceBtn');
+            if (isListening) { 
+                recognition?.stop(); 
+                btn.classList.remove('listening'); 
+                btn.innerHTML = '🎤';
+                addAIMessage("🎤 Voice control stopped.", false);
+                isListening = false; 
+            }
+            else if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH'; 
+                recognition.onstart = () => { 
+                    btn.classList.add('listening'); 
+                    btn.innerHTML = '🔴';
+                    addAIMessage("🎤 Voice control active! Say a command...", false);
+                    isListening = true; 
+                };
+                recognition.onresult = (e) => { 
+                    const cmd = e.results[0][0].transcript; 
+                    if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                    addAIMessage(cmd, true);
+                    
+                    let response;
+                    if (typeof getAIResponse === 'function') {
+                        response = getAIResponse(cmd, 'ohms-law');
+                    } else {
+                        response = "⚠️ AI content is loading. Please try again.";
+                    }
+                    addAIMessage(response, false); 
+                    speakAI(response);
+                };
+                recognition.onerror = () => { 
+                    btn.classList.remove('listening'); 
+                    btn.innerHTML = '🎤';
+                    addAIMessage("🎤 Voice error. Please try again.", false);
+                    isListening = false; 
+                };
+                recognition.start();
+            }
+        }
+
+        // ========== UI MODALS (QUIZ & ANALYTICS) ==========
+        function showModal(htmlContent) {
+            document.getElementById('modalContent').innerHTML = htmlContent;
+            document.getElementById('generalModal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+        // ─── Local quiz for lab-specific questions ───
+        const ohmsLawQuiz = [
+            {q: "What is the primary difference between Ohm's Law and a Circuit?", o: ["Ohm's Law applies to a single component, while a circuit is the entire system layout", "They are exactly the same thing", "Ohm's law is for parallel, circuits are for series", "Ohm's law measures power, circuits measure voltage"], a: "Ohm's Law applies to a single component, while a circuit is the entire system layout"},
+            {q: "What is the correct mathematical formula for Ohm's Law?", o: ["V = I / R", "I = V × R", "V = I × R", "R = V × I"], a: "V = I × R"},
+            {q: "What is the SI unit of electrical resistance?", o: ["Ampere", "Volt", "Ohm", "Watt"], a: "Ohm"},
+            {q: "According to Ohm's law, if the voltage across a resistor is doubled while resistance stays constant, what happens to the current?", o: ["It halves", "It doubles", "It quadruples", "It remains the same"], a: "It doubles"},
+            {q: "If the resistance in a circuit is doubled, and the voltage remains constant, what happens to the current?", o: ["It doubles", "It halves", "It stays the same", "It quadruples"], a: "It halves"},
+            {q: "Which device is used to measure current, and how must it be connected?", o: ["Voltmeter in parallel", "Voltmeter in series", "Ammeter in series", "Ammeter in parallel"], a: "Ammeter in series"},
+            {q: "A circuit has a voltage of 12V and a resistance of 3Ω. What is the current?", o: ["36A", "4A", "0.25A", "15A"], a: "4A"},
+            {q: "If a circuit has a current of 2A and a resistance of 5Ω, what is the voltage?", o: ["10V", "2.5V", "7V", "0.4V"], a: "10V"},
+            {q: "What is the standard formula for Electrical Power in terms of Voltage and Current?", o: ["P = V / I", "P = I²R", "P = V × I", "P = V² / R"], a: "P = V × I"},
+            {q: "Which of the following does NOT obey Ohm's law?", o: ["Copper wire", "Carbon resistor", "Semiconductor diode", "Silver wire"], a: "Semiconductor diode"}
+        ];
+
+        function showQuiz() {
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                    <h2 style="color:white; margin:0;">📝 Ohm's Law Quiz</h2>
+                    <span style="background:#f59e0b; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">10 Questions</span>
+                </div>
+                <div style="max-height: 55vh; overflow-y: auto; padding-right: 15px;">
+            `;
+            
+            ohmsLawQuiz.forEach((item, index) => {
+                html += `
+                <div style="margin-bottom:20px; padding:20px; background:rgba(0,0,0,0.25); border-radius:16px; border:1px solid rgba(255,255,255,0.05);">
+                    <p style="color:white; font-size:1.1rem; margin-top:0;"><strong>${index + 1}. ${item.q}</strong></p>
+                    ${item.o.map(opt => `
+                        <label style="display:flex; align-items:center; gap:12px; color:#cbd5e1; margin:10px 0; cursor:pointer; padding:10px; border-radius:10px; transition:0.2s; background:rgba(255,255,255,0.02);" 
+                               onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
+                               onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+                            <input type="radio" name="q${index}" value="${opt}" style="width:20px;height:20px;accent-color:#f59e0b;"> 
+                            <span style="font-size:1.05rem;">${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>`;
+            });
+
+            html += `
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                    <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+                </div>
+            `;
+            showModal(html);
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            ohmsLawQuiz.forEach((item, index) => {
+                const ans = document.querySelector(`input[name="q${index}"]:checked`);
+                if (ans && ans.value === item.a) score += 10; 
+            });
+            
+            userStats.quizScores.push(score);
+            
+            showModal(`
+                <div style="text-align:center; padding: 30px 10px;">
+                    <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(245,158,11,0.3); margin-bottom:10px; line-height:1;">${score}%</div>
+                    <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Completed!</h3>
+                    <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+                </div>
+            `);
+        }
+
+        function showPrediction() {
+            let avgQuiz = 0;
+            if (userStats.quizScores.length > 0) {
+                const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+                avgQuiz = sum / userStats.quizScores.length;
+            }
+
+            let labScore = Math.min(100, userStats.configurations * 5);
+            let overallScore = (avgQuiz > 0) ? Math.round((labScore * 0.4) + (avgQuiz * 0.6)) : labScore;
+            
+            let txt = overallScore >= 80 ? "Outstanding! Your combined lab interactions and quiz results demonstrate deep mastery of Ohm's Law and direct/inverse proportionality." : 
+                      overallScore >= 50 ? "Good progress! Keep adjusting the voltage and resistance independently to see how they impact the current." : 
+                      "Just getting started! Use the sliders to change voltage and observe the current calculations, then try the 10-question quiz.";
+            
+            showModal(`
+                <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">🔮 AI Mastery Prediction</h2>
+                
+                <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                    <div>
+                        <div style="font-size:2.5rem; font-weight:bold; color:#f59e0b;">${userStats.configurations}</div>
+                        <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Circuit Inputs</div>
+                    </div>
+                    <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                    <div>
+                        <div style="font-size:2.5rem; font-weight:bold; color:#ef4444;">${Math.round(avgQuiz)}%</div>
+                        <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Average</div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin:20px 0;">
+                    <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery</div>
+                    <div style="font-size:5rem; font-weight:900; color:#f59e0b; text-shadow: 0 10px 30px rgba(245,158,11,0.4); line-height:1;">
+                        ${overallScore}%
+                    </div>
+                </div>
+                
+                <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #f59e0b; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                    <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+                </div>
+                <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+            `);
+        }
+
+        // ✅ CORRECTION 5: Experiment uses global AI
+        function showExperiment() {
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse("Give me an experiment on Ohm's Law", 'ohms-law');
+            } else {
+                response = "🧪 **Custom AI Experiment:**\n\nSet the Resistance to exactly 100Ω. Now slide the Voltage from 0V to 24V. Watch the Current display. Notice how the current doubles exactly when the voltage doubles? That is direct proportionality!";
+            }
+            addAIMessage(response, false);
+            if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+        }
+
+        window.onload = () => { 
+            updateOhmCircuit();
+            setLanguage('english'); 
+            
+            // Auto-open AI on desktop
+            if(window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+            
+            // Check if global AI is loaded
+            setTimeout(() => {
+                if (typeof getAIResponse === 'function') {
+                    console.log('✅ Global AI loaded for Ohm\'s Law Lab');
+                } else {
+                    console.log('⏳ Global AI not yet loaded');
+                }
+            }, 500);
+        };
+    </script>
+    
+    <!-- ✅ CORRECTION 6: Load global AI scripts with leading slash -->
+    <script src="/js/ai-content.js"></script>
+    <script src="/js/global.js"></script>
+</body>
+</html>

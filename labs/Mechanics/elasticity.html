@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elasticity & Hooke's Law Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── all original styles, with modifications for 3D container ─── */
+        :root {
+            --bg-color: #080e1a;
+            --bg-gradient-1: rgba(79, 70, 229, 0.08);
+            --bg-gradient-2: rgba(212, 160, 23, 0.06);
+            --glass-bg: rgba(16, 23, 41, 0.75);
+            --glass-blur: 24px;
+            --glass-blur-light: 16px;
+            --glass-border: rgba(79, 70, 229, 0.25);
+            --glass-shine: rgba(255, 255, 255, 0.05);
+            --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --primary: #d4a017;
+            --primary-glow: rgba(212, 160, 23, 0.3);
+            --secondary: #6366f1;
+            --secondary-glow: rgba(99, 102, 241, 0.3);
+            --accent: #c084fc;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --highlight: #f8fafc;
+            --card-bg: rgba(30, 41, 59, 0.7);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+                radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        h1 {
+            font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #d4a017, #6366f1, #d4a017);
+            background-size: 200% auto;
+            color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: var(--card-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+        .lang-btn:hover { color: var(--text-main); border-color: var(--primary); transform: translateY(-2px); }
+        .lang-btn.active { background: var(--primary); border-color: var(--primary); color: #0a0a0a; box-shadow: 0 0 20px var(--primary-glow), var(--glass-inner-shadow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+        .canvas-container, .controls-panel {
+            flex: 1; min-width: 320px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: 24px; padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        .canvas-container::before, .controls-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+            pointer-events: none; border-radius: 24px 24px 0 0;
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        #three-container {
+            width: 100%; height: 500px; min-height: 400px; max-height: 520px;
+            border-radius: 16px; overflow: hidden;
+            background: #080e1a;
+            border: 1px solid rgba(99,102,241,0.2);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(212,160,23,0.4); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: var(--text-muted); font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--primary-glow); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--primary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #f59e0b; }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 10px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .data-display { background: rgba(8, 12, 20, 0.6); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.4), var(--glass-inner-shadow); }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+        .data-value { color: var(--primary); font-weight: bold; text-shadow: 0 0 10px var(--primary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .lab-action-btn {
+            background: linear-gradient(135deg, #d4a017, #b8860b);
+            border: 1px solid rgba(255,255,255,0.15); padding: 12px 24px; border-radius: 30px;
+            color: #0a0a0a; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 4px 20px var(--primary-glow), var(--glass-inner-shadow);
+        }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); background: linear-gradient(135deg, #f59e0b, #d4a017); }
+
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+        .btn-primary { background: linear-gradient(135deg, #d4a017, #b8860b); box-shadow: 0 4px 20px var(--primary-glow); color: #0a0a0a; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px var(--primary-glow); }
+        .btn-secondary { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--text-main); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #334155, #1e293b); }
+
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+        details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--primary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .distinction-box { background: rgba(99,102,241,0.06); backdrop-filter: blur(4px); border-left: 4px solid var(--secondary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+        .distinction-box strong { color: var(--text-main); }
+
+        footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+        footer .brand span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.6), var(--glass-inner-shadow);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.3), var(--glass-inner-shadow); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.5); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #d4a017, #6366f1); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(212,160,23,0.3), var(--glass-inner-shadow); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(212,160,23,0.5); }
+        @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+        .ai-window {
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+            height: 600px; max-height: calc(100vh - 140px);
+            background: rgba(8, 12, 20, 0.92); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 28px; overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1), var(--glass-inner-shadow);
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            border: 1px solid var(--glass-border);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+        .ai-header { background: linear-gradient(135deg, rgba(212,160,23,0.9), rgba(99,102,241,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 5px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(212,160,23,0.3); border-radius: 10px; }
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .ai-message.user .ai-message-content { background: linear-gradient(135deg, #d4a017, #6366f1); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(212,160,23,0.3); }
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(8,12,20,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+        .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); background: rgba(30,41,59,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--primary-glow); background: rgba(30,41,59,0.9); }
+        .ai-input-area input::placeholder { color: var(--text-dim); }
+        .ai-input-area button { background: linear-gradient(135deg, #d4a017, #6366f1); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--primary-glow); flex-shrink: 0; }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+        .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+        .ai-typing span { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s; padding: 20px; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(30px); border-radius: 32px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: hidden; padding: 32px; border: 1px solid rgba(99,102,241,0.25); box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow); transform: translateY(20px) scale(0.95); transition: 0.4s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+        .modal-scroll::-webkit-scrollbar { width: 5px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(212,160,23,0.3); border-radius: 10px; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question:hover { border-color: rgba(212,160,23,0.2); }
+        .quiz-question p { color: var(--text-main); font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: var(--text-muted); margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.2); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #d4a017; flex-shrink: 0; cursor: pointer; }
+        .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--primary); }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; padding: 0; border-radius: 0; background: #080e1a;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%; height: 100%; max-height: none; border-radius: 0; min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 40px;
+            backdrop-filter: blur(8px); display: flex; gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover { background: rgba(255,255,255,0.2); }
+        .fullscreen-mode header, .fullscreen-mode .controls-panel, .fullscreen-mode .info-section,
+        .fullscreen-mode footer, .fullscreen-mode .language-selector, .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab { display: none !important; }
+        .fullscreen-mode .container { max-width: 100%; padding: 0; margin: 0; }
+        .fullscreen-mode .sim-container { margin: 0; gap: 0; }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            #three-container { min-height: 320px; max-height: 380px; height: 380px; }
+            .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+            .modal-content { padding: 22px; max-height: 90vh; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <header>
+        <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+        <h1>🔬 Elasticity & Hooke's Law Lab</h1>
+        <p class="subtitle">Explore Spring Force, Extension &amp; Elastic Potential Energy | WAEC Mechanics</p>
+    </header>
+
+    <div class="language-selector">
+        <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+        <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+        <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+        <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+        <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+    </div>
+
+    <div class="sim-container">
+        <div class="canvas-container" id="canvasContainer">
+            <!-- ─── 3D container ─── -->
+            <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+            <div class="canvas-controls">
+                <button class="btn-secondary" onclick="resetElastic()">🔄 Reset</button>
+                <button id="playPauseBtn" class="btn-secondary" onclick="toggleElasticAnimation()">⏸️ Pause</button>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+            </div>
+        </div>
+        <div class="controls-panel" id="controlsPanel">
+            <div class="slider-container">
+                <label>🧲 Spring Constant (k): <span id="kValue">10.0</span> N/m</label>
+                <input type="range" id="kSlider" min="2" max="30" step="0.5" value="10" oninput="updateElastic()">
+            </div>
+            <div class="slider-container">
+                <label>⚖️ Applied Force (F): <span id="forceValue">0.0</span> N</label>
+                <input type="range" id="forceSlider" min="0" max="50" step="0.5" value="0" oninput="updateElastic()">
+            </div>
+            <div class="slider-container">
+                <label>📦 Mass (kg): <span id="massValue">1.0</span> kg</label>
+                <input type="range" id="massSlider" min="0.5" max="5" step="0.1" value="1" oninput="updateElastic()">
+            </div>
+
+            <div class="data-display">
+                <div class="data-row"><span>Spring Constant (k):</span><span id="displayK" class="data-value" style="color:#d4a017;">--- N/m</span></div>
+                <div class="data-row"><span>Applied Force (F):</span><span id="displayForce" class="data-value" style="color:#f59e0b;">--- N</span></div>
+                <div class="data-row"><span>Extension (x):</span><span id="displayExtension" class="data-value" style="color:#6366f1;">--- m</span></div>
+                <div class="data-row"><span>Elastic Energy (E):</span><span id="displayEnergy" class="data-value" style="color:#c084fc;">--- J</span></div>
+                <div class="data-row"><span>Hooke's Law Check:</span><span id="hookeCheck" class="data-value" style="color:#10b981;">F = kx ✓</span></div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <details>
+            <summary>📖 Hooke's Law & Elasticity</summary>
+            <div class="theory-content">
+                <div class="distinction-box">
+                    <p><strong>Hooke's Law:</strong> F = kx<br>
+                    The force needed to extend a spring is directly proportional to the extension. k is the spring constant (N/m).</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#6366f1;">
+                    <p><strong>Elastic Potential Energy:</strong> E = ½kx²<br>
+                    Energy stored in a stretched or compressed spring. Depends on both k and extension squared.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#c084fc;">
+                    <p><strong>Elastic Limit:</strong> The maximum force before permanent deformation. Beyond this, the material no longer obeys Hooke's Law.</p>
+                </div>
+                <div class="distinction-box" style="border-left-color:#d4a017;">
+                    <p><strong>Real-world Applications:</strong><br>
+                    • Vehicle suspension — springs absorb shocks<br>
+                    • Weighing scales — spring extension measures weight<br>
+                    • Bungee jumping — elastic cord stores and releases energy</p>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<footer>
+    <div class="brand">🔬 <span>Adusei Labs</span> | Powered by bksolutions</div>
+    <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+</footer>
+
+<button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+<button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+<div id="aiAssistant" class="ai-window">
+    <div class="ai-header">
+        <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Elasticity AI Tutor <span class="ai-badge">Ultra</span></div>
+        <button class="ai-close" onclick="toggleAI()">✕</button>
+    </div>
+    <div class="ai-body">
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message bot">
+                <div class="ai-message-icon">🤖</div>
+                <div class="ai-message-content">🔬 **Adusei AI Tutor Activated.**<br><br>I can help you with Hooke's Law, spring constant, elastic energy, and WAEC questions. Try asking:<br>• "Explain Hooke's Law"<br>• "Show me WAEC questions on elasticity"<br>• "What is the spring constant?"</div>
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Ask about Hooke's Law, spring constant, elastic energy..." onkeypress="handleAIKeypress(event)">
+            <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+        <div class="ai-disclaimer">💡 Try: "What is Hooke's Law?" | "Explain elastic potential energy" | "Show WAEC questions"</div>
+    </div>
+</div>
+
+<div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<!-- ─── Three.js & add-ons ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// 1. ELASTICITY ENGINE – 3D VERSION
+// ─────────────────────────────────────────────────────────────
+
+let isAnimating = true;
+let animFrame = null;
+let time = 0;
+let userStats = { configurations: 0, quizScores: [] };
+let graphData = [];
+let springMesh = null;
+let massMesh = null;
+let forceArrow = null;
+let graphLine = null;
+let currentPoint = null;
+
+// ─── Three.js globals ───
+let scene, camera, renderer, cssRenderer, controls;
+let elasticGroup;
+let container = document.getElementById('three-container');
+let clock = new THREE.Clock();
+let threeReady = false;
+
+// ─── Init Three.js ───
+function initThree() {
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js library not loaded. Check your internet connection.');
+        }
+
+        const rect = container.getBoundingClientRect();
+        const width = rect.width || container.clientWidth || 800;
+        const height = rect.height || container.clientHeight || 500;
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x080e1a);
+
+        camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+        camera.position.set(5, 4, 8);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        cssRenderer = new THREE.CSS2DRenderer();
+        cssRenderer.setSize(width, height);
+        cssRenderer.domElement.style.position = 'absolute';
+        cssRenderer.domElement.style.top = '0';
+        cssRenderer.domElement.style.left = '0';
+        cssRenderer.domElement.style.pointerEvents = 'none';
+        container.style.position = 'relative';
+        container.appendChild(cssRenderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambient);
+        const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+        scene.add(hemi);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 30;
+        mainLight.shadow.camera.left = -10;
+        mainLight.shadow.camera.right = 10;
+        mainLight.shadow.camera.top = 10;
+        mainLight.shadow.camera.bottom = -10;
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+        fillLight.position.set(-5, 0, 5);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+        rimLight.position.set(0, -5, 5);
+        scene.add(rimLight);
+
+        // Grid helper (subtle)
+        const gridHelper = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
+        gridHelper.position.y = -0.01;
+        scene.add(gridHelper);
+
+        // Axis line
+        const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.15 });
+        const axisPts = [new THREE.Vector3(-5, 0, 0), new THREE.Vector3(5, 0, 0)];
+        const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+        const axisLine = new THREE.Line(axisGeo, axisMat);
+        scene.add(axisLine);
+
+        elasticGroup = new THREE.Group();
+        scene.add(elasticGroup);
+
+        threeReady = true;
+        window.addEventListener('resize', onResize);
+        onResize();
+
+        animate();
+    } catch (e) {
+        container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+        console.error(e);
+    }
+}
+
+function onResize() {
+    if (!threeReady) return;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width || container.clientWidth || 800;
+    const h = rect.height || container.clientHeight || 500;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    cssRenderer.setSize(w, h);
+}
+
+function animate() {
+    animFrame = requestAnimationFrame(animate);
+    if (!threeReady) return;
+    controls.update();
+    renderer.render(scene, camera);
+    cssRenderer.render(scene, camera);
+}
+
+// ─── Clear group ───
+function clearGroup(group) {
+    while(group.children.length > 0) {
+        const child = group.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+        }
+        group.remove(child);
+    }
+}
+
+// ─── Create CSS2D label ───
+function createLabel(text, color = '#ffffff', fontSize = '18px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.6)') {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.color = color;
+    div.style.fontFamily = 'Arial, sans-serif';
+    div.style.fontSize = fontSize;
+    div.style.fontWeight = 'bold';
+    div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+    div.style.padding = '4px 10px';
+    div.style.background = bg;
+    div.style.borderRadius = '6px';
+    div.style.border = '1px solid rgba(255,255,255,0.05)';
+    div.style.backdropFilter = 'blur(4px)';
+    div.style.pointerEvents = 'none';
+    const label = new THREE.CSS2DObject(div);
+    label.position.copy(position);
+    return label;
+}
+
+// ─── Build 3D scene ───
+function buildElasticScene(k, F, mass, extension, energy) {
+    clearGroup(elasticGroup);
+    if (!threeReady) return;
+
+    const springRestLength = 1.5;
+    const maxExt = extension * 2.5; // visual scaling
+    const totalLength = springRestLength + maxExt;
+    const springStartX = -1.5;
+    const massSize = 0.5;
+    const massX = springStartX + totalLength;
+
+    // ─── Spring (helix) ───
+    const coils = 12;
+    const radius = 0.2;
+    const points = [];
+    const segments = coils * 30;
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const x = springStartX + t * totalLength;
+        const angle = t * coils * 2 * Math.PI;
+        const y = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+        points.push(new THREE.Vector3(x, y, z));
+    }
+    const curve = new THREE.CatmullRomCurve3(points);
+    const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.03, 8, false);
+    const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0x94a3b8,
+        metalness: 0.3,
+        roughness: 0.5,
+        emissive: 0x1a2a3a,
+        emissiveIntensity: 0.1
+    });
+    springMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    springMesh.castShadow = true;
+    elasticGroup.add(springMesh);
+
+    // ─── Mass block ───
+    const massMat = new THREE.MeshStandardMaterial({
+        color: 0xd4a017,
+        emissive: 0x6366f1,
+        emissiveIntensity: 0.05,
+        metalness: 0.4,
+        roughness: 0.3
+    });
+    massMesh = new THREE.Mesh(new THREE.BoxGeometry(massSize, massSize, massSize), massMat);
+    massMesh.position.set(massX, -massSize/2, 0);
+    massMesh.castShadow = true;
+    elasticGroup.add(massMesh);
+
+    // Mass label on block
+    const massLabel = createLabel(`${mass.toFixed(1)} kg`, '#ffffff', '14px', new THREE.Vector3(massX, 0, massSize/2 + 0.1));
+    elasticGroup.add(massLabel);
+
+    // ─── Force arrow ───
+    if (F > 0.1) {
+        const arrowLen = Math.min(F * 0.06, 2.0);
+        const arrowDir = new THREE.Vector3(0, -1, 0);
+        const origin = new THREE.Vector3(massX, -massSize/2, 0);
+        const arrowColor = 0xef4444;
+        const arrowHelper = new THREE.ArrowHelper(arrowDir, origin, arrowLen, arrowColor, 0.15, 0.1);
+        elasticGroup.add(arrowHelper);
+        const forceLabel = createLabel(`F = ${F.toFixed(1)} N`, '#ef4444', '16px', new THREE.Vector3(massX + 0.3, -massSize/2 - arrowLen/2, 0));
+        elasticGroup.add(forceLabel);
+    }
+
+    // ─── Graph (F vs x) in 3D ───
+    if (graphData.length > 1) {
+        const graphWidth = 2.5;
+        const graphHeight = 2.0;
+        const graphX = 2.0;
+        const graphY = 0.2;
+        const graphZ = 1.5;
+
+        // Background plane
+        const planeMat = new THREE.MeshBasicMaterial({
+            color: 0x0f172a,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(graphWidth, graphHeight), planeMat);
+        plane.position.set(graphX + graphWidth/2, graphY, graphZ);
+        plane.rotation.y = -Math.PI / 2;
+        elasticGroup.add(plane);
+
+        // Axes
+        const axisMat2 = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.5 });
+        // X axis
+        const xPts = [
+            new THREE.Vector3(graphX, graphY, graphZ),
+            new THREE.Vector3(graphX + graphWidth, graphY, graphZ)
+        ];
+        const xGeo = new THREE.BufferGeometry().setFromPoints(xPts);
+        const xAxis = new THREE.Line(xGeo, axisMat2);
+        elasticGroup.add(xAxis);
+        // Y axis
+        const yPts = [
+            new THREE.Vector3(graphX, graphY, graphZ),
+            new THREE.Vector3(graphX, graphY + graphHeight, graphZ)
+        ];
+        const yGeo = new THREE.BufferGeometry().setFromPoints(yPts);
+        const yAxis = new THREE.Line(yGeo, axisMat2);
+        elasticGroup.add(yAxis);
+
+        // Axis labels
+        const xLabel = createLabel('x (m)', '#94a3b8', '12px', new THREE.Vector3(graphX + graphWidth/2, graphY - 0.15, graphZ));
+        elasticGroup.add(xLabel);
+        const yLabel = createLabel('F (N)', '#94a3b8', '12px', new THREE.Vector3(graphX - 0.2, graphY + graphHeight/2, graphZ));
+        elasticGroup.add(yLabel);
+
+        // Plot data
+        const maxForce = Math.max(10, Math.max(...graphData.map(d => d.force)) + 2);
+        const maxExt = Math.max(0.1, Math.max(...graphData.map(d => d.extension)) + 0.02);
+        const points3D = [];
+        for (let i = 0; i < graphData.length; i++) {
+            const px = graphX + (graphData[i].force / maxForce) * graphWidth;
+            const py = graphY + (graphData[i].extension / maxExt) * graphHeight;
+            points3D.push(new THREE.Vector3(px, py, graphZ));
+        }
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points3D);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xd4a017, linewidth: 2 });
+        graphLine = new THREE.Line(lineGeo, lineMat);
+        elasticGroup.add(graphLine);
+
+        // Current point (highlight)
+        if (graphData.length > 0) {
+            const last = graphData[graphData.length - 1];
+            const px = graphX + (last.force / maxForce) * graphWidth;
+            const py = graphY + (last.extension / maxExt) * graphHeight;
+            const dotMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            currentPoint = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), dotMat);
+            currentPoint.position.set(px, py, graphZ);
+            elasticGroup.add(currentPoint);
+            // Label: coordinates
+            const coordLabel = createLabel(`(${last.extension.toFixed(3)}, ${last.force.toFixed(1)})`, '#f8fafc', '11px', new THREE.Vector3(px + 0.15, py, graphZ));
+            elasticGroup.add(coordLabel);
+        }
+    } else {
+        // No data yet: show placeholder
+        const noDataLabel = createLabel('Apply force to see graph', '#94a3b8', '16px', new THREE.Vector3(3.5, 0.5, 1.5));
+        elasticGroup.add(noDataLabel);
+    }
+
+    // ─── Labels for k, x, E ───
+    const kLabel = createLabel(`k = ${k.toFixed(1)} N/m`, '#d4a017', '18px', new THREE.Vector3(-4, 1.8, 0));
+    elasticGroup.add(kLabel);
+    const xLabel2 = createLabel(`x = ${extension.toFixed(4)} m`, '#6366f1', '18px', new THREE.Vector3(-4, 1.4, 0));
+    elasticGroup.add(xLabel2);
+    const eLabel = createLabel(`E = ${energy.toFixed(4)} J`, '#c084fc', '18px', new THREE.Vector3(-4, 1.0, 0));
+    elasticGroup.add(eLabel);
+    const hookeLabel = createLabel(`F = kx ✓`, '#10b981', '18px', new THREE.Vector3(-4, 0.6, 0));
+    elasticGroup.add(hookeLabel);
+}
+
+// ─── Update function ───
+function updateElastic() {
+    userStats.configurations++;
+    const k = parseFloat(document.getElementById('kSlider').value);
+    const F = parseFloat(document.getElementById('forceSlider').value);
+    const mass = parseFloat(document.getElementById('massSlider').value);
+
+    document.getElementById('kValue').textContent = k.toFixed(1);
+    document.getElementById('forceValue').textContent = F.toFixed(1);
+    document.getElementById('massValue').textContent = mass.toFixed(1);
+
+    const extension = F / k;
+    const energy = 0.5 * k * extension * extension;
+
+    document.getElementById('displayK').textContent = k.toFixed(1) + ' N/m';
+    document.getElementById('displayForce').textContent = F.toFixed(2) + ' N';
+    document.getElementById('displayExtension').textContent = extension.toFixed(4) + ' m';
+    document.getElementById('displayEnergy').textContent = energy.toFixed(4) + ' J';
+    document.getElementById('hookeCheck').innerHTML = `F = kx ✓ (${F.toFixed(2)} = ${(k * extension).toFixed(2)})`;
+
+    if (F > 0 && graphData.length < 50) {
+        graphData.push({ force: F, extension: extension });
+    }
+
+    buildElasticScene(k, F, mass, extension, energy);
+}
+
+function resetElastic() {
+    document.getElementById('forceSlider').value = 0;
+    graphData = [];
+    time = 0;
+    updateElastic();
+}
+
+function toggleElasticAnimation() {
+    isAnimating = !isAnimating;
+    const btn = document.getElementById('playPauseBtn');
+    if (isAnimating) {
+        btn.innerHTML = '⏸️ Pause';
+        // restart animation loop if needed
+        if (!animFrame) animate();
+    } else {
+        btn.innerHTML = '▶ Play';
+        if (animFrame) {
+            cancelAnimationFrame(animFrame);
+            animFrame = null;
+        }
+    }
+}
+
+// ─── Fullscreen toggle ───
+function toggleFullscreen() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        if (container.requestFullscreen) container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+        else if (container.msRequestFullscreen) container.msRequestFullscreen();
+        container.classList.add('fullscreen');
+        main.classList.add('fullscreen-mode');
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+}
+document.addEventListener('fullscreenchange', function() {
+    const container = document.getElementById('canvasContainer');
+    const main = document.getElementById('mainContainer');
+    if (!document.fullscreenElement) {
+        container.classList.remove('fullscreen');
+        main.classList.remove('fullscreen-mode');
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// 2. AI SYSTEM – (unchanged from original, using global getAIResponse)
+// ─────────────────────────────────────────────────────────────
+
+let currentLang = 'english';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+    
+    const labels = {
+        english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+        twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+        ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+        ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+        dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+    };
+    const l = labels[lang] || labels.english;
+    document.getElementById('btnQuiz').innerHTML = l.quiz;
+    document.getElementById('btnPred').innerHTML = l.pred;
+    document.getElementById('btnExp').innerHTML = l.exp;
+    
+    const placeholders = {
+        english: 'Ask about Hooke\'s Law, spring constant, elastic energy...',
+        twi: 'Bisa physics asɛm biara...',
+        ga: 'Bi lɛɛlɛŋ sane...',
+        ewe: 'Bia nya...',
+        dagbani: 'Bɔhi yɛltɔɣa...'
+    };
+    document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+}
+
+function toggleAI() { 
+    document.getElementById('aiAssistant').classList.toggle('active'); 
+    if(document.getElementById('aiAssistant').classList.contains('active')) {
+        document.getElementById('aiInput').focus();
+    }
+}
+
+function addAIMessage(msg, isUser = false) {
+    const c = document.getElementById('aiMessages');
+    let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+    c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+    const c = document.getElementById('aiMessages');
+    const t = document.createElement('div');
+    t.className = 'ai-message bot';
+    t.id = 'typingIndicator';
+    t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    c.appendChild(t);
+    c.scrollTop = c.scrollHeight;
+}
+
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+async function sendAIMessage() {
+    const input = document.getElementById('aiInput');
+    const q = input.value.trim();
+    if (!q) return;
+    
+    addAIMessage(q, true);
+    input.value = '';
+    showTyping();
+    
+    await new Promise(r => setTimeout(r, 600));
+    removeTyping();
+    
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse(q, 'elasticity');
+    } else {
+        response = "⚠️ AI content is still loading. Please try again in a moment.";
+    }
+    
+    addAIMessage(response, false);
+    speakAI(response);
+}
+
+function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+function speakAI(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+        clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = currentLang==='english'?'en-US':'en-GB';
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+    }
+}
+
+let isListening = false, recognition = null;
+function toggleVoice() {
+    const btn = document.getElementById('voiceBtn');
+    if (isListening) { 
+        recognition?.stop(); 
+        btn.classList.remove('listening'); 
+        isListening = false; 
+    } else if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = currentLang==='english'?'en-US':'en-GH';
+        recognition.onstart = () => { 
+            btn.classList.add('listening'); 
+            isListening = true; 
+        };
+        recognition.onresult = (e) => {
+            const cmd = e.results[0][0].transcript;
+            if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+            addAIMessage(cmd, true);
+            let response;
+            if (typeof getAIResponse === 'function') {
+                response = getAIResponse(cmd, 'elasticity');
+            } else {
+                response = "⚠️ AI content is loading. Please try again.";
+            }
+            addAIMessage(response, false);
+            speakAI(response);
+        };
+        recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+        recognition.start();
+    }
+}
+
+function showModal(html) { 
+    document.getElementById('modalContent').innerHTML = html; 
+    document.getElementById('generalModal').classList.add('active'); 
+}
+function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+const elasticityQuiz = [
+    { q: "What is Hooke's Law?", o: ["F = kx", "F = k/x", "F = ma", "F = mg"], a: "F = kx" },
+    { q: "What is the unit of spring constant (k)?", o: ["N/m", "N·m", "m/N", "J/m"], a: "N/m" },
+    { q: "What is elastic potential energy?", o: ["½kx²", "kx²", "½kx", "kx"], a: "½kx²" },
+    { q: "If spring constant doubles, what happens to extension for the same force?", o: ["Doubles", "Halves", "Quadruples", "Stays same"], a: "Halves" },
+    { q: "What is the elastic limit?", o: ["Maximum force without permanent deformation", "Maximum extension", "Breaking point", "Yield strength"], a: "Maximum force without permanent deformation" },
+    { q: "What does a higher spring constant mean?", o: ["Stiffer spring", "Softer spring", "Longer spring", "Shorter spring"], a: "Stiffer spring" },
+    { q: "What is the SI unit of elastic potential energy?", o: ["Joule", "Newton", "Watt", "Pascal"], a: "Joule" },
+    { q: "What happens to the energy stored when extension doubles?", o: ["Quadruples", "Doubles", "Halves", "Stays same"], a: "Quadruples" },
+    { q: "What type of material obeys Hooke's Law?", o: ["Elastic materials", "Plastic materials", "Brittle materials", "All materials"], a: "Elastic materials" },
+    { q: "What is an example of Hooke's Law in real life?", o: ["Spring balance", "Thermometer", "Barometer", "Speedometer"], a: "Spring balance" }
+];
+
+function showQuiz() {
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;">
+            <h2 style="color:var(--text-main);margin:0;font-size:1.5rem;">📝 Elasticity Quiz</h2>
+            <span style="background:#d4a017;color:#0a0a0a;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;">10 Questions</span>
+        </div>
+        <div class="modal-scroll">
+    `;
+    elasticityQuiz.forEach((item, idx) => {
+        html += `<div class="quiz-question"><p><strong>${idx+1}. ${item.q}</strong></p><div class="quiz-options">${item.o.map(opt => `<label><input type="radio" name="q${idx}" value="${opt}"><span>${opt}</span></label>`).join('')}</div></div>`;
+    });
+    html += `</div><div style="display:flex;gap:12px;margin-top:20px;flex-shrink:0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);"><button class="btn-secondary" style="flex:1;padding:14px;font-size:1rem;" onclick="closeModal()">✕ Cancel</button><button class="lab-action-btn" style="flex:2;padding:14px;font-size:1rem;" onclick="submitQuiz()">Submit & Grade</button></div>`;
+    showModal(html);
+}
+
+function submitQuiz() {
+    let score = 0;
+    elasticityQuiz.forEach((item, idx) => { 
+        const s = document.querySelector(`input[name="q${idx}"]:checked`); 
+        if (s && s.value === item.a) score += 10; 
+    });
+    userStats.quizScores.push(score);
+    showModal(`<div style="text-align:center;padding:30px 10px;"><div style="font-size:5rem;font-weight:900;background:linear-gradient(135deg,#d4a017,#6366f1);-webkit-background-clip:text;color:transparent;text-shadow:0 10px 30px rgba(212,160,23,0.3);margin-bottom:10px;line-height:1.2;">${score}%</div><h3 style="color:var(--text-main);margin-bottom:30px;font-size:1.3rem;font-weight:400;">Quiz Completed!</h3><button class="lab-action-btn" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Continue</button></div>`);
+}
+
+function showPrediction() {
+    let avg = 0; 
+    if (userStats.quizScores.length > 0) { 
+        const s = userStats.quizScores.reduce((a,b)=>a+b,0); 
+        avg = s / userStats.quizScores.length; 
+    }
+    const labScore = Math.min(100, userStats.configurations * 5);
+    const overall = avg > 0 ? Math.round((labScore * 0.4) + (avg * 0.6)) : labScore;
+    const msg = overall >= 80 ? "Outstanding! You've mastered Hooke's Law and elastic energy." : 
+                overall >= 50 ? "Good progress! Keep exploring how force relates to extension." : 
+                "Just getting started! Apply forces and observe the extension.";
+    showModal(`<h2 style="color:var(--text-main);border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-top:0;font-size:1.5rem;">🔮 AI Mastery Prediction</h2>
+        <div style="display:flex;justify-content:space-around;text-align:center;margin:24px 0;background:rgba(255,255,255,0.03);padding:20px;border-radius:16px;">
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#d4a017;">${userStats.configurations}</div><div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-top:4px;">Adjustments</div></div>
+            <div style="width:1px;background:rgba(255,255,255,0.06);"></div>
+            <div><div style="font-size:2.2rem;font-weight:bold;color:#6366f1;">${Math.round(avg)}%</div><div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-top:4px;">Quiz Avg</div></div>
+        </div>
+        <div style="text-align:center;margin:20px 0;">
+            <div style="font-size:0.9rem;color:var(--text-muted);text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Overall AI Mastery</div>
+            <div style="font-size:4rem;font-weight:900;color:#d4a017;text-shadow:0 10px 30px rgba(212,160,23,0.3);line-height:1.2;">${overall}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:18px;border-left:4px solid #d4a017;border-radius:12px;color:var(--text-muted);margin-bottom:24px;line-height:1.6;">
+            <strong style="color:var(--text-main);display:block;margin-bottom:6px;">🧠 Analysis:</strong>${msg}
+        </div>
+        <button class="btn-primary" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Close</button>
+    `);
+}
+
+function showExperiment() {
+    let response;
+    if (typeof getAIResponse === 'function') {
+        response = getAIResponse("Give me an experiment on Hooke's Law", 'elasticity');
+    } else {
+        response = "🧪 **Experiment:** Set k = 10 N/m. Apply different forces (5N, 10N, 15N, 20N). Record the extension each time. Plot F vs x — you should get a straight line!";
+    }
+    addAIMessage(response, false);
+    if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. INIT
+// ─────────────────────────────────────────────────────────────
+window.onload = () => {
+    initThree();
+    setTimeout(() => {
+        updateElastic();
+        setLanguage('english');
+        if (window.innerWidth > 768) {
+            setTimeout(() => {
+                document.getElementById('aiAssistant').classList.add('active');
+            }, 1000);
+        }
+        // Start animation loop
+        if (!animFrame) animate();
+    }, 300);
+};
+</script>
+
+<script src="/js/ai-content.js"></script>
+<script src="/js/global.js"></script>
+</body>
+</html>

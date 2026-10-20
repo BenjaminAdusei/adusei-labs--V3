@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Harmonic Motion Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── all original styles, with modifications for 3D container ─── */
+        :root {
+            --bg-color: #061115;
+            --panel-bg: rgba(15, 35, 30, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.4);
+            --secondary: #06b6d4;
+            --secondary-glow: rgba(6, 182, 212, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 15% 30%, rgba(16, 185, 129, 0.05), transparent 30%),
+                radial-gradient(circle at 85% 70%, rgba(6, 182, 212, 0.05), transparent 30%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 25px; margin-top: 10px; position: relative;}
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #10b981, #6ee7b7, #06b6d4);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; 
+            min-width: 320px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; 
+            padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        /* ─── 3D container ─── */
+        #three-container {
+            width: 100%; height: 450px; min-height: 350px;
+            border-radius: 12px; overflow: hidden;
+            background: #061115;
+            border: 1px solid rgba(16, 185, 129, 0.08);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(16, 185, 129, 0.2); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #34d399; }
+
+        .data-display { 
+            background: rgba(5, 15, 20, 0.8); 
+            padding: 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .data-cell { display: flex; flex-direction: column; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .data-cell span:first-child { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;}
+        .data-value { color: var(--secondary); font-weight: bold; font-family: 'Courier New', Courier, monospace; font-size: 1.15rem; text-shadow: 0 0 8px var(--secondary-glow); }
+        .highlight-value { color: var(--primary); text-shadow: 0 0 8px var(--primary-glow); }
+        
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px;}
+        .lab-action-btn { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #34d399, #10b981); }
+        
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #1e293b, #0f172a); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #334155, #1e293b); }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(15, 35, 30, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(16, 185, 129, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #06b6d4, #0284c7); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(6, 182, 212, 0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0); } }
+
+        footer {
+            width: 100%;
+            background: rgba(5, 15, 20, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(10, 25, 20, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(16,185,129,0.9), rgba(6,182,212,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(30, 50, 45, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #10b981, #059669); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(5, 15, 20, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(15, 35, 30, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px var(--primary-glow); background: rgba(15, 35, 30, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #10b981, #06b6d4); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(15, 35, 30, 0.95), rgba(5, 15, 20, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(16, 185, 129, 0.3); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; max-height: 60vh; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #10b981; flex-shrink: 0; cursor: pointer; }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; padding: 0; border-radius: 0; background: #061115;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%; height: 100%; max-height: none; border-radius: 0; min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 40px;
+            backdrop-filter: blur(8px); display: flex; gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover { background: rgba(255,255,255,0.2); }
+        .fullscreen-mode header, .fullscreen-mode .controls-panel, .fullscreen-mode .info-section,
+        .fullscreen-mode footer, .fullscreen-mode .language-selector, .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab { display: none !important; }
+        .fullscreen-mode .container { max-width: 100%; padding: 0; margin: 0; }
+        .fullscreen-mode .sim-container { margin: 0; gap: 0; }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top:20px;}
+            #three-container { min-height: 300px; height: 350px; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-display { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .data-cell { padding: 8px; }
+            .data-value { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>🔄 Simple Harmonic Motion</h1>
+            <p class="subtitle">Explore Hooke's Law, Oscillations & Energy Transfer</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container" id="canvasContainer">
+                <!-- ─── 3D container ─── -->
+                <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+                <div class="canvas-controls">
+                    <button id="toggleBtn" class="btn-primary" onclick="toggleSHM()">⏸ Pause Oscillation</button>
+                    <button id="trailBtn" class="btn-secondary" onclick="toggleTrail()">✨ Toggle Trail</button>
+                    <button id="resetBtn" class="btn-secondary" onclick="resetSHM()">🔄 Reset</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                </div>
+            </div>
+
+            <div class="controls-panel" id="controlsPanel">
+                <div class="slider-container">
+                    <label>🎯 Amplitude (A): <span id="ampValue">1.00 m</span></label>
+                    <input type="range" id="ampSlider" min="0.1" max="2.5" step="0.1" value="1.0" oninput="updateParams()">
+                </div>
+                <div class="slider-container">
+                    <label>⚖️ Mass (m): <span id="massValue">1.0 kg</span></label>
+                    <input type="range" id="massSlider" min="0.5" max="5.0" step="0.1" value="1.0" oninput="updateParams()">
+                </div>
+                <div class="slider-container">
+                    <label>🔧 Spring Constant (k): <span id="springValue">10 N/m</span></label>
+                    <input type="range" id="springSlider" min="2" max="40" step="1" value="10" oninput="updateParams()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-cell"><span>Period (T)</span><span id="periodValue" class="data-value highlight-value">1.99 s</span></div>
+                    <div class="data-cell"><span>Frequency (f)</span><span id="freqValue" class="data-value highlight-value">0.50 Hz</span></div>
+                    <div class="data-cell"><span>Total Energy (E)</span><span id="energyValue" class="data-value" style="color:#f59e0b;">5.00 J</span></div>
+                    <div class="data-cell"><span>Max Velocity (|v|)</span><span id="maxVelValue" class="data-value">3.16 m/s</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">🔄 <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> SHM AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages">
+                <div class="ai-message bot">
+                    <div class="ai-message-icon">🤖</div>
+                    <div class="ai-message-content">🔄 **Adusei AI Tutor Activated.**<br><br>I can help you with Simple Harmonic Motion, period, frequency, energy, and WAEC questions. Try asking:<br>• "What is the period of a mass-spring system?"<br>• "Show me WAEC questions on SHM"<br>• "Explain energy conservation in SHM"</div>
+                </div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about Period, Energy, Hooke's Law..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ─── Three.js & add-ons ─── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. SHM ENGINE – 3D VERSION
+    // ─────────────────────────────────────────────────────────────
+
+    // ─── State ───
+    let amplitude = 1.0, mass = 1.0, springK = 10.0;
+    let omega = 0, period = 0, frequency = 0;
+    let time = 0, isSimulating = true, showTrail = true, trails = [];
+    let userStats = { configurations: 0, toggles: 0, quizScores: [] };
+
+    // ─── Three.js globals ───
+    let scene, camera, renderer, cssRenderer, controls;
+    let shmGroup;
+    let container = document.getElementById('three-container');
+    let threeReady = false;
+    let lastTime = 0;
+    let animFrameId = null;
+
+    // ─── Init Three.js ───
+    function initThree() {
+        try {
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js library not loaded. Check your internet connection.');
+            }
+
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 800;
+            const height = rect.height || container.clientHeight || 450;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x061115);
+
+            camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+            camera.position.set(0, 2.5, 8);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            cssRenderer = new THREE.CSS2DRenderer();
+            cssRenderer.setSize(width, height);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            container.style.position = 'relative';
+            container.appendChild(cssRenderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambient);
+            const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+            scene.add(hemi);
+            const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 30;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+            const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+
+            // Grid helper (subtle)
+            const gridHelper = new THREE.GridHelper(6, 6, 0x1a3a3a, 0x0a1a1a);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Axis line
+            const axisMat = new THREE.LineBasicMaterial({ color: 0x2a5a5a, transparent: true, opacity: 0.2 });
+            const axisPts = [new THREE.Vector3(-3.5, 0, 0), new THREE.Vector3(3.5, 0, 0)];
+            const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+            const axisLine = new THREE.Line(axisGeo, axisMat);
+            scene.add(axisLine);
+
+            shmGroup = new THREE.Group();
+            scene.add(shmGroup);
+
+            threeReady = true;
+            window.addEventListener('resize', onResize);
+            onResize();
+
+            // Start main loop
+            lastTime = performance.now();
+            mainLoop();
+        } catch (e) {
+            container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+            console.error(e);
+        }
+    }
+
+    function onResize() {
+        if (!threeReady) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || container.clientWidth || 800;
+        const h = rect.height || container.clientHeight || 450;
+        if (w === 0 || h === 0) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        cssRenderer.setSize(w, h);
+    }
+
+    function mainLoop() {
+        animFrameId = requestAnimationFrame(mainLoop);
+        if (!threeReady) return;
+
+        const now = performance.now();
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+
+        if (isSimulating) {
+            time += dt;
+            // Update trail
+            if (showTrail && Math.floor(time * 100) % 3 === 0) {
+                const x = amplitude * Math.cos(omega * time);
+                trails.push({ x: x, time: time });
+                if (trails.length > 80) trails.shift();
+            }
+        }
+
+        // Rebuild scene
+        buildScene();
+
+        controls.update();
+        renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
+    }
+
+    // ─── Clear group ───
+    function clearGroup(group) {
+        while(group.children.length > 0) {
+            const child = group.children[0];
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            group.remove(child);
+        }
+    }
+
+    // ─── Create CSS2D label ───
+    function createLabel(text, color = '#ffffff', fontSize = '16px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.color = color;
+        div.style.fontFamily = 'Arial, sans-serif';
+        div.style.fontSize = fontSize;
+        div.style.fontWeight = 'bold';
+        div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+        div.style.padding = '4px 10px';
+        div.style.background = bg;
+        div.style.borderRadius = '6px';
+        div.style.border = '1px solid rgba(255,255,255,0.05)';
+        div.style.backdropFilter = 'blur(4px)';
+        div.style.pointerEvents = 'none';
+        const label = new THREE.CSS2DObject(div);
+        label.position.copy(position);
+        return label;
+    }
+
+    // ─── Build 3D scene ───
+    function buildScene() {
+        clearGroup(shmGroup);
+        if (!threeReady) return;
+
+        // Physics
+        const x = amplitude * Math.cos(omega * time);
+        const v = -amplitude * omega * Math.sin(omega * time);
+        const totalE = 0.5 * springK * amplitude * amplitude;
+        const pe = 0.5 * springK * x * x;
+        const ke = 0.5 * mass * v * v;
+
+        // ─── Wall ───
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.3, roughness: 0.6 });
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 0.8), wallMat);
+        wall.position.set(-2.0, 0, 0);
+        wall.castShadow = true;
+        shmGroup.add(wall);
+
+        // Wall bracket
+        const bracketMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+        const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.6), bracketMat);
+        bracket.position.set(-2.0, 0.6, 0);
+        shmGroup.add(bracket);
+        const bracket2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.6), bracketMat);
+        bracket2.position.set(-2.0, -0.6, 0);
+        shmGroup.add(bracket2);
+
+        // ─── Spring ───
+        const wallPos = -2.0;
+        const massPos = x * 0.8; // scale for visual
+        const springLength = massPos - wallPos - 0.3; // account for block size
+        if (springLength > 0.1) {
+            const coils = 12;
+            const radius = 0.08;
+            const segments = coils * 30;
+            const points = [];
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const px = wallPos + 0.15 + t * springLength;
+                const angle = t * coils * 2 * Math.PI;
+                const py = radius * Math.cos(angle);
+                const pz = radius * Math.sin(angle);
+                points.push(new THREE.Vector3(px, py, pz));
+            }
+            const curve = new THREE.CatmullRomCurve3(points);
+            const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.02, 6, false);
+            const tubeMat = new THREE.MeshStandardMaterial({
+                color: 0x94a3b8,
+                metalness: 0.3,
+                roughness: 0.5,
+                emissive: 0x1a2a3a,
+                emissiveIntensity: 0.1
+            });
+            const springMesh = new THREE.Mesh(tubeGeo, tubeMat);
+            springMesh.castShadow = true;
+            shmGroup.add(springMesh);
+        }
+
+        // ─── Mass block ───
+        const blockSize = 0.3 + mass * 0.04;
+        const blockMat = new THREE.MeshStandardMaterial({
+            color: 0x10b981,
+            emissive: 0x06b6d4,
+            emissiveIntensity: 0.1,
+            metalness: 0.2,
+            roughness: 0.3
+        });
+        const block = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockSize, blockSize), blockMat);
+        block.position.set(massPos, 0, 0);
+        block.castShadow = true;
+        shmGroup.add(block);
+
+        // Mass label
+        const massLabel = createLabel(`${mass.toFixed(1)} kg`, '#ffffff', '14px', new THREE.Vector3(massPos, 0, blockSize/2 + 0.1));
+        shmGroup.add(massLabel);
+
+        // ─── Velocity arrow ───
+        if (Math.abs(v) > 0.05) {
+            const arrowLen = Math.min(0.8, Math.abs(v) * 0.2);
+            const dir = new THREE.Vector3(v > 0 ? 1 : -1, 0, 0);
+            const origin = new THREE.Vector3(massPos + blockSize/2, 0.2, 0);
+            const arrowColor = 0xf43f5e;
+            const arrowHelper = new THREE.ArrowHelper(dir, origin, arrowLen, arrowColor, 0.12, 0.08);
+            shmGroup.add(arrowHelper);
+            const velLabel = createLabel(`v = ${v.toFixed(2)} m/s`, '#f43f5e', '14px', new THREE.Vector3(massPos + arrowLen + 0.3, 0.2, 0));
+            shmGroup.add(velLabel);
+        }
+
+        // ─── Amplitude guides ───
+        const guideMat = new THREE.LineDashedMaterial({ color: 0xf59e0b, dashSize: 0.02, gapSize: 0.02, transparent: true, opacity: 0.3 });
+        const aPos = amplitude * 0.8;
+        // Left guide
+        const lPts = [new THREE.Vector3(-aPos, -0.6, 0), new THREE.Vector3(-aPos, 0.6, 0)];
+        const lGeo = new THREE.BufferGeometry().setFromPoints(lPts);
+        const lLine = new THREE.Line(lGeo, guideMat);
+        lLine.computeLineDistances();
+        shmGroup.add(lLine);
+        // Right guide
+        const rPts = [new THREE.Vector3(aPos, -0.6, 0), new THREE.Vector3(aPos, 0.6, 0)];
+        const rGeo = new THREE.BufferGeometry().setFromPoints(rPts);
+        const rLine = new THREE.Line(rGeo, guideMat);
+        rLine.computeLineDistances();
+        shmGroup.add(rLine);
+        // Labels
+        const aLabelL = createLabel('-A', '#f59e0b', '14px', new THREE.Vector3(-aPos, 0.7, 0));
+        shmGroup.add(aLabelL);
+        const aLabelR = createLabel('+A', '#f59e0b', '14px', new THREE.Vector3(aPos, 0.7, 0));
+        shmGroup.add(aLabelR);
+
+        // ─── Trail ───
+        if (showTrail && trails.length > 1) {
+            const trailPoints = trails.map(t => {
+                const px = t.x * 0.8;
+                const py = (t.time - time) * 0.5; // spread in time
+                return new THREE.Vector3(px, py, 0);
+            });
+            const trailGeo = new THREE.BufferGeometry().setFromPoints(trailPoints);
+            const trailMat = new THREE.PointsMaterial({
+                color: 0x06b6d4,
+                size: 0.03,
+                transparent: true,
+                opacity: 0.5
+            });
+            const trailMesh = new THREE.Points(trailGeo, trailMat);
+            shmGroup.add(trailMesh);
+        }
+
+        // ─── Energy bars ───
+        const barWidth = 0.08;
+        const barDepth = 0.08;
+        const maxBarHeight = 1.0;
+        const maxE = Math.max(1, totalE);
+        const barScale = maxBarHeight / maxE;
+
+        // PE (green)
+        if (pe > 0.01) {
+            const peMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.1 });
+            const peBar = new THREE.Mesh(new THREE.BoxGeometry(barWidth, pe * barScale, barDepth), peMat);
+            peBar.position.set(1.8, pe * barScale / 2, -0.3);
+            shmGroup.add(peBar);
+            const peLabel = createLabel('PE', '#10b981', '12px', new THREE.Vector3(1.8, pe * barScale + 0.05, -0.3));
+            shmGroup.add(peLabel);
+        }
+
+        // KE (cyan)
+        if (ke > 0.01) {
+            const keMat = new THREE.MeshStandardMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.1 });
+            const keBar = new THREE.Mesh(new THREE.BoxGeometry(barWidth, ke * barScale, barDepth), keMat);
+            keBar.position.set(1.8, ke * barScale / 2, 0);
+            shmGroup.add(keBar);
+            const keLabel = createLabel('KE', '#06b6d4', '12px', new THREE.Vector3(1.8, ke * barScale + 0.05, 0));
+            shmGroup.add(keLabel);
+        }
+
+        // Total (orange) – always shown
+        const totalMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 0.1 });
+        const totalBar = new THREE.Mesh(new THREE.BoxGeometry(barWidth, totalE * barScale, barDepth), totalMat);
+        totalBar.position.set(1.8, totalE * barScale / 2, 0.3);
+        shmGroup.add(totalBar);
+        const totalLabel = createLabel('Total', '#f59e0b', '12px', new THREE.Vector3(1.8, totalE * barScale + 0.05, 0.3));
+        shmGroup.add(totalLabel);
+
+        // ─── Data labels ───
+        const periodLabel = createLabel(`T = ${period.toFixed(2)} s`, '#10b981', '18px', new THREE.Vector3(0, 1.8, 0));
+        shmGroup.add(periodLabel);
+        const freqLabel = createLabel(`f = ${frequency.toFixed(2)} Hz`, '#06b6d4', '18px', new THREE.Vector3(0, 1.4, 0));
+        shmGroup.add(freqLabel);
+        const energyLabel = createLabel(`E = ${totalE.toFixed(2)} J`, '#f59e0b', '18px', new THREE.Vector3(0, 1.0, 0));
+        shmGroup.add(energyLabel);
+        const maxVelLabel = createLabel(`|v|_max = ${(amplitude * omega).toFixed(2)} m/s`, '#94a3b8', '16px', new THREE.Vector3(0, 0.6, 0));
+        shmGroup.add(maxVelLabel);
+
+        // ─── Live displacement and velocity ───
+        const dispLabel = createLabel(`x = ${x.toFixed(3)} m`, '#e2e8f0', '16px', new THREE.Vector3(0, -0.6, 0));
+        shmGroup.add(dispLabel);
+        const velLiveLabel = createLabel(`v = ${v.toFixed(3)} m/s`, '#f43f5e', '16px', new THREE.Vector3(0, -1.0, 0));
+        shmGroup.add(velLiveLabel);
+    }
+
+    // ─── Physics update ───
+    function updateParams() {
+        amplitude = parseFloat(document.getElementById('ampSlider').value);
+        mass = parseFloat(document.getElementById('massSlider').value);
+        springK = parseFloat(document.getElementById('springSlider').value);
+
+        document.getElementById('ampValue').textContent = amplitude.toFixed(2) + ' m';
+        document.getElementById('massValue').textContent = mass.toFixed(1) + ' kg';
+        document.getElementById('springValue').textContent = springK + ' N/m';
+
+        omega = Math.sqrt(springK / mass);
+        frequency = omega / (2 * Math.PI);
+        period = 1 / frequency;
+        let maxVel = amplitude * omega;
+        let totalEnergy = 0.5 * springK * (amplitude * amplitude);
+
+        document.getElementById('periodValue').textContent = period.toFixed(2) + ' s';
+        document.getElementById('freqValue').textContent = frequency.toFixed(2) + ' Hz';
+        document.getElementById('maxVelValue').textContent = maxVel.toFixed(2) + ' m/s';
+        document.getElementById('energyValue').textContent = totalEnergy.toFixed(2) + ' J';
+
+        userStats.configurations++;
+        // Scene will rebuild in main loop
+    }
+
+    function toggleSHM() {
+        isSimulating = !isSimulating;
+        document.getElementById('toggleBtn').innerHTML = isSimulating ? '⏸ Pause Oscillation' : '▶ Resume Oscillation';
+        document.getElementById('toggleBtn').className = isSimulating ? 'btn-primary' : 'btn-secondary';
+        userStats.toggles++;
+    }
+
+    function resetSHM() {
+        time = 0;
+        trails = [];
+        if (!isSimulating) toggleSHM();
+    }
+
+    function toggleTrail() {
+        showTrail = !showTrail;
+        if (!showTrail) trails = [];
+    }
+
+    // ─── Fullscreen toggle ───
+    function toggleFullscreen() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            container.classList.add('fullscreen');
+            main.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI SYSTEM – (unchanged from original)
+    // ─────────────────────────────────────────────────────────────
+
+    let currentLang = 'english';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+        const labels = {
+            english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+            twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+            ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+            ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+            dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+        };
+        const l = labels[lang] || labels.english;
+        document.getElementById('btnQuiz').innerHTML = l.quiz;
+        document.getElementById('btnPred').innerHTML = l.pred;
+        document.getElementById('btnExp').innerHTML = l.exp;
+
+        const placeholders = {
+            english: 'Ask about Period, Energy, Hooke\'s Law...',
+            twi: 'Bisa physics asɛm biara...',
+            ga: 'Bi lɛɛlɛŋ sane...',
+            ewe: 'Bia nya...',
+            dagbani: 'Bɔhi yɛltɔɣa...'
+        };
+        document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+    }
+
+    function toggleAI() {
+        const aiWindow = document.getElementById('aiAssistant');
+        aiWindow.classList.toggle('active');
+        if (aiWindow.classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+
+    function addAIMessage(msg, isUser = false) {
+        const container = document.getElementById('aiMessages');
+        let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+        const container = document.getElementById('aiMessages');
+        const typing = document.createElement('div');
+        typing.className = 'ai-message bot';
+        typing.id = 'typingIndicator';
+        typing.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+        container.appendChild(typing);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput');
+        const q = input.value.trim();
+        if (!q) return;
+
+        addAIMessage(q, true);
+        input.value = '';
+        showTyping();
+
+        await new Promise(r => setTimeout(r, 600));
+        removeTyping();
+
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse(q, 'shm');
+        } else {
+            response = "⚠️ AI content is still loading. Please try again in a moment.";
+        }
+
+        addAIMessage(response, false);
+        speakAI(response);
+    }
+
+    function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+            clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB';
+            utterance.rate = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) {
+            recognition?.stop();
+            btn.classList.remove('listening');
+            btn.innerHTML = '🎤';
+            addAIMessage("🎤 Voice control stopped.", false);
+            isListening = false;
+        } else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH';
+            recognition.onstart = () => {
+                btn.classList.add('listening');
+                btn.innerHTML = '🔴';
+                addAIMessage("🎤 Voice control active! Say a command...", false);
+                isListening = true;
+            };
+            recognition.onresult = (e) => {
+                const cmd = e.results[0][0].transcript;
+                if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true);
+                let response;
+                if (typeof getAIResponse === 'function') {
+                    response = getAIResponse(cmd, 'shm');
+                } else {
+                    response = "⚠️ AI content is loading. Please try again.";
+                }
+                addAIMessage(response, false);
+                speakAI(response);
+            };
+            recognition.onerror = () => {
+                btn.classList.remove('listening');
+                btn.innerHTML = '🎤';
+                addAIMessage("🎤 Voice error. Please try again.", false);
+                isListening = false;
+            };
+            recognition.start();
+        }
+    }
+
+    function showModal(htmlContent) {
+        document.getElementById('modalContent').innerHTML = htmlContent;
+        document.getElementById('generalModal').classList.add('active');
+    }
+    function closeModal() {
+        document.getElementById('generalModal').classList.remove('active');
+    }
+
+    const shmQuiz = [
+        {q: "What is the formula for the Period (T) of a mass-spring system?", o: ["T = 2π√(k/m)", "T = 2π√(m/k)", "T = √(m/k)", "T = 1/f²"], a: "T = 2π√(m/k)"},
+        {q: "If you double the mass attached to the spring, what happens to the period?", o: ["It doubles", "It halves", "It increases by √2", "It stays the same"], a: "It increases by √2"},
+        {q: "Does changing the Amplitude (A) affect the Period of oscillation?", o: ["Yes, larger amplitude means longer period", "Yes, larger amplitude means shorter period", "No, period is completely independent of amplitude", "Only if the mass is heavy"], a: "No, period is completely independent of amplitude"},
+        {q: "At which point in the oscillation is the Kinetic Energy at its maximum?", o: ["At maximum positive amplitude (+A)", "At maximum negative amplitude (-A)", "At the equilibrium position (x=0)", "Kinetic energy is constant everywhere"], a: "At the equilibrium position (x=0)"},
+        {q: "Where is the acceleration of the mass at its absolute maximum?", o: ["At the extreme amplitudes (±A)", "At the equilibrium position (x=0)", "Halfway between equilibrium and amplitude", "Acceleration is constant"], a: "At the extreme amplitudes (±A)"},
+        {q: "What is the formula for the Total Energy (E) in a Simple Harmonic Oscillator?", o: ["E = ½mv²", "E = ½kx²", "E = ½kA²", "E = mgA"], a: "E = ½kA²"},
+        {q: "If the spring constant (k) is made 4 times stiffer, what happens to the frequency?", o: ["It quadruples", "It doubles", "It halves", "It stays the same"], a: "It doubles"},
+        {q: "Hooke's Law states that the restoring force is proportional to:", o: ["Velocity", "Acceleration", "Displacement", "Mass"], a: "Displacement"},
+        {q: "When Potential Energy is at its maximum, what is the Kinetic Energy?", o: ["Also maximum", "Zero", "Half its maximum", "Equal to the total energy"], a: "Zero"},
+        {q: "Angular frequency (ω) is measured in what units?", o: ["Hertz (Hz)", "Meters per second (m/s)", "Radians per second (rad/s)", "Seconds (s)"], a: "Radians per second (rad/s)"}
+    ];
+
+    function showQuiz() {
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                <h2 style="color:white; margin:0;">📝 SHM Quiz</h2>
+                <span style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">10 Questions</span>
+            </div>
+            <div class="modal-scroll">
+        `;
+        shmQuiz.forEach((item, index) => {
+            html += `
+            <div class="quiz-question">
+                <p><strong>${index + 1}. ${item.q}</strong></p>
+                ${item.o.map(opt => `
+                    <label><input type="radio" name="q${index}" value="${opt}"><span>${opt}</span></label>
+                `).join('')}
+            </div>`;
+        });
+        html += `
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.06);">
+                <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+            </div>
+        `;
+        showModal(html);
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        shmQuiz.forEach((item, index) => {
+            const ans = document.querySelector(`input[name="q${index}"]:checked`);
+            if (ans && ans.value === item.a) score += 10;
+        });
+        userStats.quizScores.push(score);
+        showModal(`
+            <div style="text-align:center; padding: 30px 10px;">
+                <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #10b981, #06b6d4); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(16,185,129,0.3); margin-bottom:10px; line-height:1;">${score}%</div>
+                <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Completed!</h3>
+                <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+            </div>
+        `);
+    }
+
+    function showPrediction() {
+        let avgQuiz = 0;
+        if (userStats.quizScores.length > 0) {
+            const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+            avgQuiz = sum / userStats.quizScores.length;
+        }
+        let configScore = Math.min(100, userStats.configurations * 5);
+        let interactionScore = Math.min(100, userStats.toggles * 10);
+        let overallScore = (avgQuiz > 0) ? Math.round((configScore * 0.3) + (interactionScore * 0.2) + (avgQuiz * 0.5)) : Math.round((configScore * 0.6) + (interactionScore * 0.4));
+        let txt = overallScore >= 80 ? "Outstanding! Your manipulation of mass and stiffness along with your quiz results show mastery of SHM principles." :
+                  overallScore >= 50 ? "Good progress! Remember to watch the live energy bars to understand the conservation of energy." :
+                  "Just getting started! Change the mass and spring constant, observe the new Period, and then try the quiz.";
+
+        showModal(`
+            <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">🔮 AI Mastery Prediction</h2>
+            <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                <div><div style="font-size:2.5rem; font-weight:bold; color:#06b6d4;">${userStats.configurations}</div><div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Parameter Edits</div></div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div><div style="font-size:2.5rem; font-weight:bold; color:#10b981;">${Math.round(avgQuiz)}%</div><div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Avg</div></div>
+            </div>
+            <div style="text-align:center; margin:20px 0;">
+                <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery</div>
+                <div style="font-size:5rem; font-weight:900; color:#10b981; text-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); line-height:1;">${overallScore}%</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #10b981; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+            </div>
+            <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+        `);
+    }
+
+    function showExperiment() {
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse("Give me an experiment on Simple Harmonic Motion", 'shm');
+        } else {
+            response = "🧪 **Custom AI Experiment:**\n\nWatch the Energy Bars. Pull the Amplitude to 2.0m. Notice how Total Energy quadruples (since E ∝ A²)? Now watch the bars trade places as the block moves through x=0.";
+        }
+        addAIMessage(response, false);
+        if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.onload = () => {
+        initThree();
+        setTimeout(() => {
+            updateParams();
+            setLanguage('english');
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        }, 300);
+    };
+    </script>
+
+    <script src="/js/ai-content.js"></script>
+    <script src="/js/global.js"></script>
+</body>
+</html>

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inclined Plane Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── all original styles, with modifications for 3D container ─── */
+        :root {
+            --bg-color: #0a0505;
+            --panel-bg: rgba(30, 15, 15, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #f59e0b;
+            --primary-glow: rgba(245, 158, 11, 0.4);
+            --secondary: #e11d48;
+            --secondary-glow: rgba(225, 29, 72, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 10% 40%, rgba(245, 158, 11, 0.05), transparent 30%),
+                radial-gradient(circle at 90% 60%, rgba(225, 29, 72, 0.05), transparent 30%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 25px; margin-top: 10px; position: relative;}
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #e11d48);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; 
+            min-width: 320px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; 
+            padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        #three-container {
+            width: 100%; height: 450px; min-height: 350px;
+            border-radius: 12px; overflow: hidden;
+            background: #0a0505;
+            border: 1px solid rgba(245, 158, 11, 0.08);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(245, 158, 11, 0.2); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 18px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #fbbf24; }
+
+        .data-display { 
+            background: rgba(15, 5, 5, 0.8); 
+            padding: 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600;}
+        .data-value { color: var(--text-main); font-weight: bold; }
+        
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px;}
+        .lab-action-btn { background: linear-gradient(135deg, #f59e0b, #d97706); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #fbbf24, #ea580c); }
+        
+        .btn-primary, .btn-secondary, .btn-launch { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #e11d48, #be123c); box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5); }
+        .btn-launch { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-launch:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #1e293b, #0f172a); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #334155, #1e293b); }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(30, 15, 15, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(245, 158, 11, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #e11d48, #9f1239); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(225, 29, 72, 0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #10b981, #059669); border-color: #10b981; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(245, 158, 11, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(16,185,129,0); } }
+
+        footer {
+            width: 100%;
+            background: rgba(15, 5, 5, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(20, 10, 10, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(245,158,11,0.9), rgba(225,29,72,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(40, 20, 20, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #f59e0b, #d97706); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(15, 5, 5, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(30, 15, 15, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px var(--primary-glow); background: rgba(30, 15, 15, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #f59e0b, #e11d48); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(30, 15, 15, 0.95), rgba(10, 5, 5, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(245, 158, 11, 0.3); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; max-height: 60vh; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #f59e0b; flex-shrink: 0; cursor: pointer; }
+
+        .canvas-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; padding: 0; border-radius: 0; background: #0a0505;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%; height: 100%; max-height: none; border-radius: 0; min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 40px;
+            backdrop-filter: blur(8px); display: flex; gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover { background: rgba(255,255,255,0.2); }
+        .fullscreen-mode header, .fullscreen-mode .controls-panel, .fullscreen-mode .info-section,
+        .fullscreen-mode footer, .fullscreen-mode .language-selector, .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab { display: none !important; }
+        .fullscreen-mode .container { max-width: 100%; padding: 0; margin: 0; }
+        .fullscreen-mode .sim-container { margin: 0; gap: 0; }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top:20px;}
+            #three-container { min-height: 300px; height: 350px; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.9rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>📐 Inclined Plane Lab</h1>
+            <p class="subtitle">Explore Friction, Forces, Free Body Diagrams & Acceleration</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container" id="canvasContainer">
+                <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+                <div class="canvas-controls">
+                    <button id="launchBtn" class="btn-launch" onclick="launchUp()">🚀 Launch UP</button>
+                    <button id="releaseBtn" class="btn-primary" onclick="releaseDown()">↘️ Release DOWN</button>
+                    <button id="fbdBtn" class="btn-secondary" onclick="toggleFBD()">📊 Toggle FBD</button>
+                    <button id="resetBtn" class="btn-secondary" onclick="resetBlock()">🔄 Reset</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                </div>
+            </div>
+
+            <div class="controls-panel" id="controlsPanel">
+                <div class="slider-container">
+                    <label>📐 Incline Angle (θ): <span id="angleValue">30°</span></label>
+                    <input type="range" id="angleSlider" min="0" max="80" step="1" value="30" oninput="updateParams()">
+                </div>
+                <div class="slider-container">
+                    <label>⚖️ Mass (m): <span id="massValue">2.0 kg</span></label>
+                    <input type="range" id="massSlider" min="1.0" max="20.0" step="0.5" value="2.0" oninput="updateParams()">
+                </div>
+                <div class="slider-container">
+                    <label>🔧 Coeff. of Friction (μ): <span id="frictionValue">0.30</span></label>
+                    <input type="range" id="frictionSlider" min="0" max="1.0" step="0.05" value="0.30" oninput="updateParams()">
+                </div>
+                <div class="slider-container">
+                    <label>🚀 Launch Speed (m/s): <span id="launchValue">15.0</span></label>
+                    <input type="range" id="launchSlider" min="5.0" max="30.0" step="1.0" value="15.0" oninput="updateLaunchVal()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Parallel Force (mg sin θ):</span><span id="parallelValue" class="data-value" style="color: var(--primary);">--- N</span></div>
+                    <div class="data-row"><span>Active Friction (f):</span><span id="frictionForceValue" class="data-value" style="color: var(--secondary);">--- N</span></div>
+                    <div class="data-row"><span>Net Force (F_net):</span><span id="netForceValue" class="data-value" style="color: #10b981;">--- N</span></div>
+                    <div class="data-row"><span>Acceleration (a):</span><span id="accelValue" class="data-value">--- m/s²</span></div>
+                    <div class="data-row"><span>Motion Status:</span><span id="motionStatus" class="data-value">At Rest</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">📐 <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> Physics AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages">
+                <div class="ai-message bot">
+                    <div class="ai-message-icon">🤖</div>
+                    <div class="ai-message-content">📐 **Adusei AI Tutor Activated.**<br><br>I can help you with inclined planes, friction, normal force, and WAEC questions. Try asking:<br>• "Explain normal force"<br>• "Show me WAEC questions on inclined planes"<br>• "What is the critical angle?"</div>
+                </div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about friction, normal force..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ─── Three.js & add-ons ─── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. INCLINED PLANE ENGINE – 3D VERSION
+    // ─────────────────────────────────────────────────────────────
+
+    const GRAVITY = 9.81;
+    let angle = 30, mass = 2.0, mu = 0.30, launchSpeed = 15.0;
+    let position = 0.5; // start position in meters along the ramp
+    let velocity = 0;
+    let isSimulating = false, showFBD = true;
+    let userStats = { configurations: 0, quizScores: [] };
+    const RAMP_LENGTH = 5.0;
+    const BLOCK_SIZE = 0.5;
+
+    // ─── Three.js globals ───
+    let scene, camera, renderer, cssRenderer, controls;
+    let planeGroup;
+    let container = document.getElementById('three-container');
+    let threeReady = false;
+    let lastTime = 0;
+    let animFrameId = null;
+
+    // ─── Init Three.js ───
+    function initThree() {
+        try {
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js library not loaded. Check your internet connection.');
+            }
+
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 800;
+            const height = rect.height || container.clientHeight || 450;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0505);
+
+            camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+            camera.position.set(4, 3, 6);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            cssRenderer = new THREE.CSS2DRenderer();
+            cssRenderer.setSize(width, height);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            container.style.position = 'relative';
+            container.appendChild(cssRenderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambient);
+            const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+            scene.add(hemi);
+            const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 30;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+            const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+
+            // Grid helper (subtle)
+            const gridHelper = new THREE.GridHelper(8, 8, 0x2a1515, 0x1a0a0a);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Axis line
+            const axisMat = new THREE.LineBasicMaterial({ color: 0x4a2a2a, transparent: true, opacity: 0.2 });
+            const axisPts = [new THREE.Vector3(-4, 0, 0), new THREE.Vector3(4, 0, 0)];
+            const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+            const axisLine = new THREE.Line(axisGeo, axisMat);
+            scene.add(axisLine);
+
+            planeGroup = new THREE.Group();
+            scene.add(planeGroup);
+
+            threeReady = true;
+            window.addEventListener('resize', onResize);
+            onResize();
+
+            // Start the main loop
+            lastTime = performance.now();
+            mainLoop();
+        } catch (e) {
+            container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+            console.error(e);
+        }
+    }
+
+    function onResize() {
+        if (!threeReady) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || container.clientWidth || 800;
+        const h = rect.height || container.clientHeight || 450;
+        if (w === 0 || h === 0) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        cssRenderer.setSize(w, h);
+    }
+
+    function mainLoop() {
+        animFrameId = requestAnimationFrame(mainLoop);
+        if (!threeReady) return;
+
+        const now = performance.now();
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+
+        // Physics update
+        if (isSimulating) {
+            const forces = calculateForces();
+            velocity += forces.acceleration * dt;
+            position += velocity * dt * 0.8;
+
+            if (position >= RAMP_LENGTH - BLOCK_SIZE) {
+                position = RAMP_LENGTH - BLOCK_SIZE;
+                velocity = 0;
+                isSimulating = false;
+                enableButtons();
+            }
+            if (position <= BLOCK_SIZE) {
+                position = BLOCK_SIZE;
+                velocity = 0;
+                isSimulating = false;
+                enableButtons();
+            }
+            if (Math.abs(velocity) < 0.01 && forces.netForce === 0) {
+                velocity = 0;
+                isSimulating = false;
+                enableButtons();
+            }
+            // Update data display
+            updateDataDisplay(forces);
+        }
+
+        // Rebuild scene
+        buildPlaneScene();
+
+        controls.update();
+        renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
+    }
+
+    // ─── Clear group ───
+    function clearGroup(group) {
+        while(group.children.length > 0) {
+            const child = group.children[0];
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            group.remove(child);
+        }
+    }
+
+    // ─── Create CSS2D label ───
+    function createLabel(text, color = '#ffffff', fontSize = '16px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.color = color;
+        div.style.fontFamily = 'Arial, sans-serif';
+        div.style.fontSize = fontSize;
+        div.style.fontWeight = 'bold';
+        div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+        div.style.padding = '4px 10px';
+        div.style.background = bg;
+        div.style.borderRadius = '6px';
+        div.style.border = '1px solid rgba(255,255,255,0.05)';
+        div.style.backdropFilter = 'blur(4px)';
+        div.style.pointerEvents = 'none';
+        const label = new THREE.CSS2DObject(div);
+        label.position.copy(position);
+        return label;
+    }
+
+    // ─── Physics calculations ───
+    function calculateForces() {
+        let theta = angle * (Math.PI / 180);
+        let weight = mass * GRAVITY;
+        let normalForce = weight * Math.cos(theta);
+        let gravityParallel = weight * Math.sin(theta);
+        let maxFriction = mu * normalForce;
+        let activeFriction = 0;
+        let netForce = 0;
+        let statusText = "At Rest";
+
+        if (velocity > 0.05) {
+            activeFriction = maxFriction;
+            netForce = -gravityParallel - activeFriction;
+            statusText = "Sliding UP";
+        } else if (velocity < -0.05) {
+            activeFriction = -maxFriction;
+            netForce = -gravityParallel - activeFriction;
+            statusText = "Sliding DOWN";
+        } else {
+            if (gravityParallel > maxFriction) {
+                activeFriction = -maxFriction;
+                netForce = -gravityParallel - activeFriction;
+                statusText = "Sliding DOWN";
+            } else {
+                activeFriction = -gravityParallel;
+                netForce = 0;
+                velocity = 0;
+                statusText = angle === 0 ? "Flat Surface" : "Held by Friction";
+            }
+        }
+
+        let acceleration = netForce / mass;
+        return { weight, normalForce, gravityParallel, maxFriction, activeFriction, netForce, acceleration, statusText };
+    }
+
+    function updateDataDisplay(forces) {
+        document.getElementById('parallelValue').textContent = forces.gravityParallel.toFixed(1) + ' N';
+        document.getElementById('frictionForceValue').textContent = Math.abs(forces.activeFriction).toFixed(1) + ' N';
+        document.getElementById('netForceValue').textContent = Math.abs(forces.netForce).toFixed(1) + ' N';
+        document.getElementById('accelValue').textContent = Math.abs(forces.acceleration).toFixed(2) + ' m/s²';
+
+        const statusEl = document.getElementById('motionStatus');
+        statusEl.textContent = forces.statusText;
+        statusEl.style.color = Math.abs(forces.netForce) > 0 ? '#e11d48' : '#10b981';
+    }
+
+    function updateLaunchVal() {
+        launchSpeed = parseFloat(document.getElementById('launchSlider').value);
+        document.getElementById('launchValue').textContent = launchSpeed.toFixed(1);
+    }
+
+    function updateParams() {
+        angle = parseFloat(document.getElementById('angleSlider').value);
+        mass = parseFloat(document.getElementById('massSlider').value);
+        mu = parseFloat(document.getElementById('frictionSlider').value);
+
+        document.getElementById('angleValue').textContent = angle + '°';
+        document.getElementById('massValue').textContent = mass.toFixed(1) + ' kg';
+        document.getElementById('frictionValue').textContent = mu.toFixed(2);
+
+        userStats.configurations++;
+        const forces = calculateForces();
+        updateDataDisplay(forces);
+        // Scene will rebuild in the main loop
+    }
+
+    function toggleFBD() { showFBD = !showFBD; }
+
+    function launchUp() {
+        if (isSimulating) return;
+        position = BLOCK_SIZE;
+        velocity = launchSpeed;
+        isSimulating = true;
+        disableButtons();
+    }
+
+    function releaseDown() {
+        if (isSimulating) return;
+        let forces = calculateForces();
+        if (forces.gravityParallel <= forces.maxFriction) {
+            if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+            addAIMessage(`⚠️ **Static Friction is too high!**\n\nThe parallel force (${forces.gravityParallel.toFixed(1)} N) is not strong enough to overcome maximum static friction (${forces.maxFriction.toFixed(1)} N). \n\n*Try increasing the angle or lowering the friction!*`, false);
+            return;
+        }
+        position = RAMP_LENGTH - BLOCK_SIZE;
+        velocity = 0;
+        isSimulating = true;
+        disableButtons();
+    }
+
+    function resetBlock() {
+        isSimulating = false;
+        position = BLOCK_SIZE;
+        velocity = 0;
+        enableButtons();
+        updateParams();
+    }
+
+    function disableButtons() {
+        document.getElementById('launchBtn').disabled = true;
+        document.getElementById('releaseBtn').disabled = true;
+        document.getElementById('launchBtn').style.opacity = '0.5';
+        document.getElementById('releaseBtn').style.opacity = '0.5';
+    }
+
+    function enableButtons() {
+        document.getElementById('launchBtn').disabled = false;
+        document.getElementById('releaseBtn').disabled = false;
+        document.getElementById('launchBtn').style.opacity = '1';
+        document.getElementById('releaseBtn').style.opacity = '1';
+    }
+
+    // ─── Build 3D inclined plane scene ───
+    function buildPlaneScene() {
+        clearGroup(planeGroup);
+        if (!threeReady) return;
+
+        const theta = angle * Math.PI / 180;
+        const hingeX = -2.5;
+        const hingeY = 0;
+        const rampLength = RAMP_LENGTH;
+        const rampWidth = 0.8;
+        const rampThickness = 0.05;
+
+        const topX = hingeX + rampLength * Math.cos(theta);
+        const topY = hingeY - rampLength * Math.sin(theta);
+
+        // ─── Ramp (top surface) ───
+        const rampMat = new THREE.MeshStandardMaterial({
+            color: 0x4a2a2a,
+            metalness: 0.1,
+            roughness: 0.8,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const rampMesh = new THREE.Mesh(new THREE.BoxGeometry(rampLength, rampThickness, rampWidth), rampMat);
+        const midX = (hingeX + topX) / 2;
+        const midY = (hingeY + topY) / 2;
+        rampMesh.position.set(midX, midY, 0);
+        rampMesh.rotation.z = -theta;
+        rampMesh.castShadow = true;
+        planeGroup.add(rampMesh);
+
+        // ─── Ramp edges ───
+        const edgeMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.2 });
+        const edgePts = [
+            new THREE.Vector3(hingeX, hingeY, 0),
+            new THREE.Vector3(topX, topY, 0)
+        ];
+        const edgeGeo = new THREE.BufferGeometry().setFromPoints(edgePts);
+        const edgeLine = new THREE.Line(edgeGeo, edgeMat);
+        planeGroup.add(edgeLine);
+
+        // ─── Hinge point ───
+        const hingeMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+        const hingeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), hingeMat);
+        hingeSphere.position.set(hingeX, hingeY, 0);
+        planeGroup.add(hingeSphere);
+
+        // ─── Angle arc ───
+        if (angle > 0) {
+            const arcPoints = [];
+            const arcRadius = 0.6;
+            const segments = 30;
+            for (let i = 0; i <= segments; i++) {
+                const a = (i / segments) * theta;
+                const x = hingeX + arcRadius * Math.cos(a);
+                const y = hingeY - arcRadius * Math.sin(a);
+                arcPoints.push(new THREE.Vector3(x, y, 0));
+            }
+            const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPoints);
+            const arcMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.3 });
+            const angleArc = new THREE.Line(arcGeo, arcMat);
+            planeGroup.add(angleArc);
+            // Angle label
+            const angleLabel = createLabel(`${angle}°`, '#f8fafc', '14px', new THREE.Vector3(hingeX + 0.4, hingeY - 0.4, 0));
+            planeGroup.add(angleLabel);
+        }
+
+        // ─── Block ───
+        const blockPos = hingeX + position * Math.cos(theta);
+        const blockY = hingeY - position * Math.sin(theta);
+        const blockMat = new THREE.MeshStandardMaterial({
+            color: 0xf59e0b,
+            emissive: 0xe11d48,
+            emissiveIntensity: 0.05,
+            metalness: 0.3,
+            roughness: 0.4
+        });
+        const blockSize = BLOCK_SIZE;
+        const blockMesh = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockSize, blockSize), blockMat);
+        blockMesh.position.set(blockPos, blockY + blockSize/2 * Math.cos(theta), 0);
+        blockMesh.rotation.z = -theta;
+        blockMesh.castShadow = true;
+        planeGroup.add(blockMesh);
+
+        // Block label
+        const blockLabel = createLabel(`${mass.toFixed(1)} kg`, '#ffffff', '14px', new THREE.Vector3(blockPos, blockY + blockSize * Math.cos(theta) + 0.15, 0));
+        planeGroup.add(blockLabel);
+
+        // ─── Force vectors (FBD) ───
+        if (showFBD) {
+            const forces = calculateForces();
+            const scale = 0.015;
+
+            // Normal force (green) - perpendicular to surface
+            const normalMag = forces.normalForce;
+            const normalDir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0);
+            const origin = new THREE.Vector3(blockPos, blockY, 0);
+            if (normalMag > 0.1) {
+                const normalArrow = new THREE.ArrowHelper(normalDir, origin, normalMag * scale, 0x10b981, 0.15, 0.1);
+                planeGroup.add(normalArrow);
+                const normalEnd = origin.clone().add(normalDir.clone().multiplyScalar(normalMag * scale));
+                const normalLabel = createLabel(`N = ${normalMag.toFixed(1)} N`, '#10b981', '14px', normalEnd.clone().add(new THREE.Vector3(0.2, 0.2, 0)));
+                planeGroup.add(normalLabel);
+            }
+
+            // Weight (blue) - straight down
+            const weightMag = forces.weight;
+            const weightDir = new THREE.Vector3(0, -1, 0);
+            const weightArrow = new THREE.ArrowHelper(weightDir, origin, weightMag * scale, 0x3b82f6, 0.15, 0.1);
+            planeGroup.add(weightArrow);
+            const weightEnd = origin.clone().add(weightDir.clone().multiplyScalar(weightMag * scale));
+            const weightLabel = createLabel(`mg = ${weightMag.toFixed(1)} N`, '#3b82f6', '14px', weightEnd.clone().add(new THREE.Vector3(-0.2, -0.2, 0)));
+            planeGroup.add(weightLabel);
+
+            // Friction (red) - along surface
+            if (Math.abs(forces.activeFriction) > 0.1) {
+                const fricMag = Math.abs(forces.activeFriction);
+                const fricDir = new THREE.Vector3(-Math.cos(theta), Math.sin(theta), 0);
+                if (forces.activeFriction > 0) fricDir.multiplyScalar(-1);
+                const fricArrow = new THREE.ArrowHelper(fricDir, origin, fricMag * scale, 0xef4444, 0.15, 0.1);
+                planeGroup.add(fricArrow);
+                const fricEnd = origin.clone().add(fricDir.clone().multiplyScalar(fricMag * scale));
+                const fricLabel = createLabel(`f = ${fricMag.toFixed(1)} N`, '#ef4444', '14px', fricEnd.clone().add(new THREE.Vector3(0, -0.2, 0)));
+                planeGroup.add(fricLabel);
+            }
+
+            // Parallel component (mg sin θ) - along surface
+            const parallelMag = forces.gravityParallel;
+            if (parallelMag > 0.1) {
+                const parallelDir = new THREE.Vector3(Math.cos(theta), -Math.sin(theta), 0);
+                const parallelArrow = new THREE.ArrowHelper(parallelDir, origin, parallelMag * scale, 0xf59e0b, 0.15, 0.1);
+                planeGroup.add(parallelArrow);
+                const parallelEnd = origin.clone().add(parallelDir.clone().multiplyScalar(parallelMag * scale));
+                const parallelLabel = createLabel(`mg sinθ = ${parallelMag.toFixed(1)} N`, '#f59e0b', '14px', parallelEnd.clone().add(new THREE.Vector3(0.2, -0.2, 0)));
+                planeGroup.add(parallelLabel);
+            }
+        }
+
+        // ─── Status label above the block ───
+        const statusText = document.getElementById('motionStatus').textContent;
+        const statusColor = statusText === 'At Rest' ? '#10b981' : '#e11d48';
+        const statusLabel = createLabel(`⚡ ${statusText}`, statusColor, '18px', new THREE.Vector3(blockPos, blockY + blockSize * Math.cos(theta) + 0.6, 0));
+        planeGroup.add(statusLabel);
+    }
+
+    // ─── Fullscreen toggle ───
+    function toggleFullscreen() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            container.classList.add('fullscreen');
+            main.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI SYSTEM – (unchanged from original)
+    // ─────────────────────────────────────────────────────────────
+
+    let currentLang = 'english';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+        const labels = {
+            english: { quiz: '📝 Take Quiz', pred: '🔮 AI Analytics', exp: '🧪 Experiment' },
+            twi: { quiz: '📝 Yɛ Nsɔhwɛ', pred: '🔮 AI Nkɔmhyɛ', exp: '🧪 Yɛ Nhwehwɛmu' },
+            ga: { quiz: '📝 Feemɔ Kaamɔ', pred: '🔮 AI Kɔkɔbɔ', exp: '🧪 Feemɔ Nitsumɔ' },
+            ewe: { quiz: '📝 Wɔ Dodokpɔ', pred: '🔮 AI Nyagbɔgblɔɖi', exp: '🧪 Wɔ Dodokpɔ' },
+            dagbani: { quiz: '📝 Niŋ Dahimbu', pred: '🔮 AI Baŋsim', exp: '🧪 Niŋ Niŋsim' }
+        };
+        const l = labels[lang] || labels.english;
+        document.getElementById('btnQuiz').innerHTML = l.quiz;
+        document.getElementById('btnPred').innerHTML = l.pred;
+        document.getElementById('btnExp').innerHTML = l.exp;
+
+        const placeholders = {
+            english: 'Ask about friction, normal force...',
+            twi: 'Bisa physics asɛm biara...',
+            ga: 'Bi lɛɛlɛŋ sane...',
+            ewe: 'Bia nya...',
+            dagbani: 'Bɔhi yɛltɔɣa...'
+        };
+        document.getElementById('aiInput').placeholder = placeholders[lang] || placeholders.english;
+    }
+
+    function toggleAI() {
+        const aiWindow = document.getElementById('aiAssistant');
+        aiWindow.classList.toggle('active');
+        if (aiWindow.classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+
+    function addAIMessage(msg, isUser = false) {
+        const container = document.getElementById('aiMessages');
+        let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+        const container = document.getElementById('aiMessages');
+        const typing = document.createElement('div');
+        typing.className = 'ai-message bot';
+        typing.id = 'typingIndicator';
+        typing.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+        container.appendChild(typing);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput');
+        const q = input.value.trim();
+        if (!q) return;
+
+        addAIMessage(q, true);
+        input.value = '';
+        showTyping();
+
+        await new Promise(r => setTimeout(r, 600));
+        removeTyping();
+
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse(q, 'inclined-plane');
+        } else {
+            response = "⚠️ AI content is still loading. Please try again in a moment.";
+        }
+
+        addAIMessage(response, false);
+        speakAI(response);
+    }
+
+    function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+            clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB';
+            utterance.rate = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) {
+            recognition?.stop();
+            btn.classList.remove('listening');
+            btn.innerHTML = '🎤';
+            addAIMessage("🎤 Voice control stopped.", false);
+            isListening = false;
+        } else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH';
+            recognition.onstart = () => {
+                btn.classList.add('listening');
+                btn.innerHTML = '🔴';
+                addAIMessage("🎤 Voice control active! Say a command...", false);
+                isListening = true;
+            };
+            recognition.onresult = (e) => {
+                const cmd = e.results[0][0].transcript;
+                if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true);
+                let response;
+                if (typeof getAIResponse === 'function') {
+                    response = getAIResponse(cmd, 'inclined-plane');
+                } else {
+                    response = "⚠️ AI content is loading. Please try again.";
+                }
+                addAIMessage(response, false);
+                speakAI(response);
+            };
+            recognition.onerror = () => {
+                btn.classList.remove('listening');
+                btn.innerHTML = '🎤';
+                addAIMessage("🎤 Voice error. Please try again.", false);
+                isListening = false;
+            };
+            recognition.start();
+        }
+    }
+
+    function showModal(htmlContent) {
+        document.getElementById('modalContent').innerHTML = htmlContent;
+        document.getElementById('generalModal').classList.add('active');
+    }
+    function closeModal() {
+        document.getElementById('generalModal').classList.remove('active');
+    }
+
+    const inclinedPlaneQuiz = [
+        {q: "Which component of gravity causes the block to slide down the incline?", o: ["mg cos(θ)", "mg sin(θ)", "Normal Force", "Friction"], a: "mg sin(θ)"},
+        {q: "What is the formula for the Normal Force (N) on an inclined plane?", o: ["N = mg", "N = mg sin(θ)", "N = mg cos(θ)", "N = μmg"], a: "N = mg cos(θ)"},
+        {q: "If the angle of the incline increases, what happens to the Normal Force?", o: ["It increases", "It decreases", "It stays the same", "It becomes zero immediately"], a: "It decreases"},
+        {q: "If the parallel force is 20N and the maximum static friction is 30N, what is the net force on the block?", o: ["-10N", "10N", "0N", "50N"], a: "0N"},
+        {q: "At the 'Critical Angle' where the block just begins to slip, which mathematical relationship is true?", o: ["sin(θ) = μ", "cos(θ) = μ", "tan(θ) = μ", "mg = μ"], a: "tan(θ) = μ"},
+        {q: "Does changing the mass of the block affect its final acceleration if it is sliding?", o: ["Yes, heavier objects accelerate faster", "Yes, lighter objects accelerate faster", "No, mass cancels out in the acceleration equation", "Only if friction is zero"], a: "No, mass cancels out in the acceleration equation"},
+        {q: "Friction always acts in which direction?", o: ["Down the incline", "Up the incline", "Perpendicular to the surface", "Opposite to the direction of impending motion"], a: "Opposite to the direction of impending motion"},
+        {q: "What happens to the parallel component of gravity if the angle is 0 degrees?", o: ["It is maximum", "It is zero", "It equals the normal force", "It equals mg"], a: "It is zero"},
+        {q: "Which force is mathematically defined as μ * Normal Force?", o: ["Gravitational Force", "Parallel Force", "Frictional Force", "Net Force"], a: "Frictional Force"},
+        {q: "If a block is sliding down the ramp at a constant velocity, what must be true?", o: ["Friction is zero", "Net Force is positive", "Net force is exactly zero", "There is no gravity"], a: "Net force is exactly zero"}
+    ];
+
+    function showQuiz() {
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                <h2 style="color:white; margin:0;">📝 Inclined Plane Quiz</h2>
+                <span style="background:#f59e0b; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">10 Questions</span>
+            </div>
+            <div class="modal-scroll">
+        `;
+        inclinedPlaneQuiz.forEach((item, index) => {
+            html += `
+            <div class="quiz-question">
+                <p><strong>${index + 1}. ${item.q}</strong></p>
+                ${item.o.map(opt => `
+                    <label><input type="radio" name="q${index}" value="${opt}"><span>${opt}</span></label>
+                `).join('')}
+            </div>`;
+        });
+        html += `
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.06);">
+                <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+            </div>
+        `;
+        showModal(html);
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        inclinedPlaneQuiz.forEach((item, index) => {
+            const ans = document.querySelector(`input[name="q${index}"]:checked`);
+            if (ans && ans.value === item.a) score += 10;
+        });
+        userStats.quizScores.push(score);
+        showModal(`
+            <div style="text-align:center; padding: 30px 10px;">
+                <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #f59e0b, #e11d48); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(245,158,11,0.3); margin-bottom:10px; line-height:1;">${score}%</div>
+                <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Completed!</h3>
+                <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+            </div>
+        `);
+    }
+
+    function showPrediction() {
+        let avgQuiz = 0;
+        if (userStats.quizScores.length > 0) {
+            const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+            avgQuiz = sum / userStats.quizScores.length;
+        }
+        let labScore = Math.min(100, userStats.configurations * 4);
+        let overallScore = (avgQuiz > 0) ? Math.round((labScore * 0.4) + (avgQuiz * 0.6)) : labScore;
+        let txt = overallScore >= 80 ? "Outstanding! Your combined lab interactions and quiz results demonstrate deep mastery of physics." :
+                  overallScore >= 50 ? "Good progress! Keep adjusting the angle and friction to observe acceleration changes." :
+                  "Just getting started! Use the sliders to change values and observe the live calculations, then try the 10-question quiz.";
+
+        showModal(`
+            <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">🔮 AI Mastery Prediction</h2>
+            <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                <div><div style="font-size:2.5rem; font-weight:bold; color:#f59e0b;">${userStats.configurations}</div><div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">System Inputs</div></div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div><div style="font-size:2.5rem; font-weight:bold; color:#e11d48;">${Math.round(avgQuiz)}%</div><div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Average</div></div>
+            </div>
+            <div style="text-align:center; margin:20px 0;">
+                <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery</div>
+                <div style="font-size:5rem; font-weight:900; color:#f59e0b; text-shadow: 0 10px 30px rgba(245, 158, 11, 0.4); line-height:1;">${overallScore}%</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #f59e0b; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+            </div>
+            <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+        `);
+    }
+
+    function showExperiment() {
+        let response;
+        if (typeof getAIResponse === 'function') {
+            response = getAIResponse("Give me an experiment on inclined planes", 'inclined-plane');
+        } else {
+            response = "🧪 **Custom AI Experiment:**\n\nSet the angle to 30° and μ to 0.1. Release the block and watch the acceleration. Now, Reset, change mass from 2kg to 10kg, and release again. Does acceleration change? (Hint: The FBD arrows get bigger, but the ratio stays the same!)";
+        }
+        addAIMessage(response, false);
+        if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.onload = () => {
+        initThree();
+        setTimeout(() => {
+            resetBlock();
+            setLanguage('english');
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        }, 300);
+    };
+    </script>
+
+    <script src="/js/ai-content.js"></script>
+    <script src="/js/global.js"></script>
+</body>
+</html>

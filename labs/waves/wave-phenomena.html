@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wave Phenomena Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+        /* ─── all original styles, with modifications for 3D container ─── */
+        :root {
+            --bg-color: #0a0a0f;
+            --bg-gradient-1: rgba(107, 114, 128, 0.06);
+            --bg-gradient-2: rgba(129, 140, 248, 0.06);
+            --glass-bg: rgba(16, 16, 20, 0.55);
+            --glass-blur: 24px;
+            --glass-blur-light: 16px;
+            --glass-border: rgba(107, 114, 128, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.03);
+            --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --primary: #6b7280;
+            --primary-glow: rgba(107, 114, 128, 0.4);
+            --secondary: #818cf8;
+            --secondary-glow: rgba(129, 140, 248, 0.4);
+            --accent: #9ca3af;
+            --accent-glow: rgba(156, 163, 175, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --highlight: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 40%, var(--bg-gradient-1), transparent 30%),
+                radial-gradient(circle at 90% 60%, var(--bg-gradient-2), transparent 30%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 28px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        h1 {
+            font-size: 2.8rem; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #6b7280, #818cf8, #9ca3af);
+            background-size: 200% auto;
+            color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(16, 16, 20, 0.7); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; box-shadow: var(--glass-inner-shadow); }
+        .lang-btn:hover { color: white; border-color: rgba(129, 140, 248, 0.4); transform: translateY(-2px); }
+        .lang-btn.active { background: rgba(129, 140, 248, 0.18); border-color: var(--secondary); color: var(--highlight); box-shadow: 0 0 20px var(--secondary-glow), var(--glass-inner-shadow); }
+
+        .wavephen-mode-selector { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .wavephen-mode-btn { background: rgba(16, 16, 20, 0.6); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); padding: 12px 28px; border-radius: 40px; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.95rem; box-shadow: var(--glass-inner-shadow); }
+        .wavephen-mode-btn:hover { color: white; border-color: rgba(129, 140, 248, 0.4); transform: translateY(-2px); }
+        .wavephen-mode-btn.active { background: linear-gradient(135deg, #6b7280, #818cf8); color: white; border-color: transparent; box-shadow: 0 4px 20px var(--secondary-glow), var(--glass-inner-shadow); }
+
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; }
+        .canvas-container, .controls-panel {
+            flex: 1; min-width: 320px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: 24px; padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .canvas-container:hover, .controls-panel:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        .canvas-container::before, .controls-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+            pointer-events: none; border-radius: 24px 24px 0 0;
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        /* ─── 3D container ─── */
+        #three-container {
+            width: 100%; height: 500px; min-height: 400px; max-height: 520px;
+            border-radius: 16px; overflow: hidden;
+            background: #0a0a0f;
+            border: 1px solid rgba(129,140,248,0.08);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container:hover { border-color: rgba(129,140,248,0.2); }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 22px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--secondary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 8px var(--secondary-glow); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--secondary); cursor: pointer; margin-top: -7px; box-shadow: 0 0 15px var(--secondary-glow), 0 2px 8px rgba(0,0,0,0.4); transition: 0.2s; border: 2px solid rgba(255,255,255,0.15); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #a5b4fc; }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0,0,0,0.5); border-radius: 10px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: var(--secondary); cursor: pointer; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px var(--secondary-glow); }
+
+        .data-display { background: rgba(8, 8, 12, 0.7); backdrop-filter: blur(8px); padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.5), var(--glass-inner-shadow); }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600; }
+        .data-value { color: var(--highlight); font-weight: bold; text-shadow: 0 0 10px var(--secondary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .lab-action-btn {
+            background: linear-gradient(135deg, #6b7280, #818cf8);
+            border: 1px solid rgba(255,255,255,0.12); padding: 12px 24px; border-radius: 30px;
+            color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 4px 20px var(--secondary-glow), var(--glass-inner-shadow);
+        }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--secondary-glow); background: linear-gradient(135deg, #9ca3af, #a5b4fc); }
+
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); }
+        .btn-primary { background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 4px 20px rgba(107,114,128,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(107,114,128,0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #374151, #1f2937); box-shadow: var(--glass-inner-shadow); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #4b5563, #374151); }
+
+        .info-section { max-width: 1250px; margin: 0 auto 40px auto; padding: 0 20px; }
+        details { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px 25px; box-shadow: var(--glass-shadow), var(--glass-inner-shadow); transition: box-shadow 0.3s; }
+        details:hover { box-shadow: var(--glass-shadow), 0 0 30px var(--secondary-glow), var(--glass-inner-shadow); }
+        summary { font-size: 1.2rem; font-weight: 700; color: var(--secondary); cursor: pointer; outline: none; list-style: none; display: flex; align-items: center; user-select: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '►'; margin-right: 15px; font-size: 0.9rem; transition: transform 0.3s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .theory-content { margin-top: 20px; color: var(--text-muted); line-height: 1.8; font-size: 1.05rem; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .distinction-box { background: rgba(129,140,248,0.08); backdrop-filter: blur(4px); border-left: 4px solid var(--secondary); padding: 15px 20px; border-radius: 12px; margin-top: 15px; box-shadow: var(--glass-inner-shadow); }
+        .distinction-box strong { color: white; }
+
+        footer { width: 100%; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur-light)); border-top: 1px solid var(--glass-border); padding: 40px 20px 100px 20px; text-align: center; color: var(--text-muted); box-sizing: border-box; margin-top: 40px; box-shadow: var(--glass-inner-shadow); }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem; }
+        footer .brand span { color: var(--secondary); text-shadow: 0 0 15px var(--secondary-glow); }
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glass-inner-shadow);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 30px rgba(16,185,129,0.4), var(--glass-inner-shadow); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 40px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #6b7280, #818cf8); font-size: 2.2rem; box-shadow: 0 8px 30px rgba(129,140,248,0.4), var(--glass-inner-shadow); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 40px rgba(129,140,248,0.6); }
+        @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7), var(--glass-inner-shadow); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0), var(--glass-inner-shadow); } }
+
+        .ai-window {
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px);
+            height: 600px; max-height: calc(100vh - 140px);
+            background: rgba(8, 8, 12, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 28px; overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), var(--glass-inner-shadow);
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            border: 1px solid var(--glass-border);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+        .ai-header { background: linear-gradient(135deg, rgba(107,114,128,0.9), rgba(129,140,248,0.9)); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(6px); color: white; padding: 3px 12px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; transition: 0.3s; opacity: 0.8; }
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1; }
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 5px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(129,140,248,0.3); border-radius: 10px; }
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19,1,0.22,1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { background: rgba(16, 16, 20, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .ai-message.user .ai-message-content { background: linear-gradient(135deg, #6b7280, #818cf8); border: none; color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(129,140,248,0.3); }
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(8,8,12,0.9); border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+        .ai-input-area input { flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); background: rgba(16,16,20,0.6); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+        .ai-input-area input:focus { border-color: var(--secondary); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 20px var(--secondary-glow); background: rgba(16,16,20,0.9); }
+        .ai-input-area input::placeholder { color: #6b7280; }
+        .ai-input-area button { background: linear-gradient(135deg, #6b7280, #818cf8); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 20px var(--secondary-glow); flex-shrink: 0; }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-12deg); }
+        .ai-typing { display: flex; gap: 5px; padding: 6px 0; }
+        .ai-typing span { width: 8px; height: 8px; background: white; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        .ai-disclaimer { padding: 8px 20px 14px 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s; padding: 20px; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: linear-gradient(135deg, rgba(16,16,20,0.95), rgba(8,8,12,0.95)); backdrop-filter: blur(30px); border-radius: 32px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: hidden; padding: 32px; border: 1px solid rgba(129,140,248,0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.7), var(--glass-inner-shadow); transform: translateY(20px) scale(0.95); transition: 0.4s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; }
+        .modal-scroll::-webkit-scrollbar { width: 5px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(129,140,248,0.3); border-radius: 10px; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question:hover { border-color: rgba(129,140,248,0.15); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(129,140,248,0.08); border-color: rgba(129,140,248,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #818cf8; flex-shrink: 0; cursor: pointer; }
+        .result-item { margin: 12px 0; padding: 15px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; border-left: 3px solid var(--secondary); }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            padding: 0;
+            border-radius: 0;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            border-radius: 0;
+            min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 12px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            display: flex;
+            gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .fullscreen-mode header,
+        .fullscreen-mode .controls-panel,
+        .fullscreen-mode .info-section,
+        .fullscreen-mode footer,
+        .fullscreen-mode .language-selector,
+        .fullscreen-mode .wavephen-mode-selector,
+        .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab {
+            display: none !important;
+        }
+        .fullscreen-mode .container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .fullscreen-mode .sim-container {
+            margin: 0;
+            gap: 0;
+        }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.4rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            .wavephen-mode-btn { padding: 10px 18px; font-size: 0.8rem; }
+            #three-container { min-height: 320px; max-height: 380px; height: 380px; }
+            .canvas-container, .controls-panel { min-width: 280px; padding: 18px; }
+            .modal-content { padding: 22px; max-height: 90vh; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .wavephen-mode-btn { padding: 8px 14px; font-size: 0.75rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>🌈 Wave Phenomena Lab</h1>
+            <p class="subtitle">Explore Interference, Diffraction, Polarization &amp; Standing Waves | WAEC Waves</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="wavephen-mode-selector">
+            <button class="wavephen-mode-btn active" onclick="setWavePhenMode('interference')">🌊 Interference</button>
+            <button class="wavephen-mode-btn" onclick="setWavePhenMode('diffraction')">🌀 Diffraction</button>
+            <button class="wavephen-mode-btn" onclick="setWavePhenMode('polarization')">🔲 Polarization</button>
+            <button class="wavephen-mode-btn" onclick="setWavePhenMode('standing')">〰️ Standing Waves</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container" id="canvasContainer">
+                <!-- ─── 3D container ─── -->
+                <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+                <div class="canvas-controls">
+                    <button class="btn-secondary" onclick="resetWavePhen()">🔄 Reset</button>
+                    <button class="btn-secondary" onclick="toggleWavePhenAnimation()">⏸️ Play/Pause</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                </div>
+            </div>
+            <div class="controls-panel" id="controlsPanel">
+                <div class="slider-container" id="slitSeparationContainer">
+                    <label>📏 Slit Separation (d): <span id="slitSepValue">2.0</span> μm</label>
+                    <input type="range" id="slitSepSlider" min="0.5" max="4" step="0.1" value="2" oninput="updateWavePhen()">
+                </div>
+                <div class="slider-container" id="wavelengthContainer">
+                    <label>🌈 Wavelength (λ): <span id="wavelengthValue">500</span> nm</label>
+                    <input type="range" id="wavelengthSlider" min="200" max="800" step="10" value="500" oninput="updateWavePhen()">
+                </div>
+                <div class="slider-container" id="slitWidthContainer" style="display:none;">
+                    <label>📏 Slit Width (a): <span id="slitWidthValue">2.0</span> μm</label>
+                    <input type="range" id="slitWidthSlider" min="0.5" max="4" step="0.1" value="2" oninput="updateWavePhen()">
+                </div>
+                <div class="slider-container" id="angleContainer" style="display:none;">
+                    <label>🔄 Polarizer Angle: <span id="angleValue">30</span>°</label>
+                    <input type="range" id="angleSlider" min="0" max="90" step="1" value="30" oninput="updateWavePhen()">
+                </div>
+                <div class="slider-container" id="harmonicContainer" style="display:none;">
+                    <label>🎵 Harmonic (n): <span id="harmonicValue">1</span></label>
+                    <input type="range" id="harmonicSlider" min="1" max="5" step="1" value="1" oninput="updateWavePhen()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Fringe Spacing (Δy):</span><span id="displayFringe" class="data-value" style="color:#818cf8;">--- mm</span></div>
+                    <div class="data-row"><span>Path Difference:</span><span id="displayPathDiff" class="data-value" style="color:#9ca3af;">--- nm</span></div>
+                    <div class="data-row"><span>Intensity:</span><span id="displayIntensity" class="data-value" style="color:#e5e7eb;">--- %</span></div>
+                    <div class="data-row"><span>Order (m):</span><span id="displayOrder" class="data-value" style="color:#fbbf24;">---</span></div>
+                    <div class="data-row"><span>Condition:</span><span id="displayCondition" class="data-value" style="color:#34d399;">---</span></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <details>
+                <summary>📖 Understanding Wave Phenomena</summary>
+                <div class="theory-content">
+                    <div class="distinction-box">
+                        <p><strong>Interference:</strong> Two or more waves superpose to form a resultant wave. Constructive (in phase) or destructive (out of phase).</p>
+                        <p><em>Young's Double Slit:</em> Δy = λL/d, mλ = d sin θ</p>
+                    </div>
+                    <div class="distinction-box" style="border-left-color:#9ca3af;">
+                        <p><strong>Diffraction:</strong> Bending of waves around obstacles or through slits. Single slit: a sin θ = mλ (minima).</p>
+                    </div>
+                    <div class="distinction-box" style="border-left-color:#e5e7eb;">
+                        <p><strong>Polarization:</strong> Restriction of wave oscillations to one plane. Malus's Law: I = I₀ cos²θ.</p>
+                    </div>
+                    <div class="distinction-box" style="border-left-color:#fbbf24;">
+                        <p><strong>Standing Waves:</strong> Result of two waves traveling in opposite directions. Nodes (zero displacement) and antinodes (maximum displacement).</p>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <footer><div class="brand">🌈 <span>Adusei Labs</span> | Powered by bksolutions</div><div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div></footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size:1.6rem;">🧠</span> Wave Phenomena AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages"></div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about interference, diffraction, polarization..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+            </div>
+            <div class="ai-disclaimer">💡 Try: "What is interference?" | "Explain diffraction" | "Show WAEC questions"</div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+    <!-- ─── Three.js & add-ons ─── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. WAVE PHENOMENA ENGINE – 3D VERSION
+    // ─────────────────────────────────────────────────────────────
+    let wavePhenMode = 'interference';
+    let isAnimating = true;
+    let animFrame = null;
+    let time = 0;
+    let userStats = { configurations: 0, quizScores: [] };
+    let currentLang = 'english';
+
+    // ─── Three.js globals ───
+    let scene, camera, renderer, cssRenderer, controls;
+    let waveGroup;
+    let container = document.getElementById('three-container');
+    let clock = new THREE.Clock();
+    let threeReady = false;
+
+    function initThree() {
+        try {
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js library not loaded. Check your internet connection.');
+            }
+
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 800;
+            const height = rect.height || container.clientHeight || 500;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0f);
+
+            camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+            camera.position.set(0, 2.5, 14);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            cssRenderer = new THREE.CSS2DRenderer();
+            cssRenderer.setSize(width, height);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            container.style.position = 'relative';
+            container.appendChild(cssRenderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambient);
+            const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+            scene.add(hemi);
+            const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 30;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+            const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(14, 14, 0x334155, 0x1e293b);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Axis line
+            const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.15 });
+            const axisPts = [new THREE.Vector3(-7, 0, 0), new THREE.Vector3(7, 0, 0)];
+            const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+            const axisLine = new THREE.Line(axisGeo, axisMat);
+            scene.add(axisLine);
+
+            waveGroup = new THREE.Group();
+            scene.add(waveGroup);
+
+            threeReady = true;
+            window.addEventListener('resize', onResize);
+            onResize();
+
+            animate();
+        } catch (e) {
+            container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+            console.error(e);
+        }
+    }
+
+    function onResize() {
+        if (!threeReady) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || container.clientWidth || 800;
+        const h = rect.height || container.clientHeight || 500;
+        if (w === 0 || h === 0) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        cssRenderer.setSize(w, h);
+    }
+
+    function animate() {
+        animFrame = requestAnimationFrame(animate);
+        if (!threeReady) return;
+        controls.update();
+        renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
+    }
+
+    function clearGroup(group) {
+        while(group.children.length > 0) {
+            const child = group.children[0];
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            group.remove(child);
+        }
+    }
+
+    function createLabel(text, color = '#ffffff', fontSize = '18px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.color = color;
+        div.style.fontFamily = 'Arial, sans-serif';
+        div.style.fontSize = fontSize;
+        div.style.fontWeight = 'bold';
+        div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+        div.style.padding = '4px 10px';
+        div.style.background = bg;
+        div.style.borderRadius = '6px';
+        div.style.border = '1px solid rgba(255,255,255,0.05)';
+        div.style.backdropFilter = 'blur(4px)';
+        div.style.pointerEvents = 'none';
+        const label = new THREE.CSS2DObject(div);
+        label.position.copy(position);
+        return label;
+    }
+
+    // ─── Build 3D Scene ───
+    function buildWavePhenScene() {
+        clearGroup(waveGroup);
+        if (!threeReady) return;
+
+        const mode = wavePhenMode;
+
+        if (mode === 'interference') {
+            buildInterference3D();
+        } else if (mode === 'diffraction') {
+            buildDiffraction3D();
+        } else if (mode === 'polarization') {
+            buildPolarization3D();
+        } else if (mode === 'standing') {
+            buildStandingWave3D();
+        }
+    }
+
+    // ─── INTERFERENCE 3D ───
+    function buildInterference3D() {
+        const d = parseFloat(document.getElementById('slitSepSlider').value);
+        const lambda = parseFloat(document.getElementById('wavelengthSlider').value);
+        const L = 1000;
+        const lambda_um = lambda / 1000;
+        const sinTheta = (Math.sin(time * 0.5) * 0.5 + 0.5) * 0.8;
+        const pathDiff = d * sinTheta;
+        const m = Math.round(pathDiff / lambda_um);
+        const isConst = Math.abs(pathDiff - m * lambda_um) < 0.01;
+        const intensity = isConst ? 100 : 10 + 90 * Math.pow(Math.cos(Math.PI * pathDiff / lambda_um), 2);
+        const fringe = (lambda_um * L / d);
+
+        // ─── Slits ───
+        const slitMat = new THREE.MeshStandardMaterial({ color: 0x6b7280, emissive: 0x6b7280, emissiveIntensity: 0.2 });
+        const slit1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.6, 0.5), slitMat);
+        slit1.position.set(-0.5, 0, 0);
+        waveGroup.add(slit1);
+        const slit2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.6, 0.5), slitMat);
+        slit2.position.set(0.5, 0, 0);
+        waveGroup.add(slit2);
+
+        // ─── Wavefronts from each slit ───
+        const numWaves = 8;
+        for (let i = 0; i < numWaves; i++) {
+            const radius = 0.4 + i * 0.3 + (time * 0.3) % 0.3;
+            const alpha = 0.05 + i * 0.015;
+            const ringMat = new THREE.LineBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: alpha
+            });
+            // From slit 1
+            const pts1 = [];
+            const segments = 32;
+            for (let j = 0; j <= segments; j++) {
+                const theta = (j / segments) * Math.PI * 2;
+                const x = -0.5 + radius * Math.cos(theta);
+                const y = radius * Math.sin(theta);
+                pts1.push(new THREE.Vector3(x, y, 0));
+            }
+            const geo1 = new THREE.BufferGeometry().setFromPoints(pts1);
+            const ring1 = new THREE.Line(geo1, ringMat);
+            waveGroup.add(ring1);
+            // From slit 2
+            const pts2 = [];
+            for (let j = 0; j <= segments; j++) {
+                const theta = (j / segments) * Math.PI * 2;
+                const x = 0.5 + radius * Math.cos(theta);
+                const y = radius * Math.sin(theta);
+                pts2.push(new THREE.Vector3(x, y, 0));
+            }
+            const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+            const ring2 = new THREE.Line(geo2, ringMat);
+            waveGroup.add(ring2);
+        }
+
+        // ─── Screen with fringes ───
+        const screenX = 4.5;
+        const screenW = 2.0;
+        const screenH = 3.0;
+        const screenMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a2e,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), screenMat);
+        screen.position.set(screenX, 0, 0);
+        waveGroup.add(screen);
+
+        // Fringe bars on screen
+        const numFringes = 15;
+        const fringeSpacing = screenH / numFringes;
+        for (let i = -numFringes/2; i < numFringes/2; i++) {
+            const yPos = i * fringeSpacing * 0.9;
+            const relPos = i / (numFringes/2);
+            const intFactor = Math.pow(Math.cos(relPos * Math.PI), 2);
+            const alpha = 0.1 + 0.9 * intFactor;
+            const barMat = new THREE.MeshBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: alpha * 0.6
+            });
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 1.8), barMat);
+            bar.position.set(screenX + 0.01, yPos, 0);
+            waveGroup.add(bar);
+        }
+
+        // ─── Labels ───
+        const lblSlits = createLabel('Slits', '#9ca3af', '16px', new THREE.Vector3(0, 0.8, 0));
+        waveGroup.add(lblSlits);
+        const lblScreen = createLabel('Screen', '#9ca3af', '16px', new THREE.Vector3(screenX, -1.8, 0));
+        waveGroup.add(lblScreen);
+        const lblFringe = createLabel(`Δy = ${fringe.toFixed(2)} mm`, '#818cf8', '18px', new THREE.Vector3(screenX, 1.9, 0));
+        waveGroup.add(lblFringe);
+        const lblPath = createLabel(`Δx = ${(pathDiff * 1000).toFixed(1)} nm`, '#fbbf24', '16px', new THREE.Vector3(0, -0.8, 0));
+        waveGroup.add(lblPath);
+        const lblCond = createLabel(isConst ? '✨ Constructive (Bright)' : '🌑 Destructive (Dark)', isConst ? '#34d399' : '#ef4444', '18px', new THREE.Vector3(screenX, -1.4, 0));
+        waveGroup.add(lblCond);
+        const lblOrder = createLabel(`m = ${m}`, '#fbbf24', '16px', new THREE.Vector3(screenX, -1.0, 0));
+        waveGroup.add(lblOrder);
+        const lblTitle = createLabel('🌊 Double-Slit Interference', '#e5e7eb', '22px', new THREE.Vector3(-3, 2.2, 0));
+        waveGroup.add(lblTitle);
+        const lblParams = createLabel(`λ = ${lambda} nm  |  d = ${d.toFixed(1)} μm`, '#94a3b8', '16px', new THREE.Vector3(-3, 1.7, 0));
+        waveGroup.add(lblParams);
+    }
+
+    // ─── DIFFRACTION 3D ───
+    function buildDiffraction3D() {
+        const a = parseFloat(document.getElementById('slitWidthSlider').value);
+        const lambda = parseFloat(document.getElementById('wavelengthSlider').value);
+        const lambda_um = lambda / 1000;
+        const theta = Math.asin(Math.min(1, (lambda_um / a) * 1.2));
+        const m = Math.floor(a * Math.sin(theta) / lambda_um);
+        const isMin = Math.abs(a * Math.sin(theta) - m * lambda_um) < 0.01;
+        const intensity = isMin ? 5 : 95 * Math.pow(Math.sin(Math.PI * a * Math.sin(theta) / lambda_um) / (Math.PI * a * Math.sin(theta) / lambda_um), 2);
+        const fringeWidth = (lambda_um * 1000 / a);
+
+        // ─── Slit ───
+        const slitMat = new THREE.MeshStandardMaterial({ color: 0x6b7280, emissive: 0x6b7280, emissiveIntensity: 0.2 });
+        const slit = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.8, 0.5), slitMat);
+        slit.position.set(0, 0, 0);
+        waveGroup.add(slit);
+
+        // ─── Wavefronts ───
+        const numWaves = 8;
+        for (let i = 0; i < numWaves; i++) {
+            const radius = 0.4 + i * 0.3 + (time * 0.3) % 0.3;
+            const alpha = 0.05 + i * 0.015;
+            const ringMat = new THREE.LineBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: alpha
+            });
+            const pts = [];
+            const segments = 32;
+            for (let j = 0; j <= segments; j++) {
+                const theta = (j / segments) * Math.PI * 2;
+                const x = radius * Math.cos(theta);
+                const y = radius * Math.sin(theta);
+                pts.push(new THREE.Vector3(x, y, 0));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const ring = new THREE.Line(geo, ringMat);
+            waveGroup.add(ring);
+        }
+
+        // ─── Screen ───
+        const screenX = 4.0;
+        const screenW = 2.0;
+        const screenH = 3.2;
+        const screenMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a2e,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), screenMat);
+        screen.position.set(screenX, 0, 0);
+        waveGroup.add(screen);
+
+        // Diffraction pattern on screen
+        const numPoints = 100;
+        const maxAngle = 0.8;
+        const center = 0;
+        for (let i = 0; i < numPoints; i++) {
+            const angle = -maxAngle + (i / numPoints) * 2 * maxAngle;
+            const yPos = angle * 1.8;
+            const beta = Math.PI * a * Math.sin(angle) / lambda_um;
+            const intFactor = beta === 0 ? 1 : Math.pow(Math.sin(beta) / beta, 2);
+            const alpha = Math.max(0, Math.min(1, intFactor * 1.2));
+            const barMat = new THREE.MeshBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: alpha * 0.7
+            });
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 1.8), barMat);
+            bar.position.set(screenX + 0.01, yPos, 0);
+            waveGroup.add(bar);
+        }
+
+        // ─── Labels ───
+        const lblSlit = createLabel('Slit (a)', '#9ca3af', '16px', new THREE.Vector3(0, 1.0, 0));
+        waveGroup.add(lblSlit);
+        const lblScreenD = createLabel('Screen', '#9ca3af', '16px', new THREE.Vector3(screenX, -1.9, 0));
+        waveGroup.add(lblScreenD);
+        const lblCentral = createLabel('Central Maximum', '#fbbf24', '16px', new THREE.Vector3(screenX, 0.4, 0));
+        waveGroup.add(lblCentral);
+        const lblFringeD = createLabel(`Δy = ${fringeWidth.toFixed(2)} mm`, '#818cf8', '18px', new THREE.Vector3(screenX, 2.0, 0));
+        waveGroup.add(lblFringeD);
+        const lblIntensity = createLabel(`I = ${Math.max(0, intensity).toFixed(0)}%`, '#e5e7eb', '16px', new THREE.Vector3(screenX, -1.2, 0));
+        waveGroup.add(lblIntensity);
+        const lblCondD = createLabel(isMin ? '🌑 Minima (Dark)' : '✨ Maxima (Bright)', isMin ? '#ef4444' : '#34d399', '18px', new THREE.Vector3(screenX, -1.6, 0));
+        waveGroup.add(lblCondD);
+        const lblTitleD = createLabel('🌀 Single-Slit Diffraction', '#e5e7eb', '22px', new THREE.Vector3(-3, 2.2, 0));
+        waveGroup.add(lblTitleD);
+        const lblParamsD = createLabel(`λ = ${lambda} nm  |  a = ${a.toFixed(1)} μm`, '#94a3b8', '16px', new THREE.Vector3(-3, 1.7, 0));
+        waveGroup.add(lblParamsD);
+        const lblFormula = createLabel('a·sinθ = mλ (minima)', 'rgba(255,255,255,0.15)', '18px', new THREE.Vector3(screenX, -2.4, 0));
+        waveGroup.add(lblFormula);
+    }
+
+    // ─── POLARIZATION 3D ───
+    function buildPolarization3D() {
+        const angle = parseFloat(document.getElementById('angleSlider').value);
+        const thetaRad = angle * Math.PI / 180;
+        const intensity = 100 * Math.pow(Math.cos(thetaRad), 2);
+        const transmitted = intensity / 100;
+
+        // ─── Unpolarized light (oscillating lines) ───
+        for (let i = -8; i <= 8; i++) {
+            const yOff = i * 0.15;
+            const angle2 = i * 0.8 + time * 1.2;
+            const len = 0.3;
+            const pts = [
+                new THREE.Vector3(-2.0, yOff + len * Math.sin(angle2), 0),
+                new THREE.Vector3(-1.6, yOff + len * Math.sin(angle2 + 0.5), 0)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({ color: 0x9ca3af, transparent: true, opacity: 0.3 });
+            const line = new THREE.Line(geo, mat);
+            waveGroup.add(line);
+        }
+        const lblUnpol = createLabel('Unpolarized', '#9ca3af', '16px', new THREE.Vector3(-1.8, 1.2, 0));
+        waveGroup.add(lblUnpol);
+
+        // ─── Polarizer ───
+        const polarizerMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a3e,
+            transparent: true,
+            opacity: 0.4,
+            side: THREE.DoubleSide
+        });
+        const polarizer = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 2.0), polarizerMat);
+        polarizer.position.set(-1.2, 0, 0);
+        waveGroup.add(polarizer);
+        // Grid lines on polarizer
+        for (let i = -8; i <= 8; i++) {
+            const yOff = i * 0.12;
+            const pts = [
+                new THREE.Vector3(-1.2 - 0.35, yOff, 0.01),
+                new THREE.Vector3(-1.2 + 0.35, yOff, 0.01)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.15 });
+            const line = new THREE.Line(geo, mat);
+            waveGroup.add(line);
+        }
+        const lblPol = createLabel('Polarizer', '#818cf8', '16px', new THREE.Vector3(-1.2, 1.3, 0));
+        waveGroup.add(lblPol);
+
+        // ─── Polarized light (vertical only) ───
+        for (let i = -8; i <= 8; i++) {
+            const yOff = i * 0.15;
+            const len = 0.25 * transmitted + 0.05;
+            const pts = [
+                new THREE.Vector3(-0.4, yOff - len/2, 0),
+                new THREE.Vector3(-0.4, yOff + len/2, 0)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: 0.3 + 0.5 * transmitted
+            });
+            const line = new THREE.Line(geo, mat);
+            waveGroup.add(line);
+        }
+
+        // ─── Analyzer (rotated) ───
+        const analyzerMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a3e,
+            transparent: true,
+            opacity: 0.4,
+            side: THREE.DoubleSide
+        });
+        const analyzer = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 2.0), analyzerMat);
+        analyzer.position.set(1.2, 0, 0);
+        analyzer.rotation.z = thetaRad;
+        waveGroup.add(analyzer);
+        // Grid lines on analyzer (rotated)
+        for (let i = -8; i <= 8; i++) {
+            const yOff = i * 0.12;
+            const localY = yOff * Math.cos(thetaRad);
+            const localX = yOff * Math.sin(thetaRad);
+            const pts = [
+                new THREE.Vector3(1.2 + localX - 0.35 * Math.cos(thetaRad), localY + 0.35 * Math.sin(thetaRad), 0.01),
+                new THREE.Vector3(1.2 + localX + 0.35 * Math.cos(thetaRad), localY - 0.35 * Math.sin(thetaRad), 0.01)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.15 });
+            const line = new THREE.Line(geo, mat);
+            waveGroup.add(line);
+        }
+        const lblAnal = createLabel('Analyzer', '#818cf8', '16px', new THREE.Vector3(1.2, 1.3, 0));
+        waveGroup.add(lblAnal);
+
+        // ─── Transmitted light ───
+        for (let i = -8; i <= 8; i++) {
+            const yOff = i * 0.15;
+            const len = 0.2 * transmitted + 0.02;
+            const pts = [
+                new THREE.Vector3(2.0, yOff - len/2, 0),
+                new THREE.Vector3(2.0, yOff + len/2, 0)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: 0.1 + 0.6 * transmitted
+            });
+            const line = new THREE.Line(geo, mat);
+            waveGroup.add(line);
+        }
+
+        // ─── Intensity bar ───
+        const barX = 0;
+        const barY = -1.6;
+        const barW = 2.4;
+        const barH = 0.15;
+        const bgMat = new THREE.MeshBasicMaterial({ color: 0x1a1a2e, transparent: true, opacity: 0.5 });
+        const bgBar = new THREE.Mesh(new THREE.BoxGeometry(barW, barH, 0.02), bgMat);
+        bgBar.position.set(barX, barY, 0);
+        waveGroup.add(bgBar);
+        const fillMat = new THREE.MeshBasicMaterial({
+            color: 0x818cf8,
+            transparent: true,
+            opacity: 0.7 + 0.3 * transmitted
+        });
+        const fillBar = new THREE.Mesh(new THREE.BoxGeometry(barW * transmitted - 0.02, barH - 0.02, 0.03), fillMat);
+        fillBar.position.set(barX - (barW/2) + (barW * transmitted)/2, barY, 0.01);
+        waveGroup.add(fillBar);
+        const lblInt = createLabel(`I = ${intensity.toFixed(1)}% of I₀`, '#e5e7eb', '18px', new THREE.Vector3(barX, barY - 0.35, 0));
+        waveGroup.add(lblInt);
+
+        // ─── Formula ───
+        const lblFormulaP = createLabel('I = I₀·cos²θ', 'rgba(255,255,255,0.15)', '20px', new THREE.Vector3(0, -2.2, 0));
+        waveGroup.add(lblFormulaP);
+
+        // ─── Title ───
+        const lblTitleP = createLabel(`🔲 Polarization (θ = ${angle.toFixed(0)}°)`, '#e5e7eb', '22px', new THREE.Vector3(0, 2.2, 0));
+        waveGroup.add(lblTitleP);
+        const lblCondP = createLabel(intensity > 50 ? '✅ Transmitted' : '🔶 Partially blocked', intensity > 50 ? '#34d399' : '#f59e0b', '18px', new THREE.Vector3(0, 1.7, 0));
+        waveGroup.add(lblCondP);
+    }
+
+    // ─── STANDING WAVES 3D ───
+    function buildStandingWave3D() {
+        const harmonic = parseInt(document.getElementById('harmonicSlider').value);
+        const lambda = parseFloat(document.getElementById('wavelengthSlider').value);
+        const lambda_um = lambda / 1000;
+        const L = 3.0; // length in world units
+        const amplitude = 1.2;
+        const nodeCount = harmonic + 1;
+        const antinodeCount = harmonic;
+        const nodeSpacing = L / harmonic;
+
+        // ─── Medium (string) ───
+        const mediumMat = new THREE.MeshStandardMaterial({
+            color: 0x2a2a4a,
+            transparent: true,
+            opacity: 0.3,
+            metalness: 0.1,
+            roughness: 0.6
+        });
+        const medium = new THREE.Mesh(new THREE.BoxGeometry(L, 0.03, 0.03), mediumMat);
+        medium.position.set(0, 0, 0);
+        waveGroup.add(medium);
+
+        // ─── Standing wave ───
+        const numPoints = 300;
+        const points = [];
+        const k = harmonic * Math.PI / L;
+        const omega = 2 * Math.PI * 0.5;
+        for (let i = 0; i <= numPoints; i++) {
+            const x = -L/2 + (i / numPoints) * L;
+            const y = amplitude * Math.sin(k * (x + L/2)) * Math.cos(omega * time);
+            points.push(new THREE.Vector3(x, y, 0));
+        }
+        const waveGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const waveMat = new THREE.LineBasicMaterial({ color: 0x818cf8, linewidth: 2 });
+        const waveLine = new THREE.Line(waveGeo, waveMat);
+        waveGroup.add(waveLine);
+
+        // Glow curve
+        const glowMat = new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.15 });
+        const glowLine = new THREE.Line(waveGeo.clone(), glowMat);
+        glowLine.scale.set(1.005, 1.005, 1);
+        waveGroup.add(glowLine);
+
+        // ─── Envelope ───
+        const envMat = new THREE.LineDashedMaterial({
+            color: 0x818cf8,
+            transparent: true,
+            opacity: 0.15,
+            dashSize: 0.05,
+            gapSize: 0.05
+        });
+        const envPointsTop = [];
+        const envPointsBot = [];
+        for (let i = 0; i <= numPoints; i++) {
+            const x = -L/2 + (i / numPoints) * L;
+            const y = amplitude * Math.sin(k * (x + L/2));
+            envPointsTop.push(new THREE.Vector3(x, y, 0));
+            envPointsBot.push(new THREE.Vector3(x, -y, 0));
+        }
+        const envGeoTop = new THREE.BufferGeometry().setFromPoints(envPointsTop);
+        const envLineTop = new THREE.Line(envGeoTop, envMat);
+        envLineTop.computeLineDistances();
+        waveGroup.add(envLineTop);
+        const envGeoBot = new THREE.BufferGeometry().setFromPoints(envPointsBot);
+        const envLineBot = new THREE.Line(envGeoBot, envMat);
+        envLineBot.computeLineDistances();
+        waveGroup.add(envLineBot);
+
+        // ─── Nodes ───
+        const nodeMat = new THREE.MeshStandardMaterial({
+            color: 0xef4444,
+            emissive: 0xef4444,
+            emissiveIntensity: 0.6
+        });
+        const nodeGeo = new THREE.SphereGeometry(0.08, 12, 12);
+        for (let i = 0; i <= harmonic; i++) {
+            const x = -L/2 + i * nodeSpacing;
+            const node = new THREE.Mesh(nodeGeo, nodeMat);
+            node.position.set(x, 0, 0);
+            waveGroup.add(node);
+        }
+
+        // ─── Antinodes ───
+        const antiMat = new THREE.MeshStandardMaterial({
+            color: 0x10b981,
+            emissive: 0x10b981,
+            emissiveIntensity: 0.6
+        });
+        const antiGeo = new THREE.SphereGeometry(0.08, 12, 12);
+        for (let i = 0; i < harmonic; i++) {
+            const x = -L/2 + (i + 0.5) * nodeSpacing;
+            const y = amplitude * Math.sin(k * (x + L/2)) * Math.cos(omega * time);
+            const anti = new THREE.Mesh(antiGeo, antiMat);
+            anti.position.set(x, y, 0);
+            waveGroup.add(anti);
+            const anti2 = new THREE.Mesh(antiGeo, antiMat);
+            anti2.position.set(x, -y, 0);
+            waveGroup.add(anti2);
+        }
+
+        // ─── Labels ───
+        const lblTitleS = createLabel(`〰️ Standing Wave (${harmonic}${harmonic === 1 ? 'st' : harmonic === 2 ? 'nd' : harmonic === 3 ? 'rd' : 'th'} Harmonic)`, '#e5e7eb', '22px', new THREE.Vector3(0, 2.2, 0));
+        waveGroup.add(lblTitleS);
+        const lblNodes = createLabel(`Nodes: ${nodeCount}`, '#ef4444', '16px', new THREE.Vector3(-L/2 - 0.6, 0, 0));
+        waveGroup.add(lblNodes);
+        const lblAntinodes = createLabel(`Antinodes: ${antinodeCount}`, '#10b981', '16px', new THREE.Vector3(L/2 + 0.6, 0, 0));
+        waveGroup.add(lblAntinodes);
+        const lblL = createLabel(`L = ${(nodeSpacing * harmonic).toFixed(1)} mm`, '#9ca3af', '16px', new THREE.Vector3(0, -1.2, 0));
+        waveGroup.add(lblL);
+        const lblLambdaS = createLabel(`λ = ${(lambda_um * 1000).toFixed(1)} nm`, '#94a3b8', '16px', new THREE.Vector3(0, -1.6, 0));
+        waveGroup.add(lblLambdaS);
+        const lblFormulaS = createLabel('L = n·λ/2', 'rgba(255,255,255,0.15)', '20px', new THREE.Vector3(0, -2.0, 0));
+        waveGroup.add(lblFormulaS);
+    }
+
+    // ─── Update and Control Functions ───
+    function updateWavePhen() {
+        userStats.configurations++;
+        const slitSep = parseFloat(document.getElementById('slitSepSlider').value);
+        const wavelength = parseFloat(document.getElementById('wavelengthSlider').value);
+        const slitWidth = parseFloat(document.getElementById('slitWidthSlider').value);
+        const angle = parseFloat(document.getElementById('angleSlider').value);
+        const harmonic = parseInt(document.getElementById('harmonicSlider').value);
+
+        document.getElementById('slitSepValue').textContent = slitSep.toFixed(1);
+        document.getElementById('wavelengthValue').textContent = wavelength.toFixed(0);
+        document.getElementById('slitWidthValue').textContent = slitWidth.toFixed(1);
+        document.getElementById('angleValue').textContent = angle.toFixed(0);
+        document.getElementById('harmonicValue').textContent = harmonic;
+
+        let fringe, pathDiff, intensity, order, condition;
+
+        if (wavePhenMode === 'interference') {
+            const L = 1000;
+            const d = slitSep;
+            const lambda_um = wavelength / 1000;
+            const sinTheta = (Math.sin(time * 0.5) * 0.5 + 0.5) * 0.8;
+            pathDiff = d * sinTheta;
+            const m = Math.round(pathDiff / lambda_um);
+            const isConst = Math.abs(pathDiff - m * lambda_um) < 0.01;
+            intensity = isConst ? 100 : 10 + 90 * Math.pow(Math.cos(Math.PI * pathDiff / lambda_um), 2);
+            fringe = (lambda_um * L / d);
+            order = m;
+            condition = isConst ? 'Constructive (Bright)' : 'Destructive (Dark)';
+
+            document.getElementById('displayFringe').textContent = fringe.toFixed(2) + ' mm';
+            document.getElementById('displayPathDiff').textContent = (pathDiff * 1000).toFixed(1) + ' nm';
+            document.getElementById('displayIntensity').textContent = intensity.toFixed(0) + ' %';
+            document.getElementById('displayOrder').textContent = m;
+            document.getElementById('displayCondition').textContent = condition;
+
+        } else if (wavePhenMode === 'diffraction') {
+            const a = slitWidth;
+            const lambda_um = wavelength / 1000;
+            const theta = Math.asin(Math.min(1, (lambda_um / a) * 1.2));
+            const m = Math.floor(a * Math.sin(theta) / lambda_um);
+            const isMin = Math.abs(a * Math.sin(theta) - m * lambda_um) < 0.01;
+            intensity = isMin ? 5 : 95 * Math.pow(Math.sin(Math.PI * a * Math.sin(theta) / lambda_um) / (Math.PI * a * Math.sin(theta) / lambda_um), 2);
+            fringe = (lambda_um * 1000 / a);
+            pathDiff = a * Math.sin(theta) * 1000;
+            order = m;
+            condition = isMin ? 'Minima (Dark)' : 'Maxima (Bright)';
+
+            document.getElementById('displayFringe').textContent = fringe.toFixed(2) + ' mm';
+            document.getElementById('displayPathDiff').textContent = pathDiff.toFixed(1) + ' nm';
+            document.getElementById('displayIntensity').textContent = Math.max(0, intensity).toFixed(0) + ' %';
+            document.getElementById('displayOrder').textContent = m;
+            document.getElementById('displayCondition').textContent = condition;
+
+        } else if (wavePhenMode === 'polarization') {
+            const thetaRad = angle * Math.PI / 180;
+            intensity = 100 * Math.pow(Math.cos(thetaRad), 2);
+            condition = intensity > 50 ? 'Transmitted ✓' : 'Partially blocked';
+            fringe = 0; pathDiff = 0; order = 0;
+
+            document.getElementById('displayFringe').textContent = '---';
+            document.getElementById('displayPathDiff').textContent = '---';
+            document.getElementById('displayIntensity').textContent = intensity.toFixed(1) + ' %';
+            document.getElementById('displayOrder').textContent = '---';
+            document.getElementById('displayCondition').textContent = condition;
+
+        } else { // standing
+            const L = 1000;
+            const lambda_um = wavelength / 1000;
+            const nodeSpacing = L / (2 * harmonic);
+            fringe = nodeSpacing;
+            pathDiff = lambda_um * harmonic * 1000;
+            intensity = 100;
+            order = harmonic;
+            condition = `${harmonic}${harmonic === 1 ? 'st' : harmonic === 2 ? 'nd' : harmonic === 3 ? 'rd' : 'th'} Harmonic`;
+
+            document.getElementById('displayFringe').textContent = nodeSpacing.toFixed(2) + ' mm';
+            document.getElementById('displayPathDiff').textContent = pathDiff.toFixed(1) + ' nm';
+            document.getElementById('displayIntensity').textContent = '100%';
+            document.getElementById('displayOrder').textContent = harmonic;
+            document.getElementById('displayCondition').textContent = condition;
+        }
+
+        buildWavePhenScene();
+    }
+
+    function resetWavePhen() {
+        document.getElementById('slitSepSlider').value = 2;
+        document.getElementById('wavelengthSlider').value = 500;
+        document.getElementById('slitWidthSlider').value = 2;
+        document.getElementById('angleSlider').value = 30;
+        document.getElementById('harmonicSlider').value = 1;
+        time = 0;
+        updateWavePhen();
+    }
+
+    function toggleWavePhenAnimation() {
+        isAnimating = !isAnimating;
+        if (isAnimating) wavePhenLoop();
+    }
+
+    function wavePhenLoop() {
+        if (!isAnimating) {
+            if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+            return;
+        }
+        time += 0.02;
+        updateWavePhen();
+        animFrame = requestAnimationFrame(wavePhenLoop);
+    }
+
+    function setWavePhenMode(mode) {
+        wavePhenMode = mode;
+        document.querySelectorAll('.wavephen-mode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.wavephen-mode-btn[onclick="setWavePhenMode('${mode}')"]`).classList.add('active');
+
+        document.getElementById('slitSeparationContainer').style.display = (mode === 'interference' || mode === 'diffraction') ? 'block' : 'none';
+        document.getElementById('wavelengthContainer').style.display = (mode === 'interference' || mode === 'diffraction' || mode === 'standing') ? 'block' : 'none';
+        document.getElementById('slitWidthContainer').style.display = (mode === 'diffraction') ? 'block' : 'none';
+        document.getElementById('angleContainer').style.display = (mode === 'polarization') ? 'block' : 'none';
+        document.getElementById('harmonicContainer').style.display = (mode === 'standing') ? 'block' : 'none';
+
+        updateWavePhen();
+    }
+
+    // ─── Fullscreen toggle ───
+    function toggleFullscreen() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            container.classList.add('fullscreen');
+            main.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI SYSTEM – fully integrated
+    // ─────────────────────────────────────────────────────────────
+    const masterQuiz = [
+        { q: "What is constructive interference?", o: ["Waves in phase (bright)", "Waves out of phase (dark)", "Waves cancel", "No interference"], a: "Waves in phase (bright)" },
+        { q: "What is the condition for constructive interference?", o: ["mλ = d sinθ", "(m+½)λ = d sinθ", "mλ = a sinθ", "λ = d sinθ"], a: "mλ = d sinθ" },
+        { q: "What is diffraction?", o: ["Bending of waves", "Reflection of waves", "Refraction of waves", "Polarization of waves"], a: "Bending of waves" },
+        { q: "What is Malus's Law?", o: ["I = I₀ cos²θ", "I = I₀ sin²θ", "I = I₀ cosθ", "I = I₀/tanθ"], a: "I = I₀ cos²θ" },
+        { q: "What is a node in a standing wave?", o: ["Zero displacement", "Maximum displacement", "Maximum velocity", "Zero velocity"], a: "Zero displacement" },
+        { q: "What is the formula for fringe spacing in double-slit?", o: ["Δy = λL/d", "Δy = dL/λ", "Δy = λd/L", "Δy = L/(λd)"], a: "Δy = λL/d" },
+        { q: "What is the condition for destructive interference?", o: ["(m+½)λ = d sinθ", "mλ = d sinθ", "mλ = a sinθ", "λ = d sinθ"], a: "(m+½)λ = d sinθ" },
+        { q: "What is polarization?", o: ["Restricting wave oscillation", "Bending of waves", "Reflecting waves", "Absorbing waves"], a: "Restricting wave oscillation" },
+        { q: "What is an antinode?", o: ["Maximum displacement", "Zero displacement", "Zero velocity", "Maximum velocity"], a: "Maximum displacement" },
+        { q: "What is the distance between adjacent nodes?", o: ["λ/2", "λ", "λ/4", "2λ"], a: "λ/2" }
+    ];
+
+    const i18n = {
+        english: { dict: {
+            welcome: "🌈 **Adusei AI Tutor Activated (Wave Phenomena).**\n\nAsk me about interference, diffraction, polarization, or standing waves.\nType **'Help'** to see what I can teach you!",
+            btnQuiz: "📝 Take Quiz", btnPred: "🔮 AI Analytics", btnExp: "🧪 Get Experiment",
+            placeholder: "Ask about interference, diffraction, polarization...",
+            unknown: "Type **'Help'** to see my knowledge base.",
+            help: "🧠 **My Knowledge Base:**\n• **Interference:** mλ = d sinθ, Δy = λL/d\n• **Diffraction:** a sinθ = mλ (minima)\n• **Polarization:** I = I₀ cos²θ\n• **Standing Waves:** L = n·λ/2, nodes & antinodes",
+            interference: "🌊 **Interference:**\nTwo waves superpose. Constructive: mλ = d sinθ (bright). Destructive: (m+½)λ = d sinθ (dark).",
+            diffraction: "🌀 **Diffraction:**\nBending of waves around obstacles. Single slit minima: a sinθ = mλ.",
+            polarization: "🔲 **Polarization:**\nRestriction of wave oscillations to one plane. Malus's Law: I = I₀ cos²θ.",
+            standing: "〰️ **Standing Waves:**\nTwo waves traveling in opposite directions. Nodes (zero displacement) and antinodes (max displacement). L = n·λ/2.",
+            exp: "🧪 **Experiment:** Try the Interference mode. Change the slit separation and observe how the fringe spacing changes. What relationship do you see?",
+            predTitle: "AI Mastery Prediction", qList: masterQuiz
+        } },
+        twi: { dict: {
+            welcome: "🌈 **Adusei AI Tutor (Twi) Aba.**\n\nBisa me 'Boa' (Help) na menkyerɛ wo nea mentumi nyɛ!",
+            btnQuiz: "📝 Yɛ Nsɔhwɛ", btnPred: "🔮 AI Nkɔmhyɛ", btnExp: "🧪 Yɛ Nhwehwɛmu",
+            placeholder: "Bisa physics asɛm biara...", unknown: "Twerɛ 'Boa'.",
+            help: "🧠 **Nea Metumi Akyerɛkyerɛ Mu:**\n• Interference\n• Diffraction\n• Polarization\n• Standing Waves",
+            interference: "🌊 **Interference:**\nNnyinaso abien.", diffraction: "🌀 **Diffraction:**\nNnyinaso bɛbɛ.", polarization: "🔲 **Polarization:**\nNnyinaso kwan baako.", standing: "〰️ **Standing Waves:**\nNnyinaso a ɛnna.", exp: "🧪 **Nhwehwɛmu:** Sesa slit separation hwɛ fringe.", predTitle: "AI Nkɔmhyɛ", qList: masterQuiz
+        } },
+        ga: { dict: {
+            welcome: "🌈 **Adusei AI Tutor (Ga).**\n\nBi mi 'Boa' (Help) loo bi sane.", btnQuiz: "📝 Feemɔ Kaamɔ", btnPred: "🔮 AI Kɔkɔbɔ", btnExp: "🧪 Feemɔ Nitsumɔ", placeholder: "Bi lɛɛlɛŋ sane...", unknown: "Ŋmaa 'Boa'.",
+            help: "🧠 **Nii ni Manyɛ Matsɔɔ:**\n• Interference, Diffraction, Polarization, Standing", interference: "🌊 **Interference:**\nNɔ́ fee nɔ́.", diffraction: "🌀 **Diffraction:**\nNɔ́.", polarization: "🔲 **Polarization:**\nI = I₀ cos²θ", standing: "〰️ **Standing Waves:**\nNodes kɛ antinodes.", exp: "🧪 **Nitsumɔ:** Tsake slit separation lɛ.", predTitle: "AI Kɔkɔbɔ", qList: masterQuiz
+        } },
+        ewe: { dict: {
+            welcome: "🌈 **AI Tutor (Ewe).**\n\nBia 'Kpe' (Help) alo bia nya.", btnQuiz: "📝 Wɔ Dodokpɔ", btnPred: "🔮 AI Nyagbɔgblɔɖi", btnExp: "🧪 Wɔ Dodokpɔ", placeholder: "Bia nya...", unknown: "Nyemese egɔme o.",
+            help: "🧠 **Nu siwo mate ŋu afia:**\n• Interference, Diffraction, Polarization, Standing", interference: "🌊 **Interference:**\nNu ɖeka.", diffraction: "🌀 **Diffraction:**\nNu.", polarization: "🔲 **Polarization:**\nI = I₀ cos²θ", standing: "〰️ **Standing Waves:**\nNodes kple antinodes.", exp: "🧪 **Dodokpɔ:** Tsake slit separation la.", predTitle: "AI Nyagbɔgblɔɖi", qList: masterQuiz
+        } },
+        dagbani: { dict: {
+            welcome: "🌈 **AI Tutor (Dagbani).**\n\nBɔhi 'Sɔŋ' (Help) bee bɔhi ma yɛla.", btnQuiz: "📝 Niŋ Dahimbu", btnPred: "🔮 AI Baŋsim", btnExp: "🧪 Niŋ Niŋsim", placeholder: "Bɔhi yɛltɔɣa...", unknown: "N bi gbaai yɛla maa gbunni.",
+            help: "🧠 **Baŋsim:**\n• Interference, Diffraction, Polarization, Standing", interference: "🌊 **Interference:**\nYɛlima.", diffraction: "🌀 **Diffraction:**\nYɛli.", polarization: "🔲 **Polarization:**\nI = I₀ cos²θ", standing: "〰️ **Standing Waves:**\nNodes ni antinodes.", exp: "🧪 **Niŋsim:** Zaŋ slit separation taɣi.", predTitle: "AI Baŋsim", qList: masterQuiz
+        } }
+    };
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+        const d = i18n[currentLang].dict;
+        document.getElementById('btnQuiz').innerHTML = d.btnQuiz;
+        document.getElementById('btnPred').innerHTML = d.btnPred;
+        document.getElementById('btnExp').innerHTML = d.btnExp;
+        document.getElementById('aiInput').placeholder = d.placeholder;
+        document.getElementById('aiMessages').innerHTML = '';
+        addAIMessage(d.welcome, false);
+    }
+
+    function toggleAI() { document.getElementById('aiAssistant').classList.toggle('active'); }
+    function addAIMessage(msg, isUser = false) {
+        const c = document.getElementById('aiMessages');
+        let fm = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        c.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${fm}</div></div>`;
+        c.scrollTop = c.scrollHeight;
+    }
+    function processAIQuery(q) {
+        const dict = i18n[currentLang].dict;
+        const ql = q.toLowerCase();
+        if (ql.includes('help')) return dict.help;
+        if (ql.includes('interference')) return dict.interference;
+        if (ql.includes('diffraction')) return dict.diffraction;
+        if (ql.includes('polarization')) return dict.polarization;
+        if (ql.includes('standing')) return dict.standing;
+        if (ql.includes('quiz')) { setTimeout(showQuiz, 800); return dict.btnQuiz+'...'; }
+        if (ql.includes('pred')) { setTimeout(showPrediction, 800); return dict.btnPred+'...'; }
+        if (ql.includes('experiment')) { setTimeout(showExperiment, 800); return dict.btnExp+'...'; }
+        return dict.unknown;
+    }
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput'); const q = input.value.trim(); if (!q) return;
+        addAIMessage(q, true); input.value = '';
+        const t = document.createElement('div'); t.className = 'ai-message bot'; t.id = 'typingIndicator';
+        t.innerHTML = '<div class="ai-message-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+        document.getElementById('aiMessages').appendChild(t);
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('typingIndicator').remove();
+        const res = processAIQuery(q); addAIMessage(res, false); speakAI(res);
+    }
+    function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}]/gu,'').replace(/\*\*/g,'').replace(/\*/g,'');
+            clean = clean.replace(/\$\$.*?\$\$/g,' equation ').replace(/\$.*?\$/g,' equation ');
+            const u = new SpeechSynthesisUtterance(clean); u.lang = currentLang==='english'?'en-US':'en-GB'; u.rate = 1.05;
+            window.speechSynthesis.speak(u);
+        }
+    }
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) { recognition?.stop(); btn.classList.remove('listening'); isListening = false; }
+        else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang==='english'?'en-US':'en-GH';
+            recognition.onstart = () => { btn.classList.add('listening'); isListening = true; };
+            recognition.onresult = (e) => {
+                const cmd = e.results[0][0].transcript;
+                if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true); const res = processAIQuery(cmd); addAIMessage(res, false); speakAI(res);
+            };
+            recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+            recognition.start();
+        }
+    }
+
+    function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('generalModal').classList.add('active'); }
+    function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+    function showQuiz() {
+        const d = i18n[currentLang].dict; const qs = d.qList;
+        let html = `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-bottom:16px;"><h2 style="color:white;margin:0;font-size:1.5rem;">${d.btnQuiz}</h2><span style="background:#818cf8;color:white;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;">10 Questions</span></div><div class="modal-scroll">`;
+        qs.forEach((item, idx) => {
+            html += `<div class="quiz-question"><p><strong>${idx+1}. ${item.q}</strong></p><div class="quiz-options">${item.o.map(opt => `<label><input type="radio" name="q${idx}" value="${opt}"><span>${opt}</span></label>`).join('')}</div></div>`;
+        });
+        html += `</div><div style="display:flex;gap:12px;margin-top:20px;flex-shrink:0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);"><button class="btn-secondary" style="flex:1;padding:14px;font-size:1rem;" onclick="closeModal()">✕ Cancel</button><button class="lab-action-btn" style="flex:2;padding:14px;font-size:1rem;" onclick="submitQuiz()">Submit & Grade</button></div>`;
+        showModal(html);
+    }
+    function submitQuiz() {
+        const d = i18n[currentLang].dict; const qs = d.qList; let score = 0;
+        qs.forEach((item, idx) => { const s = document.querySelector(`input[name="q${idx}"]:checked`); if (s && s.value === item.a) score += 10; });
+        userStats.quizScores.push(score);
+        showModal(`<div style="text-align:center;padding:30px 10px;"><div style="font-size:5rem;font-weight:900;background:linear-gradient(135deg,#6b7280,#818cf8);-webkit-background-clip:text;color:transparent;text-shadow:0 10px 30px rgba(129,140,248,0.3);margin-bottom:10px;line-height:1.2;">${score}%</div><h3 style="color:white;margin-bottom:30px;font-size:1.3rem;font-weight:400;">Quiz Completed!</h3><button class="lab-action-btn" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Continue</button></div>`);
+    }
+    function showPrediction() {
+        const d = i18n[currentLang].dict;
+        let avg = 0; if (userStats.quizScores.length > 0) { const s = userStats.quizScores.reduce((a,b)=>a+b,0); avg = s / userStats.quizScores.length; }
+        const labScore = Math.min(100, userStats.configurations * 5);
+        const overall = avg > 0 ? Math.round((labScore * 0.4) + (avg * 0.6)) : labScore;
+        const msg = overall >= 80 ? "Outstanding! You've mastered wave phenomena — interference, diffraction, polarization, and standing waves." : overall >= 50 ? "Good progress! Keep exploring how waves interact and interfere." : "Just getting started! Experiment with the different wave phenomena modes.";
+        showModal(`<h2 style="color:white;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:16px;margin-top:0;font-size:1.5rem;">${d.predTitle}</h2><div style="display:flex;justify-content:space-around;text-align:center;margin:24px 0;background:rgba(0,0,0,0.2);padding:20px;border-radius:16px;"><div><div style="font-size:2.2rem;font-weight:bold;color:#6b7280;">${userStats.configurations}</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Adjustments</div></div><div style="width:1px;background:rgba(255,255,255,0.08);"></div><div><div style="font-size:2.2rem;font-weight:bold;color:#818cf8;">${Math.round(avg)}%</div><div style="font-size:0.8rem;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-top:4px;">Quiz Avg</div></div></div><div style="text-align:center;margin:20px 0;"><div style="font-size:0.9rem;color:#94a3b8;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Overall AI Mastery</div><div style="font-size:4rem;font-weight:900;color:#818cf8;text-shadow:0 10px 30px rgba(129,140,248,0.4);line-height:1.2;">${overall}%</div></div><div style="background:rgba(0,0,0,0.25);padding:18px;border-left:4px solid #818cf8;border-radius:12px;color:#cbd5e1;margin-bottom:24px;line-height:1.6;"><strong style="color:white;display:block;margin-bottom:6px;">🧠 Analysis:</strong>${msg}</div><button class="btn-primary" style="width:100%;padding:14px;font-size:1rem;" onclick="closeModal()">Close</button>`);
+    }
+    function showExperiment() { addAIMessage(i18n[currentLang].dict.exp, false); if (!document.getElementById('aiAssistant').classList.contains('active')) toggleAI(); }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.addEventListener('load', function() {
+        initThree();
+        setTimeout(function() {
+            updateWavePhen();
+            setLanguage('english');
+            if (isAnimating) wavePhenLoop();
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        }, 300);
+    });
+    </script>
+    <script src="/js/global.js"></script>
+</body>
+</html>

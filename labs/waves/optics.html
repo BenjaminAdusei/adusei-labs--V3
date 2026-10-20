@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optics Lab | Adusei Labs AI</title>
+    <style>
+        /* ─── Base & UI Styles (unchanged, with minor tweaks for 3D container) ─── */
+        :root {
+            --bg-color: #0b1120;
+            --panel-bg: rgba(30, 41, 59, 0.6);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #a855f7;
+            --primary-glow: rgba(168, 85, 247, 0.4);
+            --secondary: #ec489a;
+            --secondary-glow: rgba(236, 72, 154, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(168, 85, 247, 0.05), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(236, 72, 154, 0.05), transparent 30%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 30px; margin-top: 10px; position: relative;}
+        .home-btn-corner { position: absolute; left: 0; top: 10px; font-size: 1.5rem; text-decoration: none; filter: grayscale(1); transition: 0.3s; }
+        .home-btn-corner:hover { filter: grayscale(0); transform: scale(1.1); }
+        
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #a855f7, #f472b6, #a855f7);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; 
+            min-width: 320px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; 
+            padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+        
+        /* ─── 3D container ─── */
+        #three-container {
+            width: 100%; height: 400px; min-height: 350px;
+            border-radius: 12px; overflow: hidden;
+            background: #0b1120;
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container .loading {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #three-container .error {
+            color: #ef4444;
+            font-size: 1rem;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        /* ─── Controls & Sliders (unchanged) ─── */
+        .slider-container { margin-bottom: 18px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; text-shadow: 0 0 5px var(--primary-glow); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #334155; border-radius: 10px; }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #c084fc; }
+        
+        .data-display { 
+            background: rgba(15, 23, 42, 0.8); 
+            padding: 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600;}
+        .data-value { color: var(--secondary); font-weight: bold; text-shadow: 0 0 8px var(--secondary-glow); }
+        
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 10px;}
+        .lab-action-btn { background: linear-gradient(135deg, #a855f7, #ec489a); border: 1px solid rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #c084fc, #f472b6); }
+        
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #a855f7, #9333ea); box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #334155); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(168, 85, 247, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #a855f7, #7e22ce); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(168,85,247,0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(168,85,247,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ec489a, #be185d); border-color: #ec489a; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #ec489a, #e11d48); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(236, 72, 154, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(236, 72, 154, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(236,72,154,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(236,72,154,0); } }
+
+        footer {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(236,72,154,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(51, 65, 85, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #a855f7, #d946ef); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(30, 41, 59, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px var(--primary-glow); background: rgba(30, 41, 59, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #a855f7, #ec489a); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(168, 85, 247, 0.3); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; max-height: 60vh; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #a855f7; flex-shrink: 0; cursor: pointer; }
+
+        /* ─── Fullscreen styles ─── */
+        .canvas-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            padding: 0;
+            border-radius: 0;
+            background: #0b1120;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            border-radius: 0;
+            min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 12px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            display: flex;
+            gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .fullscreen-mode header,
+        .fullscreen-mode .controls-panel,
+        .fullscreen-mode .info-section,
+        .fullscreen-mode footer,
+        .fullscreen-mode .language-selector,
+        .fullscreen-mode .radio-mode-selector,
+        .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab {
+            display: none !important;
+        }
+        .fullscreen-mode .container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .fullscreen-mode .sim-container {
+            margin: 0;
+            gap: 0;
+        }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; margin-top:20px;}
+            #three-container { min-height: 300px; height: 350px; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.85rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>🔍 Optics Lab</h1>
+            <p class="subtitle">Advanced Lenses, Refraction & Image Formation</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container" id="canvasContainer">
+                <!-- ─── 3D container ─── -->
+                <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+                <div class="canvas-controls">
+                    <button id="showRaysBtn" class="btn-primary" onclick="toggleRays()">✨ Toggle Rays</button>
+                    <button id="resetOpticsBtn" class="btn-secondary" onclick="resetOptics()">🔄 Reset</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                </div>
+            </div>
+
+            <div class="controls-panel" id="controlsPanel">
+                <div class="slider-container">
+                    <label>🎯 Focal Length (f): <span id="focalValue">100 cm</span></label>
+                    <input type="range" id="focalSlider" min="50" max="200" step="5" value="100" oninput="updateOptics()">
+                </div>
+                <div class="slider-container">
+                    <label>📦 Object Distance (u): <span id="objectDistanceValue">150 cm</span></label>
+                    <input type="range" id="objectDistanceSlider" min="30" max="300" step="5" value="150" oninput="updateOptics()">
+                </div>
+                <div class="slider-container">
+                    <label>📏 Object Height (h): <span id="objectHeightValue">40 cm</span></label>
+                    <input type="range" id="objectHeightSlider" min="20" max="80" step="5" value="40" oninput="updateOptics()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Image Distance (v):</span><span id="imageDistanceValue" class="data-value">--- cm</span></div>
+                    <div class="data-row"><span>Magnification (m):</span><span id="magnificationValue" class="data-value">---</span></div>
+                    <div class="data-row"><span>Image Type:</span><span id="imageTypeValue" class="data-value" style="color: #a855f7;">---</span></div>
+                    <div class="data-row"><span>Orientation:</span><span id="orientationValue" class="data-value" style="color: #ec489a;">---</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">🔍 <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> Optics AI Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages"></div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about lenses or refraction..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ─── Three.js & add-ons ─── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. OPTICS ENGINE – 3D VERSION
+    // ─────────────────────────────────────────────────────────────
+    let showRays = true;
+    let focalLength = 100, objectDistance = 150, objectHeight = 40;
+    let imageDistance = 0, magnification = 0, imageHeight = 0;
+    let userStats = { configurations: 0, realImages: 0, virtualImages: 0, quizScores: [] };
+
+    // ─── Three.js globals ───
+    let scene, camera, renderer, cssRenderer, controls;
+    let opticsGroup;
+    let container = document.getElementById('three-container');
+    let clock = new THREE.Clock();
+    let threeReady = false;
+    const SCALE = 0.04; // 1 cm = 0.04 world units
+
+    function initThree() {
+        try {
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js library not loaded. Check your internet connection.');
+            }
+
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 800;
+            const height = rect.height || container.clientHeight || 400;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b1120);
+
+            camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+            camera.position.set(0, 3, 14);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // CSS2D Renderer for labels
+            cssRenderer = new THREE.CSS2DRenderer();
+            cssRenderer.setSize(width, height);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            container.style.position = 'relative';
+            container.appendChild(cssRenderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambient);
+            const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+            scene.add(hemi);
+            const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 30;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+            const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+
+            // Grid helper (subtle) – x-z plane at y=0
+            const gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Principal axis as a thin line along x
+            const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.2 });
+            const axisPoints = [
+                new THREE.Vector3(-8, 0, 0),
+                new THREE.Vector3(8, 0, 0)
+            ];
+            const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPoints);
+            const axisLine = new THREE.Line(axisGeo, axisMat);
+            scene.add(axisLine);
+
+            // Group for optical elements (will be rebuilt)
+            opticsGroup = new THREE.Group();
+            scene.add(opticsGroup);
+
+            threeReady = true;
+            window.addEventListener('resize', onResize);
+            onResize();
+
+            animate();
+        } catch (e) {
+            container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+            console.error(e);
+        }
+    }
+
+    function onResize() {
+        if (!threeReady) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || container.clientWidth || 800;
+        const h = rect.height || container.clientHeight || 400;
+        if (w === 0 || h === 0) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        cssRenderer.setSize(w, h);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (!threeReady) return;
+        controls.update();
+        renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
+    }
+
+    // ─── Clear group ───
+    function clearGroup(group) {
+        while(group.children.length > 0) {
+            const child = group.children[0];
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            group.remove(child);
+        }
+    }
+
+    // ─── Create CSS2D label ───
+    function createLabel(text, color = '#ffffff', fontSize = '18px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.color = color;
+        div.style.fontFamily = 'Arial, sans-serif';
+        div.style.fontSize = fontSize;
+        div.style.fontWeight = 'bold';
+        div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+        div.style.padding = '4px 10px';
+        div.style.background = bg;
+        div.style.borderRadius = '6px';
+        div.style.border = '1px solid rgba(255,255,255,0.05)';
+        div.style.backdropFilter = 'blur(4px)';
+        div.style.pointerEvents = 'none';
+        const label = new THREE.CSS2DObject(div);
+        label.position.copy(position);
+        return label;
+    }
+
+    // ─── Build 3D scene ───
+    function buildOpticsScene() {
+        clearGroup(opticsGroup);
+        if (!threeReady) return;
+
+        const f = focalLength;
+        const u = objectDistance;
+        const h = objectHeight;
+        const v = imageDistance;
+        const m = magnification;
+        const hi = imageHeight;
+
+        // Scale factors
+        const sf = SCALE;
+        const lensX = 0;
+        const axisY = 0;
+
+        // ─── Lens ───
+        const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 2.5, 32, 1, true);
+        const lensMat = new THREE.MeshPhysicalMaterial({
+            color: 0xa855f7,
+            transparent: true,
+            opacity: 0.15,
+            metalness: 0.0,
+            roughness: 0.1,
+            side: THREE.DoubleSide,
+            envMapIntensity: 0.2,
+            clearcoat: 0.2
+        });
+        const lens = new THREE.Mesh(lensGeo, lensMat);
+        lens.rotation.z = Math.PI / 2;
+        lens.position.set(lensX, axisY, 0);
+        lens.castShadow = true;
+        opticsGroup.add(lens);
+
+        // Lens rim (glowing edge)
+        const rimMat = new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.3 });
+        const rimPoints = [];
+        for (let i = 0; i <= 64; i++) {
+            const theta = (i / 64) * Math.PI * 2;
+            const y = 1.25 * Math.sin(theta);
+            const z = 1.25 * Math.cos(theta);
+            rimPoints.push(new THREE.Vector3(lensX, y, z));
+        }
+        const rimGeo = new THREE.BufferGeometry().setFromPoints(rimPoints);
+        const rimLine = new THREE.Line(rimGeo, rimMat);
+        opticsGroup.add(rimLine);
+
+        // Lens center mark
+        const centerMat = new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.4 });
+        const centerPoints = [
+            new THREE.Vector3(lensX, -1.5, 0),
+            new THREE.Vector3(lensX, 1.5, 0)
+        ];
+        const centerGeo = new THREE.BufferGeometry().setFromPoints(centerPoints);
+        const centerLine = new THREE.Line(centerGeo, centerMat);
+        opticsGroup.add(centerLine);
+
+        // ─── Focal points ───
+        const leftF = lensX - f * sf;
+        const rightF = lensX + f * sf;
+        const left2F = lensX - 2 * f * sf;
+        const right2F = lensX + 2 * f * sf;
+
+        const dotMat = new THREE.MeshStandardMaterial({
+            color: 0xec489a,
+            emissive: 0xec489a,
+            emissiveIntensity: 0.6
+        });
+        const dotGeo = new THREE.SphereGeometry(0.12, 12, 12);
+
+        const addDot = (x, label, color = '#ec489a') => {
+            const dot = new THREE.Mesh(dotGeo, dotMat);
+            dot.position.set(x, axisY, 0);
+            opticsGroup.add(dot);
+            const lbl = createLabel(label, color, '16px', new THREE.Vector3(x, axisY - 0.35, 0));
+            opticsGroup.add(lbl);
+        };
+
+        addDot(leftF, 'F', '#ec489a');
+        addDot(rightF, "F'", '#ec489a');
+        addDot(left2F, '2F', '#3b82f6');
+        addDot(right2F, "2F'", '#3b82f6');
+
+        // ─── Object ───
+        const objectX = lensX - u * sf;
+        const objH_scaled = h * 0.03; // scale height for 3D
+
+        // Object arrow: a cylinder + cone
+        const arrowGroup = new THREE.Group();
+        const shaftMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x3b82f6, emissiveIntensity: 0.2 });
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, objH_scaled, 8), shaftMat);
+        shaft.position.set(0, objH_scaled/2, 0);
+        arrowGroup.add(shaft);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x3b82f6, emissiveIntensity: 0.4 });
+        const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.15, 8), headMat);
+        head.position.set(0, objH_scaled + 0.075, 0);
+        arrowGroup.add(head);
+        arrowGroup.position.set(objectX, axisY, 0);
+        opticsGroup.add(arrowGroup);
+
+        // Object label
+        const objLabel = createLabel('OBJ', '#3b82f6', '18px', new THREE.Vector3(objectX, axisY + objH_scaled + 0.3, 0));
+        opticsGroup.add(objLabel);
+
+        // ─── Image ───
+        if (isFinite(v) && v !== 0 && v !== Infinity) {
+            const imageX = lensX + v * sf;
+            const imgH_scaled = hi * 0.03;
+            const isVirtual = v < 0;
+            const orientation = (v > 0) ? 'inverted' : 'upright';
+            const sign = (orientation === 'upright') ? 1 : -1;
+
+            const imgGroup = new THREE.Group();
+            const imgColor = isVirtual ? 0xf59e0b : 0xec489a;
+            const imgEmissive = isVirtual ? 0xf59e0b : 0xec489a;
+            const mat = new THREE.MeshStandardMaterial({
+                color: imgColor,
+                emissive: imgEmissive,
+                emissiveIntensity: 0.3,
+                transparent: isVirtual ? 0.6 : 1.0,
+                opacity: isVirtual ? 0.6 : 1.0
+            });
+            const shaftImg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, Math.abs(imgH_scaled), 8), mat);
+            shaftImg.position.set(0, sign * Math.abs(imgH_scaled)/2, 0);
+            imgGroup.add(shaftImg);
+            const headImg = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.15, 8), mat);
+            headImg.position.set(0, sign * (Math.abs(imgH_scaled) + 0.075), 0);
+            imgGroup.add(headImg);
+            imgGroup.position.set(imageX, axisY, 0);
+            opticsGroup.add(imgGroup);
+
+            // Image label
+            const imgLabelText = isVirtual ? 'VIRTUAL IMG' : 'REAL IMG';
+            const imgLabelColor = isVirtual ? '#f59e0b' : '#ec489a';
+            const imgLabel = createLabel(imgLabelText, imgLabelColor, '18px', new THREE.Vector3(imageX, axisY + sign * (Math.abs(imgH_scaled) + 0.4), 0));
+            opticsGroup.add(imgLabel);
+
+            // ─── Rays ───
+            if (showRays) {
+                const objTop = new THREE.Vector3(objectX, axisY + objH_scaled, 0);
+                const objCenter = new THREE.Vector3(objectX, axisY, 0);
+
+                // Ray 1: parallel to axis -> through F'
+                const ray1Mat = new THREE.LineBasicMaterial({ color: 0xec489a, transparent: true, opacity: 0.8 });
+                const p1 = objTop.clone();
+                const p2 = new THREE.Vector3(lensX, objTop.y, 0);
+                const pts1 = [p1, p2];
+                if (isVirtual) {
+                    // Extend beyond lens to the right
+                    const slope = (axisY - objTop.y) / (rightF - lensX);
+                    const p3 = new THREE.Vector3(8, objTop.y + slope * (8 - lensX), 0);
+                    pts1.push(p3);
+                    // Dashed backward extension
+                    const p0 = new THREE.Vector3(-8, objTop.y - slope * (lensX + 8), 0);
+                    const dashMat = new THREE.LineDashedMaterial({ color: 0xec489a, dashSize: 0.08, gapSize: 0.08, transparent: true, opacity: 0.4 });
+                    const dpts = [p2, p0];
+                    const dgeo = new THREE.BufferGeometry().setFromPoints(dpts);
+                    const dline = new THREE.Line(dgeo, dashMat);
+                    dline.computeLineDistances();
+                    opticsGroup.add(dline);
+                } else {
+                    // From lens to image
+                    const imageTop = new THREE.Vector3(imageX, axisY + sign * Math.abs(imgH_scaled), 0);
+                    pts1.push(imageTop);
+                }
+                const geo1 = new THREE.BufferGeometry().setFromPoints(pts1);
+                const line1 = new THREE.Line(geo1, ray1Mat);
+                opticsGroup.add(line1);
+
+                // Ray 2: through optical center (straight line)
+                const ray2Mat = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.8 });
+                const p1b = objTop.clone();
+                const p2b = new THREE.Vector3(lensX, axisY, 0);
+                const pts2 = [p1b, p2b];
+                if (isVirtual) {
+                    const slope2 = (axisY - objTop.y) / (lensX - objectX);
+                    const p3b = new THREE.Vector3(8, axisY + slope2 * (8 - lensX), 0);
+                    pts2.push(p3b);
+                    const dashMat2 = new THREE.LineDashedMaterial({ color: 0x3b82f6, dashSize: 0.08, gapSize: 0.08, transparent: true, opacity: 0.4 });
+                    const dpts2 = [p2b, new THREE.Vector3(-8, axisY - slope2 * (lensX + 8), 0)];
+                    const dgeo2 = new THREE.BufferGeometry().setFromPoints(dpts2);
+                    const dline2 = new THREE.Line(dgeo2, dashMat2);
+                    dline2.computeLineDistances();
+                    opticsGroup.add(dline2);
+                } else {
+                    const imageTop2 = new THREE.Vector3(imageX, axisY + sign * Math.abs(imgH_scaled), 0);
+                    pts2.push(imageTop2);
+                }
+                const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+                const line2 = new THREE.Line(geo2, ray2Mat);
+                opticsGroup.add(line2);
+
+                // Ray 3: through F (left) then parallel to axis after lens
+                if (Math.abs(u - f) > 0.5) { // avoid when object at F
+                    const ray3Mat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.8 });
+                    const fPoint = new THREE.Vector3(leftF, axisY, 0);
+                    // from object top to F
+                    const pts3 = [objTop, fPoint];
+                    // from lens (same height as where the ray crosses lens) to right
+                    // find intersection with lens plane: x = lensX
+                    const slope3 = (axisY - objTop.y) / (leftF - objectX);
+                    const yAtLens = objTop.y + slope3 * (lensX - objectX);
+                    const pLens = new THREE.Vector3(lensX, yAtLens, 0);
+                    if (isVirtual) {
+                        const slope3b = (axisY - yAtLens) / (rightF - lensX);
+                        const p3end = new THREE.Vector3(8, yAtLens + slope3b * (8 - lensX), 0);
+                        pts3.push(pLens);
+                        const pts3b = [pLens, p3end];
+                        const geo3b = new THREE.BufferGeometry().setFromPoints(pts3b);
+                        const line3b = new THREE.Line(geo3b, ray3Mat);
+                        opticsGroup.add(line3b);
+                        // Dashed backward from lens to object? Actually we already have from object to F.
+                    } else {
+                        // from lens to image top
+                        const imageTop3 = new THREE.Vector3(imageX, axisY + sign * Math.abs(imgH_scaled), 0);
+                        pts3.push(pLens);
+                        const pts3b = [pLens, imageTop3];
+                        const geo3b = new THREE.BufferGeometry().setFromPoints(pts3b);
+                        const line3b = new THREE.Line(geo3b, ray3Mat);
+                        opticsGroup.add(line3b);
+                    }
+                    const geo3a = new THREE.BufferGeometry().setFromPoints(pts3);
+                    const line3a = new THREE.Line(geo3a, ray3Mat);
+                    opticsGroup.add(line3a);
+                }
+            }
+        } else if (v === Infinity) {
+            // Object at focal point: rays emerge parallel
+            // Just draw rays going to infinity
+            const objTop = new THREE.Vector3(objectX, axisY + objH_scaled, 0);
+            const rayMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.6 });
+            // Ray 1: parallel to axis after lens
+            const p1 = objTop.clone();
+            const p2 = new THREE.Vector3(lensX, objTop.y, 0);
+            const p3 = new THREE.Vector3(8, objTop.y, 0);
+            const pts = [p1, p2, p3];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(geo, rayMat);
+            opticsGroup.add(line);
+            // Ray 2: through center
+            const p1b = objTop.clone();
+            const p2b = new THREE.Vector3(lensX, axisY, 0);
+            const slope2b = (axisY - objTop.y) / (lensX - objectX);
+            const p3b = new THREE.Vector3(8, axisY + slope2b * (8 - lensX), 0);
+            const pts2b = [p1b, p2b, p3b];
+            const geo2b = new THREE.BufferGeometry().setFromPoints(pts2b);
+            const line2b = new THREE.Line(geo2b, rayMat);
+            opticsGroup.add(line2b);
+        }
+    }
+
+    // ─── Update optics ───
+    function updateOptics() {
+        focalLength = parseFloat(document.getElementById('focalSlider').value);
+        objectDistance = parseFloat(document.getElementById('objectDistanceSlider').value);
+        objectHeight = parseFloat(document.getElementById('objectHeightSlider').value);
+
+        document.getElementById('focalValue').textContent = focalLength + ' cm';
+        document.getElementById('objectDistanceValue').textContent = objectDistance + ' cm';
+        document.getElementById('objectHeightValue').textContent = objectHeight + ' cm';
+
+        userStats.configurations++;
+
+        const u = objectDistance;
+        const f = focalLength;
+
+        if (Math.abs(u - f) < 0.1) { 
+            imageDistance = Infinity; 
+            magnification = Infinity; 
+            imageHeight = Infinity; 
+            document.getElementById('imageTypeValue').textContent = "At Infinity"; 
+            document.getElementById('orientationValue').textContent = "N/A"; 
+        } else {
+            imageDistance = 1 / ((1/f) - (1/u));
+            magnification = Math.abs(imageDistance / u);
+            imageHeight = magnification * objectHeight;
+            
+            const orientation = (imageDistance > 0) ? "Inverted" : "Upright";
+            let imageType = "";
+            if (imageDistance > 0) { 
+                userStats.realImages++;
+                if (Math.abs(imageDistance - u) < 1) imageType = "Real, Same size"; 
+                else if (imageDistance > u) imageType = "Real, Enlarged"; 
+                else imageType = "Real, Diminished"; 
+            } else { 
+                userStats.virtualImages++;
+                imageType = "Virtual, Enlarged"; 
+            }
+            document.getElementById('imageTypeValue').textContent = imageType;
+            document.getElementById('orientationValue').textContent = orientation;
+        }
+
+        document.getElementById('imageDistanceValue').textContent = isFinite(imageDistance) ? imageDistance.toFixed(1) + ' cm' : '∞';
+        document.getElementById('magnificationValue').textContent = isFinite(magnification) ? magnification.toFixed(2) + 'x' : '∞';
+
+        buildOpticsScene();
+    }
+
+    function toggleRays() { showRays = !showRays; buildOpticsScene(); }
+    function resetOptics() { 
+        document.getElementById('focalSlider').value = 100; 
+        document.getElementById('objectDistanceSlider').value = 150; 
+        document.getElementById('objectHeightSlider').value = 40; 
+        updateOptics(); 
+    }
+
+    // ─── Fullscreen toggle ───
+    function toggleFullscreen() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            container.classList.add('fullscreen');
+            main.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI, LANGUAGE, QUIZ – (unchanged from original, with minor adapt)
+    // ─────────────────────────────────────────────────────────────
+    let currentLang = 'english';
+
+    const intentTopics = [
+        { id: "quiz", keywords: ["quiz", "test", "exam", "nsɔhwɛ", "sɔhwɛ", "kaamɔ", "dodokpɔ", "dahimbu"] },
+        { id: "pred", keywords: ["predict", "analytics", "score", "nkɔmhyɛ", "kɔkɔbɔ", "nyagbɔgblɔɖi", "baŋsim"] },
+        { id: "exp", keywords: ["experiment", "try", "nhwehwɛmu", "nitsumɔ", "niŋsim"] },
+        { id: "help", keywords: ["help", "what can you do", "topics", "menu", "boa", "wawa", "kpe"] },
+        { id: "lensFormula", keywords: ["lens formula", "equation", "calculate distance", "1/f"] },
+        { id: "magnification", keywords: ["magnification", "size", "enlarged", "diminished"] },
+        { id: "realImage", keywords: ["real image", "inverted", "project", "screen"] },
+        { id: "virtualImage", keywords: ["virtual image", "upright", "inside f"] },
+        { id: "focalPoint", keywords: ["focal point", "focus", "converge", "principal focus"] },
+        { id: "power", keywords: ["power of lens", "diopter", "strength"] }
+    ];
+
+    const masterQuiz = [
+        {q: "What is the standard lens formula?", o: ["1/f = 1/u + 1/v", "f = u + v", "1/u = 1/f + 1/v", "v = u + f"], a: "1/f = 1/u + 1/v"},
+        {q: "If an object is placed exactly at 2F of a convex lens, the image is:", o: ["Virtual and enlarged", "Real and same size", "Real and diminished", "At infinity"], a: "Real and same size"},
+        {q: "When an object is placed between the focal point (F) and the lens, the image formed is:", o: ["Real, inverted, diminished", "Virtual, upright, enlarged", "Real, upright, enlarged", "No image is formed"], a: "Virtual, upright, enlarged"},
+        {q: "Magnification is calculated as:", o: ["u/v", "v/u", "f/v", "u/f"], a: "v/u"},
+        {q: "A real image is always:", o: ["Upright", "Inverted", "Enlarged", "Virtual"], a: "Inverted"},
+        {q: "What is the SI unit for the Power of a lens?", o: ["Watts", "Joules", "Diopters", "Meters"], a: "Diopters"},
+        {q: "For a convex lens, if the image distance (v) is positive, the image is:", o: ["Real", "Virtual", "Upright", "At infinity"], a: "Real"},
+        {q: "Light rays passing through the optical center of a thin lens:", o: ["Refract towards the focus", "Refract parallel to axis", "Pass straight through without deviation", "Reflect back"], a: "Pass straight through without deviation"},
+        {q: "If the magnification (m) is less than 1, the image is:", o: ["Enlarged", "Same size", "Diminished", "Virtual"], a: "Diminished"},
+        {q: "If an object is placed at the focal point (F) of a convex lens, where does the image form?", o: ["At F", "At 2F", "Between F and 2F", "At Infinity"], a: "At Infinity"}
+    ];
+
+    const i18n = {
+        english: {
+            dict: {
+                welcome: "🔍 **Adusei AI Tutor Activated.**\n\nI am your High-Powered Optics Engine. Ask me about lenses, focal lengths, magnification, or WAEC concepts.\n\nType **'Help'** to see what I can teach you!",
+                btnQuiz: "📝 Take Quiz", btnPred: "🔮 AI Analytics", btnExp: "🧪 Get Experiment", placeholder: "Ask about focal points, real vs virtual...",
+                unknown: "I'm your physics tutor! I might not understand that phrasing. Type **'Help'** to see my knowledge base.",
+                help: "🧠 **My Knowledge Base:**\nAsk me to explain any of these:\n• **Equations:** Lens Formula, Magnification, Power of a Lens\n• **Concepts:** Real vs Virtual Images, Focal Point\n• **Experiments:** What happens at 2F? What happens inside F?",
+                lensFormula: "📐 **Lens Formula:**\n$$\\frac{1}{f} = \\frac{1}{u} + \\frac{1}{v}$$\nWhere *f* is focal length, *u* is object distance, and *v* is image distance.",
+                magnification: "🔍 **Magnification (m):**\n$$m = \\frac{v}{u} = \\frac{h_i}{h_o}$$\nIf m > 1, the image is enlarged. If m < 1, it's diminished.",
+                realImage: "🎥 **Real Image:** Formed by actual intersection of light rays. It is always **inverted** and can be captured on a screen. Formed when object distance > focal length.",
+                virtualImage: "👻 **Virtual Image:** Formed by the apparent intersection of light rays. It is always **upright** and cannot be captured on a screen. Occurs when object is inside the focal point (u < f).",
+                focalPoint: "🎯 **Principal Focus (F):** The point on the principal axis where rays of light parallel to the axis converge after passing through the convex lens.",
+                power: "⚡ **Power of a Lens:** The reciprocal of the focal length (in meters). \n$$P = \\frac{1}{f}$$\nThe SI unit is the Diopter (D).",
+                exp: "🧪 **Custom AI Experiment:**\nSet the Focal Length to 100cm. Now set the Object Distance exactly to 200cm (which is 2F). Check the Image Distance and Height. What do you notice?",
+                predTitle: "AI Mastery Prediction", 
+                qList: masterQuiz
+            }
+        },
+        twi: {
+            dict: {
+                welcome: "🔍 **Adusei AI Tutor (Twi) Aba.**\n\nBisa me 'Boa' (Help) na menkyerɛ wo nea mentumi nyɛ!",
+                btnQuiz: "📝 Yɛ Nsɔhwɛ", btnPred: "🔮 AI Nkɔmhyɛ", btnExp: "🧪 Yɛ Nhwehwɛmu", placeholder: "Bisa physics asɛm biara...",
+                unknown: "Mente aseɛ yie. Twerɛ 'Boa'.",
+                help: "🧠 **Nea Metumi Akyerɛkyerɛ Mu:**\n• Lenses, Focal points, Real/Virtual images",
+                lensFormula: "📐 **Formula:**\n$$\\frac{1}{f} = \\frac{1}{u} + \\frac{1}{v}$$",
+                exp: "🧪 **Nhwehwɛmu:** Fa focal length no kɔ 100cm na fa object no kɔ 200cm (2F). Hwɛ nea ɛbɛsi.",
+                predTitle: "AI Nkɔmhyɛ", qList: masterQuiz
+            }
+        },
+        ga: {
+            dict: {
+                welcome: "🔍 **Adusei AI Tutor (Ga).**\n\nBi mi 'Boa' (Help) loo bi sane fɛɛ sane.", btnQuiz: "📝 Feemɔ Kaamɔ", btnPred: "🔮 AI Kɔkɔbɔ", btnExp: "🧪 Feemɔ Nitsumɔ", placeholder: "Bi lɛɛlɛŋ sane...", unknown: "Mitee shishi. Ŋmaa 'Boa'.",
+                help: "🧠 **Nii ni Manyɛ Matsɔɔ:**\n• Lenses, Focal points",
+                lensFormula: "📐 **Formula:**\n$$\\frac{1}{f} = \\frac{1}{u} + \\frac{1}{v}$$",
+                exp: "🧪 **Nitsumɔ:** Kɛ focal length yaha 100cm ni okɛ object yaha 200cm.", predTitle: "AI Kɔkɔbɔ", qList: masterQuiz
+            }
+        },
+        ewe: {
+            dict: {
+                welcome: "🔍 **AI Tutor (Ewe).**\n\nBia 'Kpe' (Help) alo bia nya tso lenses ŋu.", btnQuiz: "📝 Wɔ Dodokpɔ", btnPred: "🔮 AI Nyagbɔgblɔɖi", btnExp: "🧪 Wɔ Dodokpɔ", placeholder: "Bia nya...", unknown: "Nyemese egɔme o.",
+                help: "🧠 **Nu siwo mate ŋu afia:**\n• Lens formula, Focal points",
+                lensFormula: "📐 **Formula:**\n$$\\frac{1}{f} = \\frac{1}{u} + \\frac{1}{v}$$",
+                exp: "🧪 **Dodokpɔ:** Tsɔ focal length yi 100cm kple object yi 200cm.", predTitle: "AI Nyagbɔgblɔɖi", qList: masterQuiz
+            }
+        },
+        dagbani: {
+            dict: {
+                welcome: "🔍 **AI Tutor (Dagbani).**\n\nBɔhi 'Sɔŋ' (Help) bee bɔhi ma lenses yɛla.", btnQuiz: "📝 Niŋ Dahimbu", btnPred: "🔮 AI Baŋsim", btnExp: "🧪 Niŋ Niŋsim", placeholder: "Bɔhi yɛltɔɣa...", unknown: "N bi gbaai yɛla maa gbunni.",
+                help: "🧠 **Baŋsim:**\n• Lens zalisi",
+                lensFormula: "📐 **Formula:**\n$$\\frac{1}{f} = \\frac{1}{u} + \\frac{1}{v}$$",
+                exp: "🧪 **Niŋsim:** Zaŋ focal length niŋ 100cm ka object niŋ 200cm.", predTitle: "AI Baŋsim", qList: masterQuiz
+            }
+        }
+    };
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+        
+        const d = i18n[currentLang].dict;
+        document.getElementById('btnQuiz').innerHTML = d.btnQuiz;
+        document.getElementById('btnPred').innerHTML = d.btnPred;
+        document.getElementById('btnExp').innerHTML = d.btnExp;
+        document.getElementById('aiInput').placeholder = d.placeholder;
+        
+        document.getElementById('aiMessages').innerHTML = '';
+        addAIMessage(d.welcome, false);
+    }
+
+    function toggleAI() { 
+        const aiWindow = document.getElementById('aiAssistant');
+        aiWindow.classList.toggle('active'); 
+        if(aiWindow.classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+    
+    function addAIMessage(msg, isUser=false) {
+        const container = document.getElementById('aiMessages');
+        let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function processAIQuery(query) {
+        const q = query.toLowerCase();
+        const dict = i18n[currentLang].dict;
+        
+        for (let topic of intentTopics) {
+            if (topic.keywords.some(k => q.includes(k))) {
+                if (topic.id === "quiz") { setTimeout(showQuiz, 800); return dict.btnQuiz + "..."; }
+                if (topic.id === "pred") { setTimeout(showPrediction, 800); return dict.btnPred + "..."; }
+                if (dict[topic.id]) return dict[topic.id];
+            }
+        }
+        return dict.unknown;
+    }
+
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput');
+        const q = input.value.trim();
+        if (!q) return;
+        addAIMessage(q, true); input.value = '';
+        
+        const t = document.createElement('div'); t.className = 'ai-message bot'; t.id = 'typingIndicator'; 
+        t.innerHTML = '<div class="ai-message-content"><div style="display:flex;gap:4px;"><span style="animation:pulse 1s infinite;width:6px;height:6px;background:white;border-radius:50%;"></span><span style="animation:pulse 1s infinite 0.2s;width:6px;height:6px;background:white;border-radius:50%;"></span><span style="animation:pulse 1s infinite 0.4s;width:6px;height:6px;background:white;border-radius:50%;"></span></div></div>'; 
+        document.getElementById('aiMessages').appendChild(t);
+        let container = document.getElementById('aiMessages');
+        container.scrollTop = container.scrollHeight;
+        
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('typingIndicator').remove();
+        
+        const response = processAIQuery(q);
+        addAIMessage(response, false);
+        speakAI(response);
+    }
+    function handleAIKeypress(e) { if(e.key === 'Enter') sendAIMessage(); }
+
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+            clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB'; 
+            utterance.rate = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+    
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) { recognition?.stop(); btn.classList.remove('listening'); isListening = false; }
+        else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH'; 
+            recognition.onstart = () => { btn.classList.add('listening'); isListening = true; };
+            recognition.onresult = (e) => { 
+                const cmd = e.results[0][0].transcript; 
+                if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true); 
+                const res = processAIQuery(cmd); addAIMessage(res, false); speakAI(res);
+            };
+            recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+            recognition.start();
+        }
+    }
+
+    function showModal(htmlContent) {
+        document.getElementById('modalContent').innerHTML = htmlContent;
+        document.getElementById('generalModal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+    function showQuiz() {
+        const d = i18n[currentLang].dict;
+        const questions = d.qList;
+        
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                <h2 style="color:white; margin:0;">${d.btnQuiz}</h2>
+                <span style="background:#a855f7; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">10 Questions</span>
+            </div>
+            <div class="modal-scroll">
+        `;
+        
+        questions.forEach((item, index) => {
+            html += `
+            <div class="quiz-question">
+                <p><strong>${index + 1}. ${item.q}</strong></p>
+                ${item.o.map(opt => `
+                    <label>
+                        <input type="radio" name="q${index}" value="${opt}">
+                        <span>${opt}</span>
+                    </label>
+                `).join('')}
+            </div>`;
+        });
+
+        html += `
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.06);">
+                <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+            </div>
+        `;
+        showModal(html);
+    }
+
+    function submitQuiz() {
+        const d = i18n[currentLang].dict;
+        const questions = d.qList;
+        let score = 0;
+        
+        questions.forEach((item, index) => {
+            const ans = document.querySelector(`input[name="q${index}"]:checked`);
+            if (ans && ans.value === item.a) score += 10; 
+        });
+        
+        userStats.quizScores.push(score);
+        
+        showModal(`
+            <div style="text-align:center; padding: 30px 10px;">
+                <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #a855f7, #f472b6); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(168,85,247,0.3); margin-bottom:10px; line-height:1;">${score}%</div>
+                <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Successfully Completed!</h3>
+                <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+            </div>
+        `);
+    }
+
+    function showPrediction() {
+        const d = i18n[currentLang].dict;
+        
+        let avgQuiz = 0;
+        if (userStats.quizScores.length > 0) {
+            const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+            avgQuiz = sum / userStats.quizScores.length;
+        }
+
+        let labScore = Math.min(100, userStats.configurations * 5);
+        let overallScore = (avgQuiz > 0) ? Math.round((labScore * 0.4) + (avgQuiz * 0.6)) : labScore;
+        
+        let txt = overallScore >= 80 ? "Outstanding! Your combined lab interactions and quiz results demonstrate deep mastery of optic principles." : 
+                  overallScore >= 50 ? "Good progress! Keep adjusting focal lengths and object distances to observe image formation." : 
+                  "Just getting started! Use the sliders to form real and virtual images, then try the 10-question quiz.";
+        
+        showModal(`
+            <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">${d.predTitle}</h2>
+            
+            <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                <div>
+                    <div style="font-size:2.5rem; font-weight:bold; color:#a855f7;">${userStats.configurations}</div>
+                    <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Lab Inputs</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div>
+                    <div style="font-size:2.5rem; font-weight:bold; color:#ec489a;">${Math.round(avgQuiz)}%</div>
+                    <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Average</div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin:20px 0;">
+                <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery Score</div>
+                <div style="font-size:5rem; font-weight:900; color:#3b82f6; text-shadow: 0 10px 30px rgba(59,130,246,0.4); line-height:1;">
+                    ${overallScore}%
+                </div>
+            </div>
+            
+            <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #a855f7; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+            </div>
+            <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+        `);
+    }
+
+    function showExperiment() {
+        addAIMessage(i18n[currentLang].dict.exp, false);
+        if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.addEventListener('load', function() {
+        initThree();
+        setTimeout(function() {
+            updateOptics();
+            setLanguage('english');
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        }, 300);
+    });
+    </script>
+</body>
+</html>

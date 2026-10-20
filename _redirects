@@ -1,0 +1,15 @@
+# ─── ADUSEI LABS — NETLIFY REDIRECTS ───
+
+# Single Page App — redirect all 404s to the dashboard
+/* /index.html 404
+
+# Ensure all lab pages work
+/labs/* /labs/:splat 200
+
+# Ensure teacher and notebook work
+/teacher/* /teacher/:splat 200
+/notebook/* /notebook/:splat 200
+
+# Ensure JS and CSS work
+/js/* /js/:splat 200
+/css/* /css/:splat 200

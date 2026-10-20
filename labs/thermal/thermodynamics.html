@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermodynamics Lab | Adusei Labs AI</title>
+    <link rel="stylesheet" href="css_global.css">
+    <style>
+        /* ─── all original styles ─── */
+        :root {
+            --bg-color: #0b1120;
+            --panel-bg: rgba(30, 41, 59, 0.6);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #f97316;
+            --primary-glow: rgba(249, 115, 22, 0.4);
+            --secondary: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05), transparent 25%);
+            color: var(--text-main); 
+            overflow-x: hidden; 
+        }
+        
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 30px; margin-top: 10px; position: relative; }
+        .home-btn-corner { position: absolute; left: 10px; top: 10px; font-size: 2rem; text-decoration: none; z-index: 10000; transition: 0.3s; cursor: pointer !important; }
+        .home-btn-corner:hover { transform: scale(1.2); }
+
+        h1 { 
+            font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #f97316, #fbbf24, #f97316);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientText 5s linear infinite;
+        }
+        @keyframes gradientText { to { background-position: 200% center; } }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;}
+        
+        .sim-container { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 40px; } 
+        
+        .canvas-container, .controls-panel { 
+            flex: 1; 
+            min-width: 320px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; 
+            padding: 25px; 
+            border: 1px solid var(--panel-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
+        }
+        .canvas-container { text-align: center; display: flex; flex-direction: column; }
+
+        #three-container {
+            width: 100%; height: 400px; min-height: 350px;
+            border-radius: 12px; overflow: hidden;
+            background: #0b1120;
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: grab;
+            position: relative;
+        }
+        #three-container:active { cursor: grabbing; }
+        #three-container .loading { color: #94a3b8; font-size: 1.2rem; animation: pulse 1.5s infinite; display: flex; align-items: center; justify-content: center; height: 100%; }
+        #three-container .error { color: #ef4444; font-size: 1rem; padding: 20px; text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .canvas-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .canvas-controls .fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .canvas-controls .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .slider-container { margin-bottom: 18px; }
+        .slider-container label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; font-size: 0.95rem; }
+        .slider-container label span { color: var(--primary); font-family: monospace; font-size: 1.1rem; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #334155; border-radius: 10px; }
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        .data-display { 
+            background: rgba(15, 23, 42, 0.8); 
+            padding: 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.15rem; }
+        .data-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .data-row span:first-child { color: var(--text-muted); font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; font-weight: 600;}
+        .data-value { color: var(--primary); font-weight: bold; text-shadow: 0 0 8px var(--primary-glow); }
+
+        .action-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 10px;}
+        .lab-action-btn { background: linear-gradient(135deg, #f97316, #ea580c); border: 1px solid rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px var(--primary-glow); }
+        .lab-action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-glow); background: linear-gradient(135deg, #fb923c, #f97316); }
+        
+        .btn-primary, .btn-secondary { padding: 10px 20px; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #334155); }
+        .btn-secondary:hover { transform: translateY(-2px); background: linear-gradient(135deg, #64748b, #475569); }
+
+        .language-selector { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .lang-btn { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px 22px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;}
+        .lang-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+        .lang-btn.active { background: rgba(249, 115, 22, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .voice-btn, .ai-fab {
+            position: fixed; bottom: 25px; width: 65px; height: 65px; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer; z-index: 1000; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .voice-btn { left: 25px; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.8rem; box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+        .voice-btn:hover { transform: scale(1.15) translateY(-5px); box-shadow: 0 12px 30px rgba(16,185,129,0.6); }
+        .voice-btn.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
+        
+        .ai-fab { right: 25px; background: linear-gradient(135deg, #f97316, #e11d48); font-size: 2.2rem; box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4); }
+        .ai-fab:hover { transform: scale(1.15) translateY(-5px) rotate(8deg); box-shadow: 0 12px 30px rgba(225, 29, 72, 0.6); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0); } }
+
+        footer {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid var(--panel-border);
+            padding: 40px 20px 100px 20px; 
+            text-align: center;
+            color: var(--text-muted);
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+        footer .brand { font-weight: 700; letter-spacing: 0.5px; font-size: 1.1rem;}
+        footer .brand span { color: var(--primary); text-shadow: 0 0 5px var(--primary-glow);}
+        footer .copyright { font-size: 0.85rem; opacity: 0.6; margin-top: 8px;}
+
+        .ai-window { 
+            position: fixed; bottom: 105px; right: 25px; width: 420px; max-width: calc(100vw - 50px); 
+            height: 600px; max-height: calc(100vh - 140px); 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; z-index: 999;
+            visibility: hidden; opacity: 0; 
+            transform: translateY(40px) scale(0.95); transform-origin: bottom right;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ai-window.active { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+
+        .ai-header { 
+            background: linear-gradient(135deg, rgba(249,115,22,0.9), rgba(225,29,72,0.9)); 
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-header-content { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.15rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px;}
+        .ai-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+        .ai-close { background: transparent; border: none; color: white; font-size: 1.6rem; cursor: pointer; line-height: 1; transition: 0.2s; opacity: 0.8;}
+        .ai-close:hover { transform: scale(1.2) rotate(90deg); opacity: 1;}
+
+        .ai-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .ai-messages::-webkit-scrollbar, .modal-content::-webkit-scrollbar { width: 6px; }
+        .ai-messages::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb, .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .ai-message { display: flex; gap: 12px; max-width: 90%; animation: slideIn 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message-content { 
+            background: rgba(51, 65, 85, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 14px 20px; border-radius: 20px; border-bottom-left-radius: 4px; 
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .ai-message.user .ai-message-content { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;
+            color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .ai-input-area { padding: 18px; display: flex; gap: 12px; background: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-area input { 
+            flex: 1; padding: 14px 22px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(30, 41, 59, 0.6); color: white; outline: none; font-size: 0.95rem; 
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .ai-input-area input:focus { border-color: var(--primary); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 0 15px rgba(249,115,22,0.2); background: rgba(30, 41, 59, 0.9); }
+        .ai-input-area input::placeholder { color: #64748b; }
+        .ai-input-area button { 
+            background: linear-gradient(135deg, #f97316, #ea580c); border: none; width: 50px; height: 50px; 
+            border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .ai-input-area button:hover { transform: scale(1.1) rotate(-15deg); }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); 
+            border-radius: 28px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: hidden;
+            padding: 30px; border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); 
+            transform: translateY(20px) scale(0.95); transition: 0.4s;
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-scroll { overflow-y: auto; padding-right: 8px; flex: 1; max-height: 60vh; }
+        .quiz-question { margin-bottom: 20px; padding: 20px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); }
+        .quiz-question p { color: white; font-size: 1.05rem; margin-top: 0; margin-bottom: 14px; font-weight: 500; }
+        .quiz-options label { display: flex; align-items: center; gap: 12px; color: #cbd5e1; margin: 8px 0; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .quiz-options label:hover { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.15); }
+        .quiz-options input[type=radio] { width: 18px; height: 18px; accent-color: #f97316; flex-shrink: 0; cursor: pointer; }
+
+        .canvas-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; padding: 0; border-radius: 0; background: #0b1120;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .canvas-container.fullscreen #three-container {
+            width: 100%; height: 100%; max-height: none; border-radius: 0; min-height: 100%;
+        }
+        .canvas-container.fullscreen .canvas-controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 40px;
+            backdrop-filter: blur(8px); display: flex; gap: 12px;
+        }
+        .canvas-container.fullscreen .canvas-controls button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;
+        }
+        .canvas-container.fullscreen .canvas-controls button:hover { background: rgba(255,255,255,0.2); }
+        .fullscreen-mode header, .fullscreen-mode .controls-panel, .fullscreen-mode .info-section,
+        .fullscreen-mode footer, .fullscreen-mode .language-selector, .fullscreen-mode .voice-btn,
+        .fullscreen-mode .ai-fab { display: none !important; }
+        .fullscreen-mode .container { max-width: 100%; padding: 0; margin: 0; }
+        .fullscreen-mode .sim-container { margin: 0; gap: 0; }
+
+        @media (max-width: 768px) {
+            .voice-btn, .ai-fab { bottom: 20px; width: 55px; height: 55px; font-size: 1.5rem; }
+            .voice-btn { left: 15px; } .ai-fab { right: 15px; }
+            .ai-window { bottom: 85px; right: 10px; width: calc(100vw - 20px); height: calc(100vh - 100px); }
+            footer { padding: 30px 15px 90px 15px; }
+            h1 { font-size: 2.2rem; }
+            #three-container { min-height: 300px; height: 350px; }
+            .canvas-container.fullscreen .canvas-controls { bottom: 10px; padding: 8px 16px; gap: 8px; }
+            .canvas-container.fullscreen .canvas-controls button { font-size: 0.8rem; padding: 4px 12px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.8rem; }
+            .lang-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .lab-action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .data-row { font-size: 0.9rem; flex-wrap: wrap; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <header>
+            <a href="/" class="home-btn-corner" title="Back to Home">🏠</a>
+            <h1>🔥 Thermodynamics Lab</h1>
+            <p class="subtitle">Advanced Multi-Lingual AI Physics Engine</p>
+        </header>
+
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="english" onclick="setLanguage('english')">🌍 English</button>
+            <button class="lang-btn" data-lang="twi" onclick="setLanguage('twi')">🇬🇭 Twi (Akan)</button>
+            <button class="lang-btn" data-lang="ga" onclick="setLanguage('ga')">🇬🇭 Ga</button>
+            <button class="lang-btn" data-lang="ewe" onclick="setLanguage('ewe')">🇬🇭 Ewe</button>
+            <button class="lang-btn" data-lang="dagbani" onclick="setLanguage('dagbani')">🇬🇭 Dagbani</button>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container" id="canvasContainer">
+                <div id="three-container"><div class="loading">⏳ Loading 3D Engine…</div></div>
+                <div class="canvas-controls">
+                    <button id="startHeatingBtn" class="btn-primary" onclick="startHeating()">🔥 Start</button>
+                    <button id="stopHeatingBtn" class="btn-secondary" onclick="stopHeating()">⏸ Pause</button>
+                    <button id="resetThermoBtn" class="btn-secondary" onclick="resetThermo()">🔄 Reset</button>
+                    <button id="showMoleculesBtn" class="btn-secondary" onclick="toggleMolecules()">⚛ Molecules</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+                </div>
+            </div>
+
+            <div class="controls-panel" id="controlsPanel">
+                <div class="slider-container">
+                    <label>🔥 Source Temp: <span id="heatTempValue">100 °C</span></label>
+                    <input type="range" id="heatTempSlider" min="0" max="300" step="5" value="100" oninput="updateThermoParams()">
+                </div>
+                <div class="slider-container">
+                    <label>❄️ Object Temp: <span id="objectTempValue">20 °C</span></label>
+                    <input type="range" id="objectTempSlider" min="0" max="100" step="1" value="20" oninput="updateThermoParams()">
+                </div>
+                <div class="slider-container">
+                    <label>⚖️ Mass (kg): <span id="massValue">1.0 kg</span></label>
+                    <input type="range" id="massSlider" min="0.5" max="5" step="0.1" value="1" oninput="updateThermoParams()">
+                </div>
+                <div class="slider-container">
+                    <label>🔬 Specific Heat (c): <span id="specificHeatValue">4184 J/kg°C</span></label>
+                    <input type="range" id="specificHeatSlider" min="300" max="5000" step="50" value="4184" oninput="updateThermoParams()">
+                </div>
+
+                <div class="data-display">
+                    <div class="data-row"><span>Current Temp:</span><span id="currentTempValue" class="data-value">20.0 °C</span></div>
+                    <div class="data-row"><span>Energy Transferred:</span><span id="heatTransferredValue" class="data-value">0 J</span></div>
+                    <div class="data-row"><span>⏱️ Live Timer:</span><span id="timeToEquilibrium" class="data-value" style="color: #10b981;">0.0 s</span></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="btnQuiz" class="lab-action-btn" onclick="showQuiz()">📝 Take Quiz</button>
+                    <button id="btnPred" class="lab-action-btn" onclick="showPrediction()">🔮 AI Analytics</button>
+                    <button id="btnExp" class="lab-action-btn" onclick="showExperiment()">🧪 Experiment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="brand">🔥 <span>Adusei Labs</span> | Powered by bksolutions</div>
+        <div class="copyright">© 2026 Adusei Labs | Smart Physics Learning Platform</div>
+    </footer>
+
+    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Voice Control">🎤</button>
+    <button id="aiFab" class="ai-fab" onclick="toggleAI()" title="Open AI Tutor">🤖</button>
+
+    <div id="aiAssistant" class="ai-window">
+        <div class="ai-header">
+            <div class="ai-header-content"><span style="font-size: 1.6rem;">🧠</span> Adusei Lab Tutor <span class="ai-badge">Ultra</span></div>
+            <button class="ai-close" onclick="toggleAI()">✕</button>
+        </div>
+        <div class="ai-body">
+            <div class="ai-messages" id="aiMessages"></div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="Ask about physics or labs..." onkeypress="handleAIKeypress(event)">
+                <button onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generalModal" class="modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ─── Three.js & add-ons ─── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    // 1. THERMODYNAMICS ENGINE – 3D WITH EXPANSION & HEAT PARTICLES
+    // ─────────────────────────────────────────────────────────────
+
+    // ─── State ───
+    let isHeating = false, heatingStartTime = null, heatingAnimationId = null;
+    let heatSourceTemp = 100, objectTemp = 20, mass = 1.0, specificHeat = 4184, heatTransferred = 0;
+    let showMolecules = true;
+    let userStats = { runs: 0, equilibriums: 0, quizScores: [] };
+    let objectScale = 1.0;
+
+    // ─── Three.js globals ───
+    let scene, camera, renderer, cssRenderer, controls;
+    let thermoGroup;
+    let container = document.getElementById('three-container');
+    let clock = new THREE.Clock();
+    let threeReady = false;
+    let objectMesh = null;
+    let sourceMesh = null;
+    let sourceGlow = null;
+    let thermometerMesh = null;
+    let mercuryMesh = null;
+    let moleculeMeshes = [];
+    let heatParticles = [];
+    const MAX_PARTICLES = 40;
+    let particlePool = [];
+
+    // ─── Init Three.js ───
+    function initThree() {
+        try {
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js library not loaded. Check your internet connection.');
+            }
+
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 800;
+            const height = rect.height || container.clientHeight || 400;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b1120);
+
+            camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+            camera.position.set(0, 2, 10);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            cssRenderer = new THREE.CSS2DRenderer();
+            cssRenderer.setSize(width, height);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            container.style.position = 'relative';
+            container.appendChild(cssRenderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambient);
+            const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3a1c0a, 0.4);
+            scene.add(hemi);
+            const mainLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 30;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+            const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+
+            // Grid helper (subtle)
+            const gridHelper = new THREE.GridHelper(8, 8, 0x1a2a4a, 0x0a1a2a);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Axis line
+            const axisMat = new THREE.LineBasicMaterial({ color: 0x2a3a5a, transparent: true, opacity: 0.2 });
+            const axisPts = [new THREE.Vector3(-4, 0, 0), new THREE.Vector3(4, 0, 0)];
+            const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+            const axisLine = new THREE.Line(axisGeo, axisMat);
+            scene.add(axisLine);
+
+            thermoGroup = new THREE.Group();
+            scene.add(thermoGroup);
+
+            threeReady = true;
+            window.addEventListener('resize', onResize);
+            onResize();
+
+            animate();
+        } catch (e) {
+            container.innerHTML = `<div class="error">⚠️ 3D Engine Error: ${e.message}</div>`;
+            console.error(e);
+        }
+    }
+
+    function onResize() {
+        if (!threeReady) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || container.clientWidth || 800;
+        const h = rect.height || container.clientHeight || 400;
+        if (w === 0 || h === 0) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        cssRenderer.setSize(w, h);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (!threeReady) return;
+
+        // Update heat particles
+        updateHeatParticles();
+
+        // Update molecules
+        if (showMolecules && moleculeMeshes.length > 0 && objectMesh) {
+            const speedFactor = 0.4 + (objectTemp / 120);
+            const scale = objectMesh.scale.x; // current scale
+            const halfWidth = 0.7 * scale;
+            const halfHeight = 0.7 * scale;
+            for (let i = 0; i < moleculeMeshes.length && i < molecules.length; i++) {
+                const mol = molecules[i];
+                const mesh = moleculeMeshes[i];
+                mol.x += mol.vx * speedFactor * 0.02;
+                mol.y += mol.vy * speedFactor * 0.02;
+                if (mol.x < -halfWidth || mol.x > halfWidth) mol.vx *= -1;
+                if (mol.y < -halfHeight || mol.y > halfHeight) mol.vy *= -1;
+                mol.x = Math.max(-halfWidth, Math.min(halfWidth, mol.x));
+                mol.y = Math.max(-halfHeight, Math.min(halfHeight, mol.y));
+                mesh.position.set(mol.x, mol.y, (Math.random() - 0.5) * 0.6 * scale);
+            }
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
+    }
+
+    // ─── Heat Particles System ───
+    let molecules = [];
+    let particleTimer = 0;
+
+    function initParticlePool() {
+        particlePool = [];
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0xf97316,
+                transparent: true,
+                opacity: 0
+            });
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat);
+            mesh.visible = false;
+            thermoGroup.add(mesh);
+            particlePool.push({
+                mesh: mesh,
+                active: false,
+                life: 0,
+                maxLife: 0,
+                startX: 0,
+                startY: 0,
+                targetX: 0,
+                targetY: 0,
+                progress: 0,
+                speed: 0
+            });
+        }
+    }
+
+    function spawnParticle() {
+        if (!isHeating) return;
+        const diff = heatSourceTemp - objectTemp;
+        if (diff <= 0) return;
+        const intensity = Math.min(1, diff / 100);
+        const spawnRate = 2 + intensity * 8; // particles per second
+        if (Math.random() > spawnRate / 60) return; // 60 fps approx
+
+        // Find inactive particle
+        const available = particlePool.filter(p => !p.active);
+        if (available.length === 0) return;
+        const p = available[0];
+        p.active = true;
+        p.life = 0;
+        p.maxLife = 0.5 + intensity * 1.5;
+        p.progress = 0;
+        p.speed = 0.5 + intensity * 1.2;
+
+        const sourceX = -2.2 + 0.3;
+        const sourceY = (Math.random() - 0.5) * 0.4;
+        const targetX = 1.5 - 0.3;
+        const targetY = (Math.random() - 0.5) * 0.4;
+        p.startX = sourceX;
+        p.startY = sourceY;
+        p.targetX = targetX;
+        p.targetY = targetY;
+
+        p.mesh.position.set(sourceX, sourceY, 0);
+        p.mesh.visible = true;
+        p.mesh.material.opacity = 0.7 * intensity;
+        p.mesh.material.color.setHSL(0.08 - intensity * 0.05, 1, 0.5 + intensity * 0.3);
+    }
+
+    function updateHeatParticles() {
+        if (isHeating) spawnParticle();
+
+        for (const p of particlePool) {
+            if (!p.active) continue;
+            p.life += 0.016;
+            p.progress += p.speed * 0.02;
+            if (p.progress >= 1 || p.life > p.maxLife) {
+                p.active = false;
+                p.mesh.visible = false;
+                p.mesh.material.opacity = 0;
+                continue;
+            }
+            const t = p.progress;
+            const x = p.startX + (p.targetX - p.startX) * t;
+            const y = p.startY + (p.targetY - p.startY) * t + 0.2 * Math.sin(t * Math.PI * 2);
+            p.mesh.position.set(x, y, 0);
+            const opacity = Math.sin(t * Math.PI) * 0.7;
+            p.mesh.material.opacity = Math.max(0, opacity);
+            const scale = 1 + t * 0.5;
+            p.mesh.scale.set(scale, scale, scale);
+        }
+    }
+
+    // ─── Clear group ───
+    function clearGroup(group) {
+        while(group.children.length > 0) {
+            const child = group.children[0];
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            group.remove(child);
+        }
+    }
+
+    // ─── Create CSS2D label ───
+    function createLabel(text, color = '#ffffff', fontSize = '18px', position = new THREE.Vector3(0,0,0), bg = 'rgba(0,0,0,0.5)') {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.color = color;
+        div.style.fontFamily = 'Arial, sans-serif';
+        div.style.fontSize = fontSize;
+        div.style.fontWeight = 'bold';
+        div.style.textShadow = '0 0 10px rgba(0,0,0,0.9)';
+        div.style.padding = '4px 10px';
+        div.style.background = bg;
+        div.style.borderRadius = '6px';
+        div.style.border = '1px solid rgba(255,255,255,0.05)';
+        div.style.backdropFilter = 'blur(4px)';
+        div.style.pointerEvents = 'none';
+        const label = new THREE.CSS2DObject(div);
+        label.position.copy(position);
+        return label;
+    }
+
+    // ─── Build 3D thermodynamics scene ───
+    function buildThermoScene() {
+        clearGroup(thermoGroup);
+        if (!threeReady) return;
+
+        const sourceX = -2.2;
+        const objectX = 1.5;
+        const baseSize = 0.8;
+        // Compute object scale based on temperature (expansion)
+        objectScale = 0.7 + (objectTemp / 400) * 0.6; // ranges from 0.7 at 0°C to 1.3 at 400°C
+        const objectSize = baseSize * objectScale;
+        const sourceSize = 0.6;
+
+        // ─── Heat Source ───
+        const tempRatioSource = Math.min(1, heatSourceTemp / 300);
+        const sourceColor = new THREE.Color().setHSL(0.08 - tempRatioSource * 0.05, 1, 0.5 + tempRatioSource * 0.3);
+        const sourceMat = new THREE.MeshStandardMaterial({
+            color: sourceColor,
+            emissive: sourceColor,
+            emissiveIntensity: 0.2 + tempRatioSource * 0.6,
+            metalness: 0.1,
+            roughness: 0.3
+        });
+        sourceMesh = new THREE.Mesh(new THREE.BoxGeometry(sourceSize, sourceSize, sourceSize), sourceMat);
+        sourceMesh.position.set(sourceX, 0, 0);
+        sourceMesh.castShadow = true;
+        thermoGroup.add(sourceMesh);
+
+        // Source glow aura
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: sourceColor,
+            transparent: true,
+            opacity: 0.08 + tempRatioSource * 0.12
+        });
+        sourceGlow = new THREE.Mesh(new THREE.SphereGeometry(sourceSize * 1.6, 16, 16), glowMat);
+        sourceGlow.position.copy(sourceMesh.position);
+        thermoGroup.add(sourceGlow);
+
+        // ─── Object (with expansion) ───
+        const tempRatioObj = Math.min(1, Math.max(0, objectTemp / 200));
+        const objColor = new THREE.Color().setHSL(0.08 - tempRatioObj * 0.08, 0.8, 0.5 + tempRatioObj * 0.3);
+        const objMat = new THREE.MeshStandardMaterial({
+            color: objColor,
+            emissive: objColor,
+            emissiveIntensity: tempRatioObj * 0.2,
+            metalness: 0.2,
+            roughness: 0.4
+        });
+        objectMesh = new THREE.Mesh(new THREE.BoxGeometry(objectSize, objectSize, objectSize), objMat);
+        objectMesh.position.set(objectX, 0, 0);
+        objectMesh.castShadow = true;
+        // Store scale for later use in molecule bounds (we use the actual geometry size)
+        thermoGroup.add(objectMesh);
+
+        // ─── Molecules ───
+        if (showMolecules) {
+            const numMolecules = 60;
+            if (molecules.length !== numMolecules) {
+                molecules = [];
+                for (let i = 0; i < numMolecules; i++) {
+                    molecules.push({
+                        x: (Math.random() - 0.5) * 1.2 * objectScale,
+                        y: (Math.random() - 0.5) * 1.2 * objectScale,
+                        vx: (Math.random() - 0.5) * 0.8,
+                        vy: (Math.random() - 0.5) * 0.8
+                    });
+                }
+            }
+            moleculeMeshes = [];
+            const molMat = new THREE.MeshStandardMaterial({
+                color: 0xfbbf24,
+                emissive: 0xfbbf24,
+                emissiveIntensity: 0.1,
+                metalness: 0.1,
+                roughness: 0.3
+            });
+            for (let i = 0; i < molecules.length; i++) {
+                const mol = molecules[i];
+                const size = 0.03 + (objectTemp / 500) * 0.04;
+                const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 6, 6), molMat);
+                // Scale positions to match object size
+                const scaledX = mol.x / objectScale;
+                const scaledY = mol.y / objectScale;
+                mesh.position.set(scaledX * objectScale, scaledY * objectScale, (Math.random() - 0.5) * 0.6 * objectScale);
+                mesh.castShadow = true;
+                thermoGroup.add(mesh);
+                moleculeMeshes.push(mesh);
+            }
+        }
+
+        // ─── Thermometer ───
+        const thermoX = 3.8;
+        const thermoY = 0;
+        const thermoHeight = 1.6;
+        const thermoWidth = 0.2;
+        // Glass tube
+        const tubeMat = new THREE.MeshPhysicalMaterial({
+            color: 0x94a3b8,
+            transparent: true,
+            opacity: 0.3,
+            metalness: 0.0,
+            roughness: 0.1,
+            side: THREE.DoubleSide,
+        });
+        thermometerMesh = new THREE.Mesh(new THREE.BoxGeometry(thermoWidth, thermoHeight, thermoWidth), tubeMat);
+        thermometerMesh.position.set(thermoX, thermoY, 0);
+        thermoGroup.add(thermometerMesh);
+        // Mercury
+        const tempPercent = Math.min(1, Math.max(0, objectTemp / 300));
+        const mercuryHeight = thermoHeight * tempPercent;
+        const mercuryMat = new THREE.MeshStandardMaterial({
+            color: 0xef4444,
+            emissive: 0xef4444,
+            emissiveIntensity: 0.2,
+            metalness: 0.1,
+            roughness: 0.3
+        });
+        mercuryMesh = new THREE.Mesh(new THREE.BoxGeometry(thermoWidth * 0.8, mercuryHeight - 0.02, thermoWidth * 0.8), mercuryMat);
+        mercuryMesh.position.set(thermoX, thermoY - thermoHeight/2 + mercuryHeight/2, 0);
+        thermoGroup.add(mercuryMesh);
+
+        // Thermometer tick marks
+        for (let i = 0; i <= 5; i++) {
+            const yPos = thermoY - thermoHeight/2 + (i / 5) * thermoHeight;
+            const tickMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.3 });
+            const pts = [
+                new THREE.Vector3(thermoX + thermoWidth/2 + 0.05, yPos, 0),
+                new THREE.Vector3(thermoX + thermoWidth/2 + 0.15, yPos, 0)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(geo, tickMat);
+            thermoGroup.add(line);
+            const label = createLabel(`${(i / 5) * 300}°`, '#94a3b8', '10px', new THREE.Vector3(thermoX + 0.35, yPos, 0));
+            thermoGroup.add(label);
+        }
+
+        // ─── Labels ───
+        // Source label
+        const srcLabel = createLabel(`🔥 ${heatSourceTemp}°C`, '#f97316', '18px', new THREE.Vector3(sourceX, -1.0, 0));
+        thermoGroup.add(srcLabel);
+        // Object label (with size info)
+        const sizeLabel = createLabel(`📦 Size: ${(objectSize*100).toFixed(0)}%`, '#3b82f6', '14px', new THREE.Vector3(objectX, -1.2, 0));
+        thermoGroup.add(sizeLabel);
+        // Object temp label
+        const objLabel = createLabel(`🟦 ${objectTemp.toFixed(1)}°C`, '#3b82f6', '18px', new THREE.Vector3(objectX, -0.8, 0));
+        thermoGroup.add(objLabel);
+        // Thermometer label (current temp)
+        const thermoLabel = createLabel(`${objectTemp.toFixed(0)}°C`, '#ffffff', '16px', new THREE.Vector3(thermoX, 1.2, 0));
+        thermoGroup.add(thermoLabel);
+        // Energy transferred label
+        const energyLabel = createLabel(`Q = ${heatTransferred.toFixed(0)} J`, '#fbbf24', '16px', new THREE.Vector3(objectX, 1.2, 0));
+        thermoGroup.add(energyLabel);
+        // Timer label
+        const timer = document.getElementById('timeToEquilibrium').textContent;
+        const timerLabel = createLabel(`⏱️ ${timer}`, '#10b981', '16px', new THREE.Vector3(0, 1.8, 0));
+        thermoGroup.add(timerLabel);
+
+        // ─── Connecting arrow (heat flow) ───
+        if (isHeating && objectTemp < heatSourceTemp) {
+            const arrowMat = new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.3 });
+            const pts = [
+                new THREE.Vector3(sourceX + sourceSize/2 + 0.2, 0, 0),
+                new THREE.Vector3(objectX - objectSize/2 - 0.2, 0, 0)
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(geo, arrowMat);
+            thermoGroup.add(line);
+            // Arrowhead
+            const head = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.1, 6), new THREE.MeshBasicMaterial({ color: 0xf97316 }));
+            head.position.set((pts[0].x + pts[1].x) / 2, 0, 0);
+            head.rotation.z = -Math.PI / 2;
+            thermoGroup.add(head);
+        }
+
+        // ─── Initialize particle pool if not exists ───
+        if (particlePool.length === 0) initParticlePool();
+    }
+
+    // ─── Update functions ───
+    function updateThermoParams() {
+        heatSourceTemp = parseFloat(document.getElementById('heatTempSlider').value);
+        objectTemp = parseFloat(document.getElementById('objectTempSlider').value);
+        mass = parseFloat(document.getElementById('massSlider').value);
+        specificHeat = parseFloat(document.getElementById('specificHeatSlider').value);
+        document.getElementById('heatTempValue').textContent = heatSourceTemp + ' °C';
+        document.getElementById('objectTempValue').textContent = objectTemp + ' °C';
+        document.getElementById('massValue').textContent = mass.toFixed(1) + ' kg';
+        document.getElementById('specificHeatValue').textContent = specificHeat + ' J/kg°C';
+        document.getElementById('currentTempValue').textContent = objectTemp.toFixed(1) + ' °C';
+        buildThermoScene();
+    }
+
+    function startHeating() { 
+        if (isHeating || objectTemp >= heatSourceTemp) return; 
+        isHeating = true; 
+        userStats.runs++;
+        heatingStartTime = Date.now(); 
+        animateHeating(); 
+    }
+
+    function stopHeating() { 
+        isHeating = false; 
+        if(heatingAnimationId) cancelAnimationFrame(heatingAnimationId); 
+        // Reset particle visibility
+        for (const p of particlePool) {
+            p.active = false;
+            p.mesh.visible = false;
+            p.mesh.material.opacity = 0;
+        }
+        buildThermoScene(); 
+    }
+
+    function resetThermo() { 
+        stopHeating(); 
+        objectTemp = parseFloat(document.getElementById('objectTempSlider').value); 
+        heatTransferred = 0; 
+        document.getElementById('timeToEquilibrium').textContent = '0.0 s'; 
+        updateThermoParams(); 
+    }
+
+    function toggleMolecules() { 
+        showMolecules = !showMolecules; 
+        buildThermoScene(); 
+    }
+
+    function animateHeating() {
+        if (!isHeating) return;
+        const elapsed = (Date.now() - heatingStartTime) / 1000;
+        const tempDiff = heatSourceTemp - objectTemp;
+        
+        document.getElementById('timeToEquilibrium').textContent = elapsed.toFixed(1) + ' s';
+
+        if (tempDiff > 0 && objectTemp < heatSourceTemp) {
+            const heatingRate = 45.0 / (mass * (specificHeat / 1000));
+            const deltaTemp = Math.min(tempDiff, heatingRate * 0.03);
+            objectTemp += deltaTemp;
+            heatTransferred += mass * specificHeat * deltaTemp;
+            
+            document.getElementById('currentTempValue').textContent = objectTemp.toFixed(1) + ' °C';
+            document.getElementById('heatTransferredValue').textContent = heatTransferred.toFixed(0) + ' J';
+            
+            if (objectTemp >= heatSourceTemp - 0.1) { 
+                objectTemp = heatSourceTemp; 
+                stopHeating(); 
+                userStats.equilibriums++;
+                document.getElementById('timeToEquilibrium').innerHTML = elapsed.toFixed(1) + ' s <span style="font-size:0.8em">(Equilibrium)</span>'; 
+            }
+            buildThermoScene();
+        }
+        if(isHeating) {
+            heatingAnimationId = requestAnimationFrame(animateHeating);
+        }
+    }
+
+    // ─── Fullscreen toggle ───
+    function toggleFullscreen() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            container.classList.add('fullscreen');
+            main.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.getElementById('canvasContainer');
+        const main = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen');
+            main.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. AI, LANGUAGE, QUIZ – (unchanged from original)
+    // ─────────────────────────────────────────────────────────────
+
+    let currentLang = 'english';
+    
+    const intentTopics = [
+        { id: "quiz", keywords: ["quiz", "test", "exam", "nsɔhwɛ", "sɔhwɛ", "kaamɔ", "dodokpɔ", "dahimbu"] },
+        { id: "pred", keywords: ["predict", "analytics", "score", "nkɔmhyɛ", "kɔkɔbɔ", "nyagbɔgblɔɖi", "baŋsim"] },
+        { id: "exp", keywords: ["experiment", "try", "nhwehwɛmu", "nitsumɔ", "niŋsim"] },
+        { id: "help", keywords: ["help", "what can you do", "topics", "menu", "boa", "wawa", "kpe"] },
+        { id: "specificHeat", keywords: ["specific heat", "heat capacity", "c value"] },
+        { id: "equilibrium", keywords: ["equilibrium", "balance", "thermal balance"] },
+        { id: "energy", keywords: ["energy", "heat transfer", "joules", "q="] }
+    ];
+
+    const masterQuiz = [
+        {q: "What is the SI unit of heat energy?", o: ["Watt", "Joule", "Celsius", "Newton"], a: "Joule"},
+        {q: "What formula is used to calculate heat transfer?", o: ["F = ma", "V = IR", "Q = mcΔT", "E = mc²"], a: "Q = mcΔT"},
+        {q: "What happens when two objects reach thermal equilibrium?", o: ["Heat transfer stops", "They melt", "They explode", "Heat flows faster"], a: "Heat transfer stops"},
+        {q: "Which material typically has a higher specific heat?", o: ["Iron", "Copper", "Water", "Gold"], a: "Water"},
+        {q: "Heat transfer through direct contact is called:", o: ["Convection", "Radiation", "Conduction", "Insulation"], a: "Conduction"}
+    ];
+
+    const i18n = {
+        english: {
+            dict: {
+                welcome: "🔥 **Adusei AI Tutor Activated.**\n\nI am your Thermodynamics Engine. Ask me about Heat Transfer, Specific Heat, or Equilibrium.\n\nType **'Help'** to see what I can teach you!",
+                btnQuiz: "📝 Take Quiz", btnPred: "🔮 AI Analytics", btnExp: "🧪 Experiment", placeholder: "Ask about heat transfer, specific heat...",
+                unknown: "I'm your physics tutor! I might not understand that phrasing. Type **'Help'** to see my knowledge base.",
+                help: "🧠 **My Knowledge Base:**\nAsk me to explain any of these:\n• **Equations:** Heat Transfer ($Q = mc\\Delta T$)\n• **Concepts:** Thermal Equilibrium, Specific Heat Capacity\n• **Experiments:** How does mass affect heating time?",
+                specificHeat: "🔬 **Specific Heat Capacity (c):**\nThe energy needed to raise **1kg** of a substance by **1°C**. Water has a high specific heat (**4184 J/kg°C**), meaning it takes a lot of energy to heat up compared to metals!",
+                equilibrium: "⚖️ **Thermal Equilibrium:**\nThis occurs when heat stops flowing because the heat source and the object have reached the exact same temperature.",
+                energy: "⚡ **Heat Energy (Q):**\nMeasured in Joules (J). It depends on the mass, specific heat, and change in temperature: $$Q = mc\\Delta T$$",
+                exp: "🧪 **Custom AI Experiment:**\nSet the Mass to 1.0 kg and Specific Heat to 4184 J/kg°C. Time how long it takes to reach 100°C. Then, lower the Specific Heat to 450 (like Iron). Notice how much faster it reaches equilibrium!",
+                predTitle: "AI Mastery Prediction", 
+                qList: masterQuiz
+            }
+        },
+        twi: {
+            dict: {
+                welcome: "🔥 **Adusei AI Tutor (Twi) Aba.**\n\nBisa me 'Boa' (Help) na menkyerɛ wo nea mentumi nyɛ!",
+                btnQuiz: "📝 Yɛ Nsɔhwɛ", btnPred: "🔮 AI Nkɔmhyɛ", btnExp: "🧪 Yɛ Nhwehwɛmu", placeholder: "Bisa physics asɛm biara...",
+                unknown: "Mente aseɛ yie. Twerɛ 'Boa'.",
+                help: "🧠 **Nea Metumi Akyerɛkyerɛ Mu:**\n• Sɛnea yɛbu 'Specific Heat'\n• Thermal Equilibrium ho nsɛm",
+                specificHeat: "🔬 **Specific Heat:**\nAhoɔden a ɛhia na ama 1kg adeɛ bi ayɛ hye 1°C. Nsuo gye ahoɔden pii ansa na ayɛ hye!",
+                equilibrium: "⚖️ **Thermal Equilibrium:**\nSɛ nneɛma mmienu nyinaa hye (temperature) yɛ pɛ a, hye no gyae kɔ.",
+                energy: "⚡ **Heat Energy (Q):**\n$$Q = mc\\Delta T$$",
+                exp: "🧪 **Nhwehwɛmu:** Fa mass no kɔ 1kg na fa specific heat kɔ 450. Hwɛ sɛnea ɛyɛ hye ntɛmntɛm!",
+                predTitle: "AI Nkɔmhyɛ", qList: masterQuiz
+            }
+        },
+        ga: {
+            dict: {
+                welcome: "🔥 **Adusei AI Tutor (Ga).**\nBi mi 'Boa' (Help).", btnQuiz: "📝 Feemɔ Kaamɔ", btnPred: "🔮 AI Kɔkɔbɔ", btnExp: "🧪 Feemɔ Nitsumɔ", placeholder: "Bi sane fɛɛ sane...", unknown: "Mitee shishi. Ŋmaa 'Boa'.",
+                help: "🧠 **Nii ni Manyɛ Matsɔɔ:**\n• Specific Heat\n• Thermal Equilibrium", specificHeat: "🔬 **Specific Heat:**\nNɔ ni hãa nu tswaa la mra mra.", equilibrium: "⚖️ **Thermal Equilibrium:**\nKɛ la lɛ fɛɛ fee pɛ.", energy: "⚡ **Heat Energy (Q):**\n$$Q = mc\\Delta T$$", exp: "🧪 **Nitsumɔ:** Tsake mass lɛ ni okwɛ nɔ ni baaba.", predTitle: "AI Kɔkɔbɔ", qList: masterQuiz
+            }
+        },
+        ewe: {
+            dict: {
+                welcome: "🔥 **AI Tutor (Ewe).**\nBia 'Kpe' (Help).", btnQuiz: "📝 Wɔ Dodokpɔ", btnPred: "🔮 AI Nyagbɔgblɔɖi", btnExp: "🧪 Wɔ Dodokpɔ", placeholder: "Bia nya...", unknown: "Nyemese egɔme o.",
+                help: "🧠 **Nu siwo mate ŋu afia:**\n• Specific Heat\n• Thermal Equilibrium", specificHeat: "🔬 **Specific Heat:**\nEhiã ŋusẽ geɖe be tsi naxɔ dzo.", equilibrium: "⚖️ **Thermal Equilibrium:**\nNe dzoxɔxɔ sɔ.", energy: "⚡ **Heat Energy (Q):**\n$$Q = mc\\Delta T$$", exp: "🧪 **Dodokpɔ:** Trɔ mass la kpɔ.", predTitle: "AI Nyagbɔgblɔɖi", qList: masterQuiz
+            }
+        },
+        dagbani: {
+            dict: {
+                welcome: "🔥 **AI Tutor (Dagbani).**\nBɔhi 'Sɔŋ' (Help).", btnQuiz: "📝 Niŋ Dahimbu", btnPred: "🔮 AI Baŋsim", btnExp: "🧪 Niŋ Niŋsim", placeholder: "Bɔhi yɛltɔɣa...", unknown: "N bi gbaai yɛla maa gbunni.",
+                help: "🧠 **Baŋsim:**\n• Specific Heat\n• Thermal Equilibrium", specificHeat: "🔬 **Specific Heat:**\nKompia tulim.", equilibrium: "⚖️ **Thermal Equilibrium:**\nTulim saɣisi.", energy: "⚡ **Heat Energy (Q):**\n$$Q = mc\\Delta T$$", exp: "🧪 **Niŋsim:** Taɣimi mass maa.", predTitle: "AI Baŋsim", qList: masterQuiz
+            }
+        }
+    };
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`.lang-btn[data-lang="${lang}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
+        
+        const d = i18n[currentLang].dict;
+        document.getElementById('btnQuiz').innerHTML = d.btnQuiz;
+        document.getElementById('btnPred').innerHTML = d.btnPred;
+        document.getElementById('btnExp').innerHTML = d.btnExp;
+        document.getElementById('aiInput').placeholder = d.placeholder;
+        
+        document.getElementById('aiMessages').innerHTML = '';
+        addAIMessage(d.welcome, false);
+    }
+
+    function toggleAI() { 
+        const aiWindow = document.getElementById('aiAssistant');
+        aiWindow.classList.toggle('active'); 
+        if(aiWindow.classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+
+    function addAIMessage(msg, isUser=false) {
+        const container = document.getElementById('aiMessages');
+        let formattedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        container.innerHTML += `<div class="ai-message ${isUser?'user':'bot'}"><div class="ai-message-content">${formattedMsg}</div></div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function processAIQuery(query) {
+        const q = query.toLowerCase();
+        const dict = i18n[currentLang].dict;
+        
+        for (let topic of intentTopics) {
+            if (topic.keywords.some(k => q.includes(k))) {
+                if (topic.id === "quiz") { setTimeout(showQuiz, 800); return dict.btnQuiz + "..."; }
+                if (topic.id === "pred") { setTimeout(showPrediction, 800); return dict.btnPred + "..."; }
+                if (topic.id === "exp") { setTimeout(showExperiment, 800); return dict.btnExp + "..."; }
+                if (dict[topic.id]) return dict[topic.id];
+            }
+        }
+        return dict.unknown;
+    }
+
+    async function sendAIMessage() {
+        const input = document.getElementById('aiInput');
+        const q = input.value.trim();
+        if (!q) return;
+        addAIMessage(q, true); input.value = '';
+        
+        const t = document.createElement('div'); t.className = 'ai-message bot'; t.id = 'typingIndicator'; 
+        t.innerHTML = '<div class="ai-message-content"><div style="display:flex;gap:4px;"><span style="animation:pulse 1s infinite;width:6px;height:6px;background:white;border-radius:50%;"></span><span style="animation:pulse 1s infinite 0.2s;width:6px;height:6px;background:white;border-radius:50%;"></span><span style="animation:pulse 1s infinite 0.4s;width:6px;height:6px;background:white;border-radius:50%;"></span></div></div>'; 
+        document.getElementById('aiMessages').appendChild(t);
+        let container = document.getElementById('aiMessages');
+        container.scrollTop = container.scrollHeight;
+        
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('typingIndicator').remove();
+        
+        const response = processAIQuery(q);
+        addAIMessage(response, false);
+        speakAI(response);
+    }
+
+    function handleAIKeypress(e) { if(e.key === 'Enter') sendAIMessage(); }
+
+    function speakAI(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let clean = text.replace(/[\u{1F600}-\u{1F6FF}|[\u{2600}-\u{26FF}]/gu, '').replace(/\*\*/g, '').replace(/\*/g, '');
+            clean = clean.replace(/\$\$.*?\$\$/g, ' equation ').replace(/\$.*?\$/g, ' equation ');
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = currentLang === 'english' ? 'en-US' : 'en-GB'; 
+            utterance.rate = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+    
+    let isListening = false, recognition = null;
+    function toggleVoice() {
+        const btn = document.getElementById('voiceBtn');
+        if (isListening) { recognition?.stop(); btn.classList.remove('listening'); isListening = false; }
+        else if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang === 'english' ? 'en-US' : 'en-GH'; 
+            recognition.onstart = () => { btn.classList.add('listening'); isListening = true; };
+            recognition.onresult = (e) => { 
+                const cmd = e.results[0][0].transcript; 
+                if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+                addAIMessage(cmd, true); 
+                const res = processAIQuery(cmd); addAIMessage(res, false); speakAI(res);
+            };
+            recognition.onend = () => { btn.classList.remove('listening'); isListening = false; };
+            recognition.start();
+        }
+    }
+
+    function showModal(htmlContent) {
+        document.getElementById('modalContent').innerHTML = htmlContent;
+        document.getElementById('generalModal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('generalModal').classList.remove('active'); }
+
+    function showQuiz() {
+        const d = i18n[currentLang].dict;
+        const questions = d.qList;
+        
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:15px;">
+                <h2 style="color:white; margin:0;">${d.btnQuiz}</h2>
+                <span style="background:#f97316; color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.9rem;">${questions.length} Questions</span>
+            </div>
+            <div class="modal-scroll">
+        `;
+        
+        questions.forEach((item, index) => {
+            html += `
+            <div class="quiz-question">
+                <p><strong>${index + 1}. ${item.q}</strong></p>
+                ${item.o.map(opt => `
+                    <label><input type="radio" name="q${index}" value="${opt}"><span>${opt}</span></label>
+                `).join('')}
+            </div>`;
+        });
+
+        html += `
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.06);">
+                <button class="btn-secondary" style="flex:1; padding:15px; font-size:1.1rem;" onclick="closeModal()">✕ Cancel</button>
+                <button class="lab-action-btn" style="flex:2; font-size:1.1rem; padding:15px;" onclick="submitQuiz()">Submit & Grade</button>
+            </div>
+        `;
+        showModal(html);
+    }
+
+    function submitQuiz() {
+        const d = i18n[currentLang].dict;
+        const questions = d.qList;
+        let score = 0;
+        const scorePerQ = 100 / questions.length;
+        
+        questions.forEach((item, index) => {
+            const ans = document.querySelector(`input[name="q${index}"]:checked`);
+            if (ans && ans.value === item.a) score += scorePerQ; 
+        });
+        
+        userStats.quizScores.push(Math.round(score));
+        
+        showModal(`
+            <div style="text-align:center; padding: 30px 10px;">
+                <div style="font-size:6rem; font-weight:900; background: linear-gradient(135deg, #f97316, #fbbf24); -webkit-background-clip: text; color: transparent; text-shadow: 0 10px 30px rgba(249,115,22,0.3); margin-bottom:10px; line-height:1;">${Math.round(score)}%</div>
+                <h3 style="color:white; margin-bottom: 30px; font-size:1.5rem; font-weight:400;">Quiz Successfully Completed!</h3>
+                <button class="lab-action-btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Continue Laboratory</button>
+            </div>
+        `);
+    }
+
+    function showPrediction() {
+        const d = i18n[currentLang].dict;
+        
+        let avgQuiz = 0;
+        if (userStats.quizScores.length > 0) {
+            const sum = userStats.quizScores.reduce((a, b) => a + b, 0);
+            avgQuiz = sum / userStats.quizScores.length;
+        }
+
+        let runScore = Math.min(100, userStats.runs * 10);
+        let eqScore = Math.min(100, userStats.equilibriums * 20);
+        let overallScore = (avgQuiz > 0) ? Math.round((runScore * 0.2) + (eqScore * 0.3) + (avgQuiz * 0.5)) : Math.round((runScore * 0.4) + (eqScore * 0.6));
+        
+        let txt = overallScore >= 80 ? "Outstanding! Your combined lab interactions and quiz results demonstrate deep mastery of Thermodynamics." : 
+                  overallScore >= 50 ? "Good progress! Keep adjusting the specific heat and mass to observe temperature changes." : 
+                  "Just getting started! Use the sliders to change thermal conditions, click Start, and observe the live calculations, then try the quiz.";
+        
+        showModal(`
+            <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-top:0;">${d.predTitle}</h2>
+            
+            <div style="display:flex; justify-content:space-around; text-align:center; margin:30px 0; background:rgba(0,0,0,0.2); padding:20px; border-radius:16px;">
+                <div>
+                    <div style="font-size:2.5rem; font-weight:bold; color:#3b82f6;">${userStats.runs}</div>
+                    <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Heating Runs</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div>
+                    <div style="font-size:2.5rem; font-weight:bold; color:#f97316;">${Math.round(avgQuiz)}%</div>
+                    <div style="font-size:0.9rem; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-top:5px;">Quiz Avg</div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin:20px 0;">
+                <div style="font-size:1rem; color:#94a3b8; text-transform:uppercase; font-weight:bold; margin-bottom:10px;">Overall AI Mastery Score</div>
+                <div style="font-size:5rem; font-weight:900; color:#f97316; text-shadow: 0 10px 30px rgba(249, 115, 22, 0.4); line-height:1;">
+                    ${overallScore}%
+                </div>
+            </div>
+            
+            <div style="background:rgba(0,0,0,0.3); padding:20px; border-left:4px solid #f97316; border-radius:12px; color:#cbd5e1; margin-bottom:30px; line-height:1.6;">
+                <strong style="color:white; font-size:1.1rem; display:block; margin-bottom:8px;">System Analysis:</strong>${txt}
+            </div>
+            <button class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="closeModal()">Close Diagnostics</button>
+        `);
+    }
+
+    function showExperiment() {
+        addAIMessage(i18n[currentLang].dict.exp, false);
+        if(!document.getElementById('aiAssistant').classList.contains('active')) toggleAI();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. INIT
+    // ─────────────────────────────────────────────────────────────
+    window.addEventListener('load', function() {
+        initThree();
+        setTimeout(function() {
+            // Initialise molecules
+            molecules = [];
+            for (let i = 0; i < 60; i++) {
+                molecules.push({
+                    x: (Math.random() - 0.5) * 1.2,
+                    y: (Math.random() - 0.5) * 1.2,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8
+                });
+            }
+            // Initialise particle pool
+            initParticlePool();
+            updateThermoParams();
+            setLanguage('english');
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    document.getElementById('aiAssistant').classList.add('active');
+                }, 1000);
+            }
+        }, 300);
+    });
+    </script>
+    <script src="js/global.js"></script>
+</body>
+</html>

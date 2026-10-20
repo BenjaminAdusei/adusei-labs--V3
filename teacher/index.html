@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | Adusei Labs</title>
+    <link rel="stylesheet" href="/css_global.css">
+    <style>
+        /* ─── Teacher Dashboard Styles ─── */
+        .teacher-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .teacher-header h1 {
+            margin: 0;
+        }
+        .teacher-header .sub {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 20px 0 30px 0;
+        }
+        .stat-box {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 18px 20px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow);
+            transition: transform var(--transition-fast);
+        }
+        .stat-box:hover {
+            transform: translateY(-3px);
+        }
+        .stat-box .num {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: var(--primary);
+            display: block;
+            line-height: 1.2;
+        }
+        .stat-box .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin-top: 4px;
+        }
+
+        /* ─── Lab Grid ─── */
+        .lab-grid-teacher {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .lab-card-teacher {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow);
+            transition: all var(--transition-med);
+        }
+        .lab-card-teacher:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+        }
+        .lab-card-teacher .lab-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .lab-card-teacher .lab-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lab-card-teacher .lab-section {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 600;
+            background: rgba(0,0,0,0.04);
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        .lab-card-teacher .lab-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 8px 0 10px 0;
+        }
+        .lab-card-teacher .lab-stats strong {
+            color: var(--text-main);
+        }
+        .progress-bar {
+            height: 6px;
+            background: rgba(0,0,0,0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.8s ease;
+        }
+        .lab-card-teacher .status-badge {
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .status-badge.complete {
+            background: rgba(16,185,129,0.15);
+            color: #10b981;
+        }
+        .status-badge.partial {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+        }
+        .status-badge.not-started {
+            background: rgba(239,68,68,0.10);
+            color: #ef4444;
+        }
+
+        /* ─── Export Button ─── */
+        .export-section {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 24px 0 10px 0;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 600px) {
+            .lab-grid-teacher {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .teacher-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            .stat-box {
+                background: rgba(30,15,25,0.7);
+            }
+            .lab-card-teacher {
+                background: rgba(30,15,25,0.7);
+            }
+            .lab-card-teacher .lab-section {
+                background: rgba(255,255,255,0.05);
+            }
+            .progress-bar {
+                background: rgba(255,255,255,0.06);
+            }
+            .status-badge.complete {
+                background: rgba(16,185,129,0.2);
+            }
+            .status-badge.partial {
+                background: rgba(245,158,11,0.2);
+            }
+            .status-badge.not-started {
+                background: rgba(239,68,68,0.15);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── GLOBAL HEADER ─── -->
+    <div id="global-header"></div>
+
+    <div class="container">
+
+        <!-- ─── HEADER ─── -->
+        <div class="teacher-header">
+            <div>
+                <h1>👨‍🏫 Teacher Dashboard</h1>
+                <div class="sub">Track student progress across all 19 WAEC Physics labs</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn-primary btn-sm" onclick="exportCSV()">📤 Export CSV</button>
+                <button class="btn-secondary btn-sm" onclick="resetAllData()">🔄 Reset All Data</button>
+            </div>
+        </div>
+
+        <!-- ─── STATS ─── -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- ─── LAB LIST ─── -->
+        <h3 style="margin-bottom:4px;">📋 Lab Performance</h3>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">Each lab shows attempts and average quiz score</p>
+        <div class="lab-grid-teacher" id="teacherLabGrid"></div>
+
+        <!-- ─── EXPORT SECTION ─── -->
+        <div class="export-section">
+            <button class="btn-primary" onclick="exportCSV()">📤 Export Full Report (CSV)</button>
+            <button class="btn-secondary" onclick="exportJSON()">📄 Export as JSON</button>
+        </div>
+
+    </div>
+
+    <!-- ─── GLOBAL FOOTER ─── -->
+    <div id="global-footer"></div>
+
+    <!-- ─── SCRIPTS ─── -->
+    <script src="/js/global.js"></script>
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        // TEACHER DASHBOARD JAVASCRIPT
+        // ─────────────────────────────────────────────────────────────
+
+        function renderTeacherDashboard() {
+            const stats = getAllStats();
+            const grid = document.getElementById('teacherLabGrid');
+            const statsGrid = document.getElementById('statsGrid');
+
+            // ── Calculate totals ──
+            let totalAttempts = 0;
+            let totalCompleted = 0;
+            let totalScore = 0;
+            let scoreCount = 0;
+            let totalPossible = LABS.length;
+
+            for (const lab of LABS) {
+                const s = stats[lab.id] || { attempts: 0, average: 0 };
+                totalAttempts += s.attempts;
+                if (s.attempts > 0) totalCompleted++;
+                if (s.average > 0) {
+                    totalScore += s.average;
+                    scoreCount++;
+                }
+            }
+
+            const avgScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
+            const completionRate = Math.round((totalCompleted / totalPossible) * 100);
+
+            // ── Stats grid ──
+            statsGrid.innerHTML = `
+                <div class="stat-box"><span class="num">${totalPossible}</span><span class="label">Total Labs</span></div>
+                <div class="stat-box"><span class="num">${totalCompleted}</span><span class="label">Completed</span></div>
+                <div class="stat-box"><span class="num">${completionRate}%</span><span class="label">Completion Rate</span></div>
+                <div class="stat-box"><span class="num">${totalAttempts}</span><span class="label">Total Attempts</span></div>
+                <div class="stat-box"><span class="num">${avgScore}%</span><span class="label">Average Score</span></div>
+            `;
+
+            // ── Lab grid ──
+            let html = '';
+            for (const lab of LABS) {
+                const s = stats[lab.id] || { attempts: 0, average: 0 };
+                const pct = s.attempts > 0 ? Math.min(100, s.average) : 0;
+                let status = 'not-started';
+                let statusLabel = 'Not Started';
+                if (s.attempts > 0 && s.average >= 70) {
+                    status = 'complete';
+                    statusLabel = '✅ Mastered';
+                } else if (s.attempts > 0 && s.average >= 40) {
+                    status = 'partial';
+                    statusLabel = '🔄 In Progress';
+                } else if (s.attempts > 0) {
+                    status = 'partial';
+                    statusLabel = '📖 Needs Practice';
+                }
+
+                html += `
+                    <div class="lab-card-teacher">
+                        <div class="lab-top">
+                            <div class="lab-name">
+                                ${lab.icon} ${lab.name}
+                            </div>
+                            <span class="lab-section">${SECTION_NAMES[lab.section]}</span>
+                        </div>
+                        <div class="lab-stats">
+                            <span>📝 <strong>${s.attempts}</strong> attempts</span>
+                            <span>📊 <strong>${s.average || 0}%</strong> avg</span>
+                            <span class="status-badge ${status}">${statusLabel}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="fill" style="width:${pct}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // ─── EXPORT CSV ───
+        function exportCSV() {
+            const stats = getAllStats();
+            let csv = 'Lab,Section,Attempts,Average Score,Status\n';
+            for (const lab of LABS) {
+                const s = stats[lab.id] || { attempts: 0, average: 0 };
+                const status = s.attempts > 0 ? (s.average >= 70 ? 'Mastered' : s.average >= 40 ? 'In Progress' : 'Needs Practice') : 'Not Started';
+                csv += `"${lab.name}","${SECTION_NAMES[lab.section]}",${s.attempts},${s.average || 0},"${status}"\n`;
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'adusei-labs-progress.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            showToast('✅ CSV exported successfully!');
+        }
+
+        // ─── EXPORT JSON ───
+        function exportJSON() {
+            const stats = getAllStats();
+            const data = {
+                exported: new Date().toISOString(),
+                totalLabs: LABS.length,
+                labs: LABS.map(lab => ({
+                    id: lab.id,
+                    name: lab.name,
+                    section: lab.section,
+                    icon: lab.icon,
+                    stats: stats[lab.id] || { attempts: 0, average: 0 }
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'adusei-labs-progress.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            showToast('✅ JSON exported successfully!');
+        }
+
+        // ─── RESET ALL DATA ───
+        function resetAllData() {
+            if (confirm('⚠️ Are you sure you want to delete ALL quiz scores and notebook data? This cannot be undone!')) {
+                if (confirm('Really? All student progress will be lost.')) {
+                    localStorage.removeItem('adusei_quizScores');
+                    localStorage.removeItem('adusei_notebook');
+                    showToast('🗑️ All data has been reset.');
+                    renderTeacherDashboard();
+                }
+            }
+        }
+
+        // ─── TOAST NOTIFICATION ───
+        function showToast(message) {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.textContent = message;
+            Object.assign(toast.style, {
+                position: 'fixed',
+                bottom: '120px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(16px)',
+                padding: '14px 28px',
+                borderRadius: '30px',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+                color: 'var(--text-main)',
+                fontWeight: '600',
+                zIndex: '9999',
+                fontSize: '0.95rem',
+                maxWidth: '90%',
+                textAlign: 'center',
+                animation: 'fadeIn 0.3s ease-out'
+            });
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ─── INIT ───
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTeacherDashboard();
+        });
+
+        // Re-render when returning to the page
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                renderTeacherDashboard();
+            }
+        });
+    </script>
+
+</body>
+</html>
