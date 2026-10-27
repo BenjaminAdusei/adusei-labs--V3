@@ -1,15 +1,25 @@
 # ─── ADUSEI LABS — NETLIFY REDIRECTS ───
 
-# Single Page App — redirect all 404s to the dashboard
-/* /index.html 404
+# ─── PHASE 1: Clean URLs for Teacher & Notebook ───
+# Explicit rules for the bare paths (no trailing slash)
+# so the header icons (/teacher, /notebook) resolve.
+# MUST come before the SPA catch-all below.
+/teacher        /teacher/index.html    200
+/teacher/       /teacher/index.html    200
+/notebook       /notebook/index.html   200
+/notebook/      /notebook/index.html   200
 
-# Ensure all lab pages work
+# ─── Lab pages ───
 /labs/* /labs/:splat 200
 
-# Ensure teacher and notebook work
-/teacher/* /teacher/:splat 200
-/notebook/* /notebook/:splat 200
+# ─── Teacher & Notebook subroutes ───
+/teacher/*      /teacher/:splat        200
+/notebook/*     /notebook/:splat       200
 
-# Ensure JS and CSS work
+# ─── JS & CSS ───
 /js/* /js/:splat 200
 /css/* /css/:splat 200
+
+# ─── SPA FALLBACK — MUST BE LAST ───
+# Serves index.html (with 404 status) for any unmatched route.
+/* /index.html 404

@@ -1,14 +1,17 @@
 // ─────────────────────────────────────────────────────────────
 // ADUSEI LABS — SERVICE WORKER
 // Provides offline support, caching, and fast loading
+// v4 — Phase 1: hardened install (optional assets no longer
+//      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v3';
+const CACHE_NAME = 'adusei-labs-v4';
 const OFFLINE_URL = '/index.html';
 
-// ─── ASSETS TO CACHE ───
-// These files will be available offline
-const ASSETS = [
+// ─── CORE ASSETS (REQUIRED) ───
+// Install FAILS if any of these are missing.
+// Only add files that must exist for the app to work.
+const CORE_ASSETS = [
     // Core files
     '/',
     '/index.html',
@@ -47,27 +50,51 @@ const ASSETS = [
     '/labs/modern/atomic-physics.html',
     '/labs/modern/radioactivity.html',
 
-    // ─── Teacher & Notebook ───
-    '/teacher/index.html',
+    // ─── Notebook (already deployed) ───
     '/notebook/index.html'
+];
+
+// ─── OPTIONAL ASSETS (NON-BLOCKING) ───
+// Install CONTINUES even if these are missing.
+// Used for routes added in future phases, or resources that
+// may not be deployed yet. If they exist → cached at install;
+// if they don't → first online visit caches them at runtime.
+const OPTIONAL_ASSETS = [
+    // ─── Teacher Dashboard (Phase 2 — 404s until then) ───
+    '/teacher/index.html'
 ];
 
 // ─── INSTALL ───
 // Cache all assets when the service worker is installed
 self.addEventListener('install', (event) => {
-    console.log('🔧 Service Worker: Installing...');
+    console.log('🔧 Service Worker: Installing (v4)...');
 
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('📦 Caching assets...');
-                return cache.addAll(ASSETS);
+            .then(async (cache) => {
+                // 1. CORE — must succeed or we bail out
+                console.log('📦 Caching core assets...');
+                await cache.addAll(CORE_ASSETS);
+
+                // 2. OPTIONAL — best-effort; failures don't break install
+                console.log('📦 Caching optional assets...');
+                const results = await Promise.allSettled(
+                    OPTIONAL_ASSETS.map((url) =>
+                        cache.add(url).catch((err) => {
+                            console.warn('[SW] Optional asset skipped:', url, '—', err.message);
+                        })
+                    )
+                );
+                const ok = results.filter(r => r.status === 'fulfilled').length;
+                console.log(`📦 Optional assets cached: ${ok}/${OPTIONAL_ASSETS.length}`);
             })
             .then(() => {
                 console.log('✅ Service Worker: Installation complete!');
                 return self.skipWaiting();
             })
             .catch((err) => {
+                // If even CORE fails, log loudly but don't crash.
+                // The app still works online via network-first fetch.
                 console.error('❌ Service Worker: Installation failed', err);
             })
     );
