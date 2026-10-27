@@ -5,7 +5,7 @@
 //      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v4';
+const CACHE_NAME = 'adusei-labs-v5';
 const OFFLINE_URL = '/index.html';
 
 // ─── CORE ASSETS (REQUIRED) ───
@@ -20,6 +20,7 @@ const CORE_ASSETS = [
     '/js/ai-content.js',
     '/js/global.js',
     '/js/dashboard.js',
+    '/teacher/index.html'
 
     // ─── Mechanics Labs (5) ───
     '/labs/mechanics/projectile.html',
@@ -60,8 +61,8 @@ const CORE_ASSETS = [
 // may not be deployed yet. If they exist → cached at install;
 // if they don't → first online visit caches them at runtime.
 const OPTIONAL_ASSETS = [
-    // ─── Teacher Dashboard (Phase 2 — 404s until then) ───
-    '/teacher/index.html'
+    
+    
 ];
 
 // ─── INSTALL ───
