@@ -5,7 +5,7 @@
 //      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v5';
+const CACHE_NAME = 'adusei-labs-v6';
 const OFFLINE_URL = '/index.html';
 
 // ─── CORE ASSETS (REQUIRED) ───
@@ -61,7 +61,7 @@ const CORE_ASSETS = [
 // may not be deployed yet. If they exist → cached at install;
 // if they don't → first online visit caches them at runtime.
 const OPTIONAL_ASSETS = [
-    
+    '/js/ai-explanations.js'
     
 ];
 
