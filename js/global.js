@@ -312,7 +312,19 @@ function _matchExplanation(bank, normalizedQuery) {
     }
     return best;
 }
-
+function _matchGeneralConcept(normalizedQuery) {
+    if (typeof GENERAL_CONCEPTS === 'undefined') return null;
+    let best = null;
+    for (const [id, concept] of Object.entries(GENERAL_CONCEPTS)) {
+        let score = 0;
+        for (const kw of (concept.keywords || [])) {
+            const kl = kw.toLowerCase();
+            if (normalizedQuery.includes(kl)) score += 5;
+        }
+        if (!best || score > best.score) best = { id, concept, score };
+    }
+    return (best && best.score >= 4) ? best : null;
+}
 // ══════════ PHASE 4 WRAPPER ══════════
 
 function getAIResponse(query, currentLab = null) {
@@ -384,6 +396,11 @@ function _getAIResponseEnglish(query, currentLab = null) {
     }
 
     if (!target) {
+        const results = typeof searchAIContent === 'function' ? searchAIContent(normalized) : [];
+        const gc = _matchGeneralConcept(normalized);
+        if (gc) {
+            return `💡 **${gc.concept.q}**\n\n${gc.concept.a}`;
+        }
         const results = typeof searchAIContent === 'function' ? searchAIContent(normalized) : [];
         if (results.length > 0) {
             let r = `🔍 **Found ${results.length} related topic${results.length === 1 ? '' : 's'}:**\n\n`;
