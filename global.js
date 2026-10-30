@@ -177,12 +177,11 @@ function getNote(labId) {
     const notes = getStorage('notebook', {});
     return notes[labId] || null;
 }
-
 // ─────────────────────────────────────────────────────────────
-// ─── AI RESPONSE ENGINE (Phase 3 — Enhanced) ─────────────────
+// ─── AI RESPONSE ENGINE (Phase 3 + 3.5 + 4 — consolidated) ───
 // ─────────────────────────────────────────────────────────────
 
-// ─── HELPERS ───
+// ══════════ PHASE 3 HELPERS ══════════
 
 function _normalizeQuery(q) {
     return String(q || '')
@@ -226,7 +225,6 @@ function _levenshtein(a, b) {
     return m[a.length][b.length];
 }
 
-// Lab keyword dictionary — expanded for Phase 3
 const _LAB_KEYWORDS_V2 = {
     'projectile': ['projectile', 'range', 'time of flight', 'maximum height', 'trajectory', 'launch', 'angle of projection'],
     'inclined-plane': ['inclined plane', 'incline', 'slope', 'ramp', 'plank', 'friction on incline'],
@@ -250,14 +248,11 @@ const _LAB_KEYWORDS_V2 = {
 };
 
 function _findTargetLab(normalizedQuery, currentLab) {
-    // 1. Exact keyword match
     for (const [labId, keywords] of Object.entries(_LAB_KEYWORDS_V2)) {
         for (const kw of keywords) {
             if (normalizedQuery.includes(kw)) return { lab: labId, confidence: 1 };
         }
     }
-
-    // 2. Fuzzy match — allow typos
     const words = normalizedQuery.split(' ').filter(w => w.length >= 3);
     let best = null;
     for (const [labId, keywords] of Object.entries(_LAB_KEYWORDS_V2)) {
@@ -274,7 +269,6 @@ function _findTargetLab(normalizedQuery, currentLab) {
         }
     }
     if (best && best.confidence >= 0.5) return best;
-
     return currentLab ? { lab: currentLab, confidence: 0.5 } : null;
 }
 
@@ -292,7 +286,8 @@ function _detectIntent(q) {
     return 'general';
 }
 
-// ─── MAIN RESPONSE FUNCTION ───
+// ══════════ PHASE 3.5 HELPER ══════════
+
 function _matchExplanation(bank, normalizedQuery) {
     if (!bank || bank.length === 0) return null;
     let best = null;
@@ -315,7 +310,52 @@ function _matchExplanation(bank, normalizedQuery) {
     }
     return best;
 }
+
+// ══════════ PHASE 4 WRAPPER ══════════
+
 function getAIResponse(query, currentLab = null) {
+    const lang = (typeof detectLanguage === 'function') ? detectLanguage(query) : 'english';
+    const response = _getAIResponseEnglish(query, currentLab);
+    if (lang === 'english') return response;
+    return _decorateResponseForLanguage(response, lang);
+}
+
+function _decorateResponseForLanguage(response, lang) {
+    const t = (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS[lang]) ? TRANSLATIONS[lang] : null;
+    if (!t) return response;
+
+    if (response.startsWith('👋')) {
+        return t.greeting_title + '\n\n' +
+            '• 📚 19 WAEC Physics Labs\n' +
+            '• 📝 ' + t.try_asking + ' "start quiz"\n' +
+            '• 📊 "dashboard"\n' +
+            '• 📄 "report"\n\n' +
+            t.try_asking + ' anything about physics.';
+    }
+    if (response.startsWith('🤖')) {
+        return '🤖 **' + t.help_intro + '**\n\n' +
+            '• "What is Ohm\'s law?" — get concepts\n' +
+            '• "Show me WAEC questions on SHM" — exam questions\n' +
+            '• "Formula for waves" — key equations\n' +
+            '• "Exam tips for projectile motion" — common mistakes\n' +
+            '• "I don\'t understand electrostatics" — simplified breakdown';
+    }
+    if (response.startsWith('🙌')) {
+        return '🙌 ' + t.no_worries + '\n\n' +
+            response.replace(/^🙌[^\n]*\n+/, '').trim();
+    }
+    return response
+        .replace(/^\*\*📚 (.+?)\*\*\n/, '**📚 $1**\n\n_' + t.content_lang_note + '_\n\n')
+        .replace(/\*\*Core concepts:\*\*/g, '**' + t.core_concepts + ':**')
+        .replace(/\*\*Key formulas:\*\*/g, '**' + t.key_formulas + ':**')
+        .replace(/\*\*Exam tips for ([^*]+):\*\*/g, '**' + t.exam_tips + ' ($1):**')
+        .replace(/\*\*Formulas for ([^*]+):\*\*/g, '**' + t.formulas_for + ' $1:**')
+        .replace(/\*\*WAEC questions on ([^*]+):\*\*/g, '**' + t.waec_questions_on + ' $1:**');
+}
+
+// ══════════ PHASE 3 CORE LOGIC ══════════
+
+function _getAIResponseEnglish(query, currentLab = null) {
     if (typeof AI_CONTENT === 'undefined') {
         return "⚠️ AI content is still loading. Please try again in a moment.";
     }
@@ -327,12 +367,10 @@ function getAIResponse(query, currentLab = null) {
     const intent = _detectIntent(normalized);
     const target = _findTargetLab(normalized, currentLab);
 
-    // ── Greeting ──
     if (intent === 'greeting') {
         return "👋 Hello! I'm your Physics AI Tutor.\n\nI can help with:\n• 🔧 Mechanics\n• 🌡️ Thermal Physics\n• 🌊 Waves\n• ⚡ Electricity & Magnetism\n• ⚛️ Modern Physics\n\nOr type \"help\" to see what I can do.";
     }
 
-    // ── Help ──
     if (intent === 'help') {
         return "🤖 **Here's what I can do:**\n\n" +
             "• \"What is Ohm's law?\" — get concepts\n" +
@@ -343,7 +381,6 @@ function getAIResponse(query, currentLab = null) {
             "Or open any lab from the grid above.";
     }
 
-    // ── No lab found ──
     if (!target) {
         const results = typeof searchAIContent === 'function' ? searchAIContent(normalized) : [];
         if (results.length > 0) {
@@ -362,7 +399,6 @@ function getAIResponse(query, currentLab = null) {
             "Or type \"help\" to see everything.";
     }
 
-    // ── Get content ──
     const content = typeof getLabContent === 'function' ? getLabContent(target.lab) : null;
     if (!content) {
         return `I matched **${target.lab}** but couldn't load details. Try again or open the lab from the grid.`;
@@ -372,12 +408,9 @@ function getAIResponse(query, currentLab = null) {
     const concepts = content.keyConcepts || [];
     const formulas = content.formulas || [];
     const tips = content.examTips || [];
-     const waecQs = content.waecQuestions || [];
+    const waecQs = content.waecQuestions || [];
 
-    // ── Explanation bank match (Phase 3.5) ──
-    // Before falling into intent-based responses, try to match a specific
-    // student question against the explanation bank. Skip if the student
-    // explicitly asked for formulas, WAEC questions, tips, help, or greeting.
+    // ── Phase 3.5: explanation bank match ──
     const _skipExpl = ['formula', 'waec', 'tip', 'help', 'greeting'].includes(intent);
     if (!_skipExpl && typeof AI_EXPLANATIONS !== 'undefined' && AI_EXPLANATIONS[target.lab]) {
         const m = _matchExplanation(AI_EXPLANATIONS[target.lab], normalized);
@@ -386,7 +419,6 @@ function getAIResponse(query, currentLab = null) {
         }
     }
 
-    // ── Confusion ──
     if (intent === 'confusion') {
         return `🙌 No worries — ${labName} trips up a lot of students.\n\n` +
             `**Simplest breakdown:**\n${desc}\n\n` +
@@ -394,20 +426,16 @@ function getAIResponse(query, currentLab = null) {
             `\n\n💡 Open the **${labName}** lab to see it in action, or ask "formula for ${labName}".`;
     }
 
-    // ── Problem-solving ──
     if (intent === 'problem') {
         return `🧮 **${labName} — formulas to use:**\n\n` + formulas.map(f => `• ${f}`).join('\n') +
             `\n\n**Tip:** Write down what you know, what you need to find, then pick the formula that connects them.`;
     }
 
-    // ── Formula ──
     if (intent === 'formula') {
         return `📐 **Formulas for ${labName}:**\n\n` + formulas.map(f => `• ${f}`).join('\n');
     }
 
-    //     // ── WAEC ──
     if (intent === 'waec') {
-        // Prefer the real WASSCE bank from index.html if available
         const liveBank = (typeof LAB_QUESTIONS !== 'undefined' && LAB_QUESTIONS[target.lab]) || null;
         const source = liveBank || waecQs;
         if (!source || source.length === 0) {
@@ -416,9 +444,6 @@ function getAIResponse(query, currentLab = null) {
         let r = `📚 **WAEC questions on ${labName}:**\n\n`;
         for (let i = 0; i < Math.min(3, source.length); i++) {
             const q = source[i];
-            // handle both shapes:
-            //   LAB_QUESTIONS item → { q, o, a, e }
-            //   ai-content item → { question, options, answer, solution }
             const qText = q.q || q.question;
             const qOpts = q.o || q.options;
             const qAns = q.a || q.answer;
@@ -434,26 +459,22 @@ function getAIResponse(query, currentLab = null) {
         return r + `💡 Ask again for more questions, or open the **${labName}** lab to take the quiz.`;
     }
 
-    // ── Tips ──
     if (intent === 'tip') {
         return `💡 **Exam tips for ${labName}:**\n\n` + tips.map(t => `• ${t}`).join('\n');
     }
 
-    // ── Example ──
     if (intent === 'example') {
         return `📖 **${labName} — context:**\n\n${desc}\n\n` +
             `**Focus on:**\n` + concepts.slice(0, 2).map(c => `• ${c}`).join('\n') +
             `\n\n💡 Open **${labName}** from the lab grid for worked examples.`;
     }
 
-    // ── Definition ──
     if (intent === 'definition') {
         return `📚 **${labName} — definition:**\n\n${desc}\n\n` +
             `**Key concepts:**\n` + concepts.map(c => `• ${c}`).join('\n') +
             `\n\n💡 Ask "formula for ${labName}" or "WAEC questions on ${labName}".`;
     }
 
-    // ── Explanation / general ──
     let r = `**📚 ${labName}**\n\n${desc}\n\n`;
     r += `**Core concepts:**\n` + concepts.slice(0, 3).map(c => `• ${c}`).join('\n');
     r += `\n\n**Key formulas:**\n` + formulas.slice(0, 3).map(f => `• ${f}`).join('\n');
@@ -466,7 +487,6 @@ function getAIResponse(query, currentLab = null) {
 
     return r;
 }
-
 
 // ─── SYNONYMS FOR getAIResponse ───
 function processAIQuery(query) {

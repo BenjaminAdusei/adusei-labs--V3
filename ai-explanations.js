@@ -334,8 +334,7 @@ window.AI_EXPLANATIONS = {
         { keywords: ['star twinkle','why stars twinkle','twinkle','atmosphere'],
           q: "Why do stars twinkle but planets don't?",
           a: "Because stars are so far away they appear as tiny points of light — their light gets bent by moving air in our atmosphere, causing the point to flicker. Planets are closer, so they appear as small DISCS (not points). The disc has many points of light, each twinkling differently — they average out, so the planet looks steady. It's not the star that's twinkling — it's our atmosphere smearing the light around. Astronauts on the ISS see stars without twinkling, because they're above the atmosphere." }
-    ]
-};
+    ],
 
     // ═══════════════ ELECTRICITY & MAGNETISM ═══════════════
 

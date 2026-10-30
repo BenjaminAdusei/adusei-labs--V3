@@ -688,6 +688,8 @@
     <!-- ─── SCRIPTS ─── -->
     <script src="js/ai-content.js"></script>
     <script src="js/ai-explanations.js"></script>
+    <script src="js/language-detect.js"></script> 
+    <script src="js/translations.js"></script>   
     <script src="js/global.js"></script>
     <script src="js/dashboard.js"></script>
     <!-- Phase 1 inline logic goes here (paste-block 2) -->
@@ -1094,9 +1096,15 @@
             <button class="primary-btn" style="flex:2;" onclick="submitQuiz('${escapeHtml(labId)}')">Submit & Grade</button>
         </div>`;
 
-        window._currentQuiz = { questions, labId, title };
+       window._currentQuiz = { questions, labId, title };
         document.getElementById('quizContent').innerHTML = html;
         document.getElementById('quizModal').classList.add('active');
+
+        if (typeof window._setAIEnabled === 'function') window._setAIEnabled(false);
+        const _ql = (typeof currentLang !== 'undefined' && window.TRANSLATIONS && TRANSLATIONS[currentLang])
+            ? TRANSLATIONS[currentLang].quiz_disabled
+            : "📝 AI help is paused during the quiz. Finish the quiz to chat again!";
+        if (typeof addAIMessage === 'function') addAIMessage(_ql, false);
     }
 
     function submitQuiz(labId) {
@@ -1150,12 +1158,32 @@
         showToast(`Score saved: ${pct}%${LAB_QUESTIONS[labId] ? ' for ' + title : ''}`);
     }
 
-    function closeQuiz() {
+        function closeQuiz() {
         document.getElementById('quizModal').classList.remove('active');
+        // Phase 4 — re-enable AI after quiz
+        if (typeof window._setAIEnabled === 'function') window._setAIEnabled(true);
         if (document.getElementById('dashboardModal').classList.contains('active')) {
             showDashboard();
         }
     }
+
+    // Phase 4 — helper to toggle AI availability
+    window._setAIEnabled = function(enabled) {
+        const input = document.getElementById('aiInput');
+        if (!input) return;
+        const sendBtn = input.parentElement.querySelector('button');
+        if (enabled) {
+            input.disabled = false;
+            input.placeholder = 'Ask about forces, circuits, waves...';
+            input.style.opacity = '1';
+            if (sendBtn) sendBtn.disabled = false;
+        } else {
+            input.disabled = true;
+            input.placeholder = '🔒 AI paused during quiz';
+            input.style.opacity = '0.5';
+            if (sendBtn) sendBtn.disabled = true;
+        }
+    };
 
     // ─── DASHBOARD ───
     function showDashboard() {

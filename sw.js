@@ -62,7 +62,8 @@ const CORE_ASSETS = [
 // if they don't → first online visit caches them at runtime.
 const OPTIONAL_ASSETS = [
     '/js/ai-explanations.js'
-    
+    '/js/language-detect.js', 
+    '/js/translations.js'    
 ];
 
 // ─── INSTALL ───
