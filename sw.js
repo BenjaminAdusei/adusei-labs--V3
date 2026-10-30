@@ -5,7 +5,7 @@
 //      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v10';
+const CACHE_NAME = 'adusei-labs-v12';
 const OFFLINE_URL = '/index.html';
 
 // ─── CORE ASSETS (REQUIRED) ───
@@ -71,7 +71,7 @@ const OPTIONAL_ASSETS = [
 // ─── INSTALL ───
 // Cache all assets when the service worker is installed
 self.addEventListener('install', (event) => {
-    console.log('🔧 Service Worker: Installing (v4)...');
+    console.log('🔧 Service Worker: Installing (v12)...');
 
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -121,9 +121,13 @@ self.addEventListener('activate', (event) => {
                         })
                 );
             })
-            .then(() => {
+                        .then(() => {
                 console.log('✅ Service Worker: Activation complete!');
-                return self.clients.claim();
+                return self.clients.claim().then(() => {
+                    self.clients.matchAll().then(clients => {
+                        clients.forEach(c => c.postMessage({ type: 'SW_UPDATED' }));
+                    });
+                });
             })
     );
 });

@@ -630,7 +630,7 @@
         <div class="modal-box">
             <div class="setup-logo">🧪⚛️</div>
             <div class="setup-title">Welcome to Adusei Labs</div>
-            <div class="setup-sub">Let's set up your profile so we can track your progress.</div>
+            <div class="setup-sub">Let's set up your profile so we can track your progress. Quiz scores are shared with your teacher to monitor class performance.</div>
             <label class="field-label" for="setupName">Your Name</label>
             <input class="field-input" id="setupName" type="text" placeholder="e.g. Ama Mensah" autocomplete="name" maxlength="60">
             <label class="field-label" for="setupSchool">School</label>
@@ -733,7 +733,8 @@
     <!-- ─── SCRIPTS ─── -->
     <script src="js/ai-content.js"></script>
     <script src="js/ai-explanations.js"></script>
-    <script src="js/general-concepts.js"></script>
+     <script src="js/general-concepts.js"></script>
+    <script src="js/sync.js"></script>
     <script src="js/language-detect.js"></script> 
     <script src="js/translations.js"></script>   
     <script src="js/global.js"></script>
@@ -1276,13 +1277,12 @@
             const isCorrect = given === item.a;
             if (isCorrect) correct++;
             picks.push({ given, isCorrect });
-        });
-        const pct = Math.round((correct / questions.length) * 100);
+                const pct = Math.round((correct / questions.length) * 100);
 
         if (LAB_QUESTIONS[labId] && typeof saveQuizScore === 'function') {
             saveQuizScore(labId, pct);
+            if (typeof syncQuizResult === 'function') syncQuizResult(labId, pct);
         }
-
         let html = `<div class="quiz-result">
             <div class="big-score">${pct}%</div>
             <div class="result-msg">You got ${correct} of ${questions.length} correct on <strong>${escapeHtml(title)}</strong></div>
