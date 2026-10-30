@@ -1277,7 +1277,9 @@
             const isCorrect = given === item.a;
             if (isCorrect) correct++;
             picks.push({ given, isCorrect });
-                const pct = Math.round((correct / questions.length) * 100);
+                });
+
+        const pct = Math.round((correct / questions.length) * 100);
 
         if (LAB_QUESTIONS[labId] && typeof saveQuizScore === 'function') {
             saveQuizScore(labId, pct);
