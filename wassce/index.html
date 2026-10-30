@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>WASSCE Past Questions | Adusei Labs</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #064e3b, #31133e);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
+    color: #f8fafc;
+    min-height: 100vh;
+  }
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+  .nav-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .nav-bar a, .nav-bar button {
+    background: rgba(30,41,59,0.7); border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1; padding: 9px 16px; border-radius: 30px;
+    text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: 0.25s; font-family: inherit;
+  }
+  .nav-bar a:hover, .nav-bar button:hover {
+    background: linear-gradient(135deg,#38bdf8,#8b5cf6);
+    color: white; border-color: transparent;
+  }
+
+  header h1 {
+    font-size: 2rem; margin: 0 0 6px;
+    background: linear-gradient(135deg,#38bdf8,#818cf8);
+    -webkit-background-clip: text; color: transparent;
+  }
+  header p { color: #94a3b8; margin: 0 0 24px; font-size: 0.95rem; }
+
+  .filters {
+    background: rgba(30,41,59,0.6); border-radius: 18px; padding: 16px 18px;
+    margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;
+    align-items: center; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .filters label { color: #cbd5e1; font-size: 0.85rem; font-weight: 600; }
+  .filters select {
+    flex: 1; min-width: 140px; padding: 9px 14px;
+    border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(15,23,42,0.8); color: white; font-family: inherit;
+    font-size: 0.9rem; cursor: pointer; outline: none;
+  }
+  .filters select:focus { border-color: #38bdf8; }
+
+  .stats-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; margin-bottom: 18px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .stats-bar .stat-item { color: #cbd5e1; font-size: 0.9rem; font-weight: 600; }
+  .stats-bar .stat-item strong {
+    color: #38bdf8; font-weight: 800;
+  }
+
+  .q-card {
+    background: rgba(15,23,42,0.6); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; padding: 18px 20px; margin-bottom: 14px;
+    transition: 0.25s;
+  }
+  .q-card:hover { border-color: rgba(56,189,248,0.3); }
+
+  .q-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 700; margin-right: 6px;
+    background: rgba(56,189,248,0.15); color: #38bdf8;
+    border: 1px solid rgba(56,189,248,0.3);
+  }
+  .q-badge.year { background: rgba(139,92,246,0.15); color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
+
+  .q-text {
+    color: white; font-size: 1rem; font-weight: 600;
+    margin: 10px 0 14px; line-height: 1.55;
+  }
+
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .q-option {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-radius: 12px; background: rgba(255,255,255,0.03);
+    border: 1px solid transparent; color: #cbd5e1; font-size: 0.92rem;
+    transition: 0.18s;
+  }
+  .q-option .opt-letter {
+    font-weight: 800; color: #38bdf8; width: 20px; flex-shrink: 0;
+  }
+  .q-card.revealed .q-option.correct {
+    background: rgba(16,185,129,0.15); border-color: #10b981;
+    color: #a7f3d0;
+  }
+  .q-card.revealed .q-option.correct .opt-letter { color: #34d399; }
+
+  .reveal-btn {
+    margin-top: 14px; padding: 9px 20px; border-radius: 20px;
+    background: rgba(139,92,246,0.15); color: #c4b5fd;
+    border: 1px solid rgba(139,92,246,0.4); font-weight: 700;
+    font-size: 0.82rem; cursor: pointer; transition: 0.2s;
+    font-family: inherit;
+  }
+  .reveal-btn:hover { background: #8b5cf6; color: white; }
+
+  .q-explain {
+    margin-top: 14px; padding: 12px 15px;
+    background: rgba(56,189,248,0.08);
+    border-left: 3px solid #38bdf8; border-radius: 10px;
+    color: #bae6fd; font-size: 0.88rem; line-height: 1.6;
+    display: none;
+  }
+  .q-card.revealed .q-explain { display: block; }
+
+  .empty-state {
+    text-align: center; padding: 50px 20px; color: #94a3b8;
+    background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 18px;
+  }
+  .empty-state .e-icon { font-size: 3rem; margin-bottom: 10px; }
+
+  footer {
+    text-align: center; padding: 30px 20px; color: #64748b;
+    font-size: 0.85rem; margin-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.5rem; }
+    .filters { flex-direction: column; align-items: stretch; }
+    .q-card { padding: 14px 16px; }
+    .q-text { font-size: 0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="nav-bar">
+    <a href="/">← Home</a>
+    <button onclick="revealAll()">👁️ Reveal All</button>
+    <button onclick="hideAll()">🙈 Hide All</button>
+  </div>
+
+  <header>
+    <h1>📖 WASSCE Past Questions</h1>
+    <p>Real WAEC Physics questions from 2016, 2020, and 2025. Filter by year or topic, reveal answers with explanations.</p>
+  </header>
+
+  <div class="filters">
+    <label for="yearFilter">Year:</label>
+    <select id="yearFilter">
+      <option value="">All Years</option>
+      <option value="2025">2025</option>
+      <option value="2020">2020</option>
+      <option value="2016">2016</option>
+    </select>
+    <label for="topicFilter">Topic:</label>
+    <select id="topicFilter">
+      <option value="">All Topics</option>
+      <option value="mechanics">🔧 Mechanics</option>
+      <option value="thermal">🌡️ Thermal Physics</option>
+      <option value="waves">🌊 Waves & Optics</option>
+      <option value="electricity">⚡ Electricity & Magnetism</option>
+      <option value="modern">⚛️ Modern Physics</option>
+    </select>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">Showing <strong id="countShown">0</strong> questions</div>
+    <div class="stat-item">Revealed <strong id="countRevealed">0</strong> of <strong id="countTotal">0</strong></div>
+  </div>
+
+  <div id="questionsList"></div>
+
+  <footer>
+    Real WASSCE questions · Adusei Labs © 2026
+  </footer>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// WASSCE PAST QUESTIONS — Question bank
+// Sources: 2016, 2020, 2025 WASSCE Physics Paper 1
+// Format: y=year, n=question number, t=topic, q=question, o=options, a=answer, e=explanation
+// ─────────────────────────────────────────────────────────────
+
+const WASCE_QUESTIONS = [
+
+  // ═══════════ 2025 ═══════════
+  {y:2025,n:2,t:'thermal',q:"What temperature on the Kelvin scale is equivalent to a 10°C change in Celsius reading?",o:["263 K","273 K","283 K","10 K"],a:"283 K",e:"10°C + 273 = 283 K (converting from Celsius to Kelvin, add 273)."},
+  {y:2025,n:3,t:'thermal',q:"Hot liquid in a vacuum flask cools extremely slowly because some modes of heat transfer cannot take place in a vacuum. These modes are:",o:["conduction and convection only","conduction and radiation only","conduction, convection, and radiation","convection and radiation only"],a:"conduction and convection only",e:"Both need a material medium. Radiation (electromagnetic waves) can cross a vacuum."},
+  {y:2025,n:4,t:'thermal',q:"A swimmer coming out of a pool of water soon feels cold on a sunny day. The swimmer experiences coldness because:",o:["water evaporates from the skin","convection occurs in the air","air is a bad conductor of heat","water is a good conductor of heat"],a:"water evaporates from the skin",e:"Evaporation carries away the most energetic molecules, cooling the skin — this is evaporative cooling."},
+  {y:2025,n:5,t:'mechanics',q:"A car of mass 1000 kg travelling at 72 km/h is brought to rest over a distance of 30 m. Calculate the retardation.",o:["7.1 m/s²","6.2 m/s²","6.7 m/s²","5.8 m/s²"],a:"6.7 m/s²",e:"Convert 72 km/h = 20 m/s. Using v² = u² + 2as: 0 = 400 + 2a(30). a = -400/60 = -6.7 m/s². Retardation = 6.7 m/s²."},
+  {y:2025,n:6,t:'electricity',q:"Which action converts a moving-coil galvanometer into an ammeter?",o:["connect a large resistance in series","connect a small resistance in parallel","connect a small resistance in series","connect a large resistance in parallel"],a:"connect a small resistance in parallel",e:"An ammeter needs very low resistance to measure current without disturbing the circuit. A shunt (small resistor) in parallel diverts most of the current past the galvanometer."},
+  {y:2025,n:11,t:'mechanics',q:"A metal of mass 10 kg falls freely to the surface of a planet with acceleration 1.70 m/s². Calculate the magnitude of the weight of the metal.",o:["11.7 N","8.3 N","5.9 N","17.0 N"],a:"17.0 N",e:"Weight = mg = 10 × 1.70 = 17.0 N."},
+  {y:2025,n:12,t:'electricity',q:"The energy stored in a capacitor of capacitance 5 µF is 40 J. Calculate the voltage across its terminals.",o:["400 V","2000 V","4000 V","200 V"],a:"4000 V",e:"Energy = ½CV². 40 = ½ × 5×10⁻⁶ × V². V² = 80/(5×10⁻⁶) = 16×10⁶. V = 4000 V."},
+  {y:2025,n:13,t:'mechanics',q:"When an elastic material exceeds its elastic limit, the material would:",o:["return to its original size","yield at that point","break at that point","not extend again"],a:"yield at that point",e:"Beyond the elastic limit, the material undergoes plastic (permanent) deformation — it yields. It doesn't return to shape, but doesn't break immediately either."},
+  {y:2025,n:15,t:'thermal',q:"The process by which heat is transferred from one point to another in a solid material is called:",o:["radiation","conduction","convection","evaporation"],a:"conduction",e:"Conduction transfers heat through a solid via particle collisions, without bulk movement of the material."},
+  {y:2025,n:16,t:'electricity',q:"The induced emf of a transformer is 24 V when the output voltage is 240 V. What is the ratio of primary to secondary turns?",o:["15:1","1:15","1:10","10:1"],a:"1:10",e:"Vp/Vs = Np/Ns → 24/240 = 1/10. So primary:secondary = 1:10 (step-up transformer)."},
+  {y:2025,n:18,t:'mechanics',q:"The air resistance on a parachutist of mass 102 kg falling vertically is 150 N. Calculate the acceleration. [g = 10 m/s²]",o:["11.4 m/s²","8.5 m/s²","4.8 m/s²","25.5 m/s²"],a:"8.5 m/s²",e:"Net force = mg − R = (102)(10) − 150 = 1020 − 150 = 870 N. a = F/m = 870/102 ≈ 8.5 m/s²."},
+  {y:2025,n:19,t:'mechanics',q:"A golf ball is kicked with initial velocity 20 m/s at 60° to the vertical. Calculate the magnitude of the horizontal component of its velocity.",o:["23.1 m/s","17.3 m/s","10.0 m/s","40.0 m/s"],a:"17.3 m/s",e:"60° to vertical = 30° to horizontal. uₓ = u·cos30° = 20 × 0.866 ≈ 17.3 m/s."},
+  {y:2025,n:22,t:'thermal',q:"Convection takes place in:",o:["solids and liquids only","solids and gases only","liquids and gases only","liquids only"],a:"liquids and gases only",e:"Convection requires fluid flow. Solids can't convect because particles are fixed."},
+  {y:2025,n:25,t:'mechanics',q:"A cargo truck of mass 8000 kg moving at 15 m/s comes to rest in 3 s. Determine the average braking force.",o:["40 kN","80 kN","120 kN","24 kN"],a:"40 kN",e:"a = v/t = 15/3 = 5 m/s². F = ma = 8000 × 5 = 40,000 N = 40 kN."},
+  {y:2025,n:28,t:'waves',q:"The distance between two successive troughs of a wave is 16.5 cm and its velocity is 247.5 m/s. Calculate the frequency of the wave.",o:["15.00 Hz","40.84 Hz","4083.75 Hz","1500.00 Hz"],a:"1500.00 Hz",e:"λ = 0.165 m. f = v/λ = 247.5/0.165 = 1500 Hz."},
+  {y:2025,n:30,t:'waves',q:"A radio station broadcast covers a distance of 3.27 m away at a nearby stadium. At what frequency was the radio wave transmitted? [c = 3.0×10⁸ m/s]",o:["92.5 MHz","98.1 MHz","100.9 MHz","91.7 MHz"],a:"91.7 MHz",e:"λ = 3.27 m. f = c/λ = 3×10⁸ / 3.27 ≈ 91.7 × 10⁶ Hz = 91.7 MHz."},
+  {y:2025,n:32,t:'thermal',q:"Hot water of mass X g is added to water of mass X/2 g at 20°C. If the mixture reaches 50°C, calculate the initial temperature of the hot water.",o:["72°C","65°C","86°C","55°C"],a:"65°C",e:"Heat lost = heat gained. m(T−50) = (m/2)(50−20). T−50 = 15. T = 65°C."},
+  {y:2025,n:35,t:'modern',q:"If Uranium-234 disintegrates by emitting an alpha particle, the resultant atom would be:",o:["²³²Th","²³⁰Th","²³⁴Th","²²⁸Th"],a:"²³⁰Th",e:"Alpha decay: mass decreases by 4, atomic number decreases by 2. ²³⁴U → ²³⁰Th + ⁴He."},
+  {y:2025,n:37,t:'electricity',q:"The most convenient way of charging a body without friction and contact with a charged body is by:",o:["induction","demagnetization","electrolysis","catalyst"],a:"induction",e:"Charging by induction uses a nearby charged object to redistribute charges without direct contact."},
+  {y:2025,n:38,t:'mechanics',q:"A projectile P is launched at 30° to the horizontal. A second projectile Q is launched at 60° to the horizontal (same speed). The range of P compared to Q is:",o:["the same","doubled","halved","reduced to one-quarter"],a:"the same",e:"R = u²sin(2θ)/g. sin(2×30°) = sin(60°) = sin(120°) = sin(2×60°). Complementary angles give the same range."},
+  {y:2025,n:41,t:'mechanics',q:"A force-displacement graph shows 40 N constant from 0 to 20 m, then decreasing linearly to 0 at 30 m. Calculate the work done.",o:["500 J","1000 J","750 J","800 J"],a:"1000 J",e:"Rectangle (0–20 m): 40 × 20 = 800 J. Triangle (20–30 m): ½ × 10 × 40 = 200 J. Total = 1000 J."},
+  {y:2025,n:45,t:'waves',q:"A ray of light is incident upon a plane mirror at 25°. The mirror is rotated clockwise through 15°. Determine the new angle of reflection.",o:["65°","55°","80°","40°"],a:"40°",e:"When the mirror rotates by θ, the angle of incidence changes by θ. New angle = 25° + 15° = 40°."},
+  {y:2025,n:47,t:'mechanics',q:"A body X of mass 5 kg moving at 30 m/s is hit by another body moving in the same direction. After collision, X moves at 50 m/s. Calculate the impulse received by X.",o:["250 Ns","150 Ns","100 Ns","200 Ns"],a:"100 Ns",e:"Impulse = Δp = m(v − u) = 5 × (50 − 30) = 5 × 20 = 100 Ns."},
+  {y:2025,n:49,t:'waves',q:"When the direction of vibration of particles of a medium is parallel to the direction of wave propagation, the wave is said to be:",o:["transverse","standing","electromagnetic","longitudinal"],a:"longitudinal",e:"In longitudinal waves, particles vibrate parallel to the direction of propagation (e.g., sound)."},
+  {y:2025,n:50,t:'modern',q:"How long will it take a radioactive material with a half-life of 10 days to reduce to 1/32 of its original number?",o:["50 days","30 days","20 days","40 days"],a:"50 days",e:"1/32 = (½)⁵. So 5 half-lives × 10 days = 50 days."},
+
+  // ═══════════ 2020 ═══════════
+  {y:2020,n:1,t:'mechanics',q:"In a collision between two objects, kinetic energy is conserved only if:",o:["one of the objects is initially at rest","potential energy is converted to work","the collision is elastic","the collision is inelastic"],a:"the collision is elastic",e:"An elastic collision conserves both momentum AND kinetic energy. Inelastic collisions convert some KE to heat/sound."},
+  {y:2020,n:2,t:'mechanics',q:"The quantity of motion of a body is its:",o:["acceleration","momentum","displacement","velocity"],a:"momentum",e:"Momentum (p = mv) is the product of mass and velocity — it defines 'quantity of motion'."},
+  {y:2020,n:3,t:'thermal',q:"The volume of a fixed mass of gas varies inversely as the pressure on it, provided the temperature is constant. This statement is:",o:["General gas law","Boyle's law","Charles' law","Pressure law"],a:"Boyle's law",e:"Boyle's law: PV = constant at constant T. (Charles: V/T constant; Pressure law: P/T constant.)"},
+  {y:2020,n:5,t:'electricity',q:"How would the capacitance of a parallel plate capacitor be affected if the distance of separation of its plates is decreased?",o:["drop to zero","remain unchanged","decrease slightly","increase in value"],a:"increase in value",e:"C = ε₀A/d. Decreasing the separation d increases capacitance."},
+  {y:2020,n:8,t:'waves',q:"Which of the following waves requires a material medium for its propagation?",o:["Radio waves","Sound waves","X-rays","Light waves"],a:"Sound waves",e:"Sound is mechanical — needs a medium. Radio, X-rays, and light are electromagnetic and can travel through vacuum."},
+  {y:2020,n:13,t:'electricity',q:"An electrical device has 50 turns in primary and 20 turns in secondary. The device can be:",o:["an a.c. generator","a d.c. generator","a step-down transformer","a step-up transformer"],a:"a step-down transformer",e:"Np > Ns means Vout < Vin — that's a step-down transformer."},
+  {y:2020,n:16,t:'waves',q:"A ray of light travels from glass (n=1.5) into ethyl alcohol (n=1.36) with angle of incidence 30°. Calculate the angle of refraction.",o:["72.8°","51.7°","33.5°","27.0°"],a:"33.5°",e:"Snell's law: 1.5 sin30° = 1.36 sinθ₂. sinθ₂ = 0.75/1.36 = 0.5515. θ₂ ≈ 33.5°."},
+  {y:2020,n:18,t:'thermal',q:"The length of an iron bar is 100 cm at 20°C. At what temperature will its length increase by 0.01%? [α = 1.2×10⁻⁵ °C⁻¹]",o:["23.0°C","28.3°C","38.0°C","48.0°C"],a:"28.3°C",e:"ΔL/L = 1×10⁻⁴ = αΔT → ΔT = 10⁻⁴/(1.2×10⁻⁵) = 8.33°C. T = 20 + 8.33 ≈ 28.3°C."},
+  {y:2020,n:20,t:'modern',q:"A beam of α-particles, β-particles, and γ-rays passes through a magnetic field at right angles. What is the observation?",o:["deflected, deflected, deflected","deflected, deflected, not deflected","deflected, not deflected, deflected","not deflected, deflected, deflected"],a:"deflected, deflected, not deflected",e:"α (+) and β (−) are charged → deflected in opposite directions. γ is uncharged → not deflected."},
+  {y:2020,n:22,t:'waves',q:"The velocity of sound in air at 15°C is 340 m/s. Calculate its velocity at 47°C.",o:["322 m/s","358 m/s","602 m/s","790 m/s"],a:"358 m/s",e:"v ∝ √T. T₁=288 K, T₂=320 K. v₂ = 340 × √(320/288) ≈ 340 × 1.054 ≈ 358 m/s."},
+  {y:2020,n:23,t:'electricity',q:"Which current-voltage characteristic is exhibited by an ohmic conductor?",o:["a curve bending upward","a straight line through the origin","a curve bending downward","a curve decreasing with V"],a:"a straight line through the origin",e:"Ohm's law: V = IR. Constant R → straight line I–V through origin."},
+  {y:2020,n:24,t:'mechanics',q:"A 500 N box rests on a horizontal floor. A constant horizontal force moves it 8 m. If μk = 0.22, calculate the work done on the box.",o:["110 J","400 J","440 J","880 J"],a:"880 J",e:"Friction F = μN = 0.22 × 500 = 110 N. Work = F × d = 110 × 8 = 880 J."},
+  {y:2020,n:25,t:'mechanics',q:"For a ball of mass m sliding down a plank inclined at θ to the horizontal, the normal force on the ball is:",o:["mg sinθ","mg tanθ","mg cosθ","mg cotθ"],a:"mg cosθ",e:"Perpendicular component of weight is balanced by the normal force: N = mg cosθ."},
+  {y:2020,n:26,t:'mechanics',q:"For the same ball, with kinetic friction F acting up the slope, the net force along the plank is:",o:["mg sinθ + F","F − mg cosθ","mg sinθ − F","F + mg cosθ"],a:"mg sinθ − F",e:"Weight component down slope (mg sinθ) minus friction opposing motion (F)."},
+  {y:2020,n:29,t:'mechanics',q:"Which statement about viscosity is NOT true?",o:["depends on areas of the surfaces in contact","is independent of the relative velocity of the layers","occurs in fluids","depends on tangential force between layers"],a:"is independent of the relative velocity of the layers",e:"Viscosity DOES depend on relative velocity between fluid layers — the statement saying otherwise is false."},
+  {y:2020,n:32,t:'mechanics',q:"Which statement about a simple pendulum's motion is true?",o:["It swings faster at the poles than at the equator","It has maximum KE at extreme positions","It passes equilibrium with minimum speed","It is SHM at large angles"],a:"It swings faster at the poles than at the equator",e:"g is slightly larger at the poles, so T = 2π√(L/g) is smaller → faster swing."},
+  {y:2020,n:34,t:'modern',q:"Which statement about photoelectrons is correct?",o:["a faint green light produces photoelectrons with less KE than bright red light","a red light releases fewer electrons than a green light","a faint green light produces photoelectrons with greater KE than a bright red light","a red light releases more electrons than a green light"],a:"a faint green light produces photoelectrons with greater KE than a bright red light",e:"Photoelectron KE depends on frequency, not intensity. Green has higher frequency than red → greater KE per electron."},
+  {y:2020,n:41,t:'waves',q:"A ray of light travels obliquely from a less dense medium to a denser medium. Which statement is true?",o:["wavelength increases in the second medium","speed increases in the second medium","the light refracts toward the normal","there is a change in frequency"],a:"the light refracts toward the normal",e:"In a denser medium light slows down and bends toward the normal. Frequency stays the same; wavelength decreases."},
+  {y:2020,n:45,t:'electricity',q:"Which action would increase the electric force between two positively charged particles?",o:["decreasing their mass","decreasing the distance between them","increasing the distance between them","increasing their mass"],a:"decreasing the distance between them",e:"Coulomb's law: F = kq₁q₂/r². Decreasing r increases F. Mass is irrelevant to electric force."},
+  {y:2020,n:49,t:'modern',q:"In photoelectric effect, the number of electrons emitted per second from a metallic surface is proportional to the:",o:["work function","energy of incident radiation","frequency of radiation","intensity of incident radiation"],a:"intensity of incident radiation",e:"Intensity = number of photons per second. More photons → more emitted electrons. Frequency determines KE, not number."},
+
+  // ═══════════ 2016 ═══════════
+  {y:2016,n:1,t:'mechanics',q:"The dimensions of momentum are:",o:["MLT","MLT⁻¹","ML²T⁻¹","ML²T⁻²"],a:"MLT⁻¹",e:"p = mv. [m] = M, [v] = LT⁻¹. So [p] = MLT⁻¹."},
+  {y:2016,n:2,t:'mechanics',q:"A student measures the volume of a liquid using a measuring cylinder. What else must be measured to determine the liquid's density?",o:["depth of the liquid in the cylinder","mass of the cylinder","mass of the liquid","temperature of the liquid"],a:"mass of the liquid",e:"Density ρ = m/V. Knowing volume, you need mass of the LIQUID (not the cylinder)."},
+  {y:2016,n:3,t:'mechanics',q:"On a stress-strain graph, the point Q at the end of the curve (rightmost point) is the:",o:["elastic limit","breaking point","yield point","proportional limit"],a:"breaking point",e:"The rightmost point of the stress-strain curve (where the wire fractures) is the breaking point."},
+  {y:2016,n:6,t:'mechanics',q:"An object of volume 400 cm³ and density 2.5 g/cm³ is suspended from a spring balance with half its volume immersed in water. Reading? [ρ_water = 1 g/cm³]",o:["1200 g","1000 g","800 g","400 g"],a:"800 g",e:"Weight = 400 × 2.5 = 1000 g. Upthrust = (400/2) × 1 = 200 g. Reading = 1000 − 200 = 800 g."},
+  {y:2016,n:10,t:'mechanics',q:"A uniform metre rule is balanced at the 35 cm mark by suspending 120 g at the 10 cm mark. Calculate the mass of the rule.",o:["60 g","80 g","120 g","200 g"],a:"200 g",e:"Load is 25 cm from fulcrum (35−10). Rule's weight acts at 50 cm = 15 cm from fulcrum. 120×25 = m×15 → m = 200 g."},
+  {y:2016,n:13,t:'waves',q:"Resonance occurs when one vibrating object causes a second object to vibrate at its own natural:",o:["amplitude","speed","frequency","intensity"],a:"frequency",e:"Resonance is maximum energy transfer when the driving frequency matches the natural frequency."},
+  {y:2016,n:19,t:'thermal',q:"An aluminium rod of length 1.8 m at 10°C is heated to produce a length increase of 0.007 m. Calculate the final temperature. [α = 2.3×10⁻⁵ K⁻¹]",o:["155°C","160°C","169°C","179°C"],a:"179°C",e:"ΔL = LαΔT → 0.007 = 1.8 × 2.3×10⁻⁵ × ΔT → ΔT ≈ 169°C. Final = 10 + 169 = 179°C."},
+  {y:2016,n:20,t:'thermal',q:"A mercury thermometer reads 4 cm at ice point, 29 cm at steam point. Find the temperature when the mercury level is at 9 cm.",o:["13°C","20°C","33°C","38°C"],a:"20°C",e:"T = (9−4)/(29−4) × 100 = 5/25 × 100 = 20°C."},
+  {y:2016,n:26,t:'waves',q:"The distance between two successive troughs of a wave is 0.4 m. If the frequency is 825 Hz, calculate the speed.",o:["165.0 m/s","330.0 m/s","412.5 m/s","825.0 m/s"],a:"330.0 m/s",e:"λ = 0.4 m. v = fλ = 825 × 0.4 = 330 m/s."},
+  {y:2016,n:32,t:'waves',q:"The pair of musical instruments that work on the vibration of air in pipes:",o:["piano and organ","guitar and flute","trumpet and violin","flute and trumpet"],a:"flute and trumpet",e:"Flutes and trumpets are wind instruments — sound comes from vibrating air columns."},
+  {y:2016,n:35,t:'electricity',q:"Ammeter A₂ reads 3.0 A through a 4 Ω resistor in parallel with a 6 Ω resistor (branch A₁). What does A₁ read?",o:["12 A","9 A","7 A","2 A"],a:"2 A",e:"Voltage across parallel branches: V = 3×4 = 12 V. I₁ = V/6 = 12/6 = 2 A."},
+  {y:2016,n:43,t:'electricity',q:"A 10 µC charge moves at 1.0×10⁵ m/s perpendicular to a magnetic field of 5.0×10⁻⁴ T. Calculate the force.",o:["5.0×10⁻⁵ N","5.0×10⁻⁴ N","5.0×10⁵ N","5.0×10⁶ N"],a:"5.0×10⁻⁴ N",e:"F = qvB = (10×10⁻⁶)(1.0×10⁵)(5.0×10⁻⁴) = 5.0×10⁻⁴ N."},
+  {y:2016,n:46,t:'modern',q:"How many beta particles are emitted in the radioactive decay ¹⁹⁸Au → ¹⁹⁸Hg?",o:["1","2","3","5"],a:"1",e:"Beta decay increases atomic number by 1, mass unchanged. Au (Z=79) → Hg (Z=80) = 1 beta particle."},
+  {y:2016,n:50,t:'modern',q:"Let Δx be uncertainty in position and Δp the uncertainty in momentum. The uncertainty principle is:",o:["Δx·Δp = h","Δx·Δp ≤ h","Δx·Δp ≥ h","Δx·Δp > h"],a:"Δx·Δp ≥ h",e:"Heisenberg's uncertainty principle: the product of uncertainties cannot be smaller than the order of h (often stated as ≥ h)."}
+];
+
+// ─────────────────────────────────────────────────────────────
+// RENDERING
+// ─────────────────────────────────────────────────────────────
+
+const TOPIC_NAMES = {
+  mechanics: '🔧 Mechanics',
+  thermal: '🌡️ Thermal',
+  waves: '🌊 Waves',
+  electricity: '⚡ Electricity',
+  modern: '⚛️ Modern'
+};
+
+function renderQuestions() {
+  const yearFilter = document.getElementById('yearFilter').value;
+  const topicFilter = document.getElementById('topicFilter').value;
+  const list = document.getElementById('questionsList');
+
+  const filtered = WASCE_QUESTIONS.filter(q => {
+    if (yearFilter && q.y !== parseInt(yearFilter, 10)) return false;
+    if (topicFilter && q.t !== topicFilter) return false;
+    return true;
+  });
+
+  document.getElementById('countShown').textContent = filtered.length;
+  document.getElementById('countTotal').textContent = filtered.length;
+  document.getElementById('countRevealed').textContent = '0';
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="e-icon">📭</div><p>No questions match your filters.</p></div>`;
+    return;
+  }
+
+  let html = '';
+  for (const q of filtered) {
+    const letters = ['A', 'B', 'C', 'D'];
+    const optionsHtml = q.o.map((opt, i) => {
+      const isCorrect = opt === q.a;
+      return `<div class="q-option ${isCorrect ? 'correct' : ''}">
+        <span class="opt-letter">${letters[i]}</span>
+        <span>${escapeHtml(opt)}</span>
+      </div>`;
+    }).join('');
+
+    html += `<div class="q-card" data-year="${q.y}" data-num="${q.n}">
+      <div>
+        <span class="q-badge year">${q.y}</span>
+        <span class="q-badge">Q${q.n}</span>
+        <span class="q-badge">${TOPIC_NAMES[q.t] || q.t}</span>
+      </div>
+      <p class="q-text">${escapeHtml(q.q)}</p>
+      <div class="q-options">${optionsHtml}</div>
+      <div class="q-explain"><strong>💡 Why:</strong> ${escapeHtml(q.e)}</div>
+      <button class="reveal-btn" onclick="toggleReveal(this)">Show Answer</button>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function toggleReveal(btn) {
+  const card = btn.closest('.q-card');
+  card.classList.toggle('revealed');
+  btn.textContent = card.classList.contains('revealed') ? 'Hide Answer' : 'Show Answer';
+  updateRevealedCount();
+}
+
+function revealAll() {
+  document.querySelectorAll('.q-card').forEach(card => {
+    card.classList.add('revealed');
+    const btn = card.querySelector('.reveal-btn');
+    if (btn) btn.textContent = 'Hide Answer';
+  });
+  updateRevealedCount();
+}
+
+function hideAll() {
+  document.querySelectorAll('.q-card').forEach(card => {
+    card.classList.remove('revealed');
+    const btn = card.querySelector('.reveal-btn');
+    if (btn) btn.textContent = 'Show Answer';
+  });
+  updateRevealedCount();
+}
+
+function updateRevealedCount() {
+  const total = document.querySelectorAll('.q-card').length;
+  const revealed = document.querySelectorAll('.q-card.revealed').length;
+  document.getElementById('countRevealed').textContent = revealed;
+  document.getElementById('countTotal').textContent = total;
+}
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('yearFilter').addEventListener('change', renderQuestions);
+  document.getElementById('topicFilter').addEventListener('change', renderQuestions);
+  renderQuestions();
+});
+</script>
+
+</body>
+</html>S

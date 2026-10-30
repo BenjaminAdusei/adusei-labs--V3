@@ -5,7 +5,7 @@
 //      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v6';
+const CACHE_NAME = 'adusei-labs-v9';
 const OFFLINE_URL = '/index.html';
 
 // ─── CORE ASSETS (REQUIRED) ───
@@ -21,7 +21,8 @@ const CORE_ASSETS = [
     '/js/global.js',
     '/js/dashboard.js',
     '/teacher/index.html'
-
+    '/wassce/index.html'
+    
     // ─── Mechanics Labs (5) ───
     '/labs/mechanics/projectile.html',
     '/labs/mechanics/inclined-plane.html',
