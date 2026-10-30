@@ -5,7 +5,7 @@
 //      break the SW if missing; forces fresh cache rollout)
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'adusei-labs-v9';
+const CACHE_NAME = 'adusei-labs-v10';
 const OFFLINE_URL = '/index.html';
 
 // ─── CORE ASSETS (REQUIRED) ───
@@ -65,6 +65,7 @@ const OPTIONAL_ASSETS = [
     '/js/ai-explanations.js'
     '/js/language-detect.js', 
     '/js/translations.js'    
+    '/js/general-concepts.js'
 ];
 
 // ─── INSTALL ───

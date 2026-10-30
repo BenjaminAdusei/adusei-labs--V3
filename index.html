@@ -393,6 +393,36 @@
             .quick-actions .action-btn { padding: 8px 16px; font-size: 0.8rem; }
             .quiz-result .big-score { font-size: 4.5rem; }
         }
+                /* ─── PHASE 8: INSTALL + OFFLINE BANNERS ─── */
+        .install-banner, .offline-banner {
+            position: fixed; left: 50%; transform: translateX(-50%) translateY(-20px);
+            padding: 12px 18px; border-radius: 30px; font-weight: 600;
+            font-size: 0.9rem; z-index: 5000; display: none;
+            align-items: center; gap: 10px; max-width: 92vw;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); opacity: 0;
+            transition: all 0.3s;
+        }
+        .install-banner.show, .offline-banner.show {
+            display: flex; opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .install-banner {
+            bottom: 90px; background: linear-gradient(135deg,#38bdf8,#8b5cf6);
+            color: white; border: 1px solid rgba(255,255,255,0.3);
+        }
+        .install-banner button {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            padding: 6px 14px; border-radius: 20px; cursor: pointer;
+            font-weight: 700; font-size: 0.82rem; font-family: inherit;
+        }
+        .install-banner button:hover { background: rgba(255,255,255,0.35); }
+        .offline-banner {
+            top: 20px; background: rgba(239,68,68,0.95); color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        @media (max-width: 640px) {
+            .install-banner, .offline-banner { font-size: 0.8rem; padding: 10px 14px; }
+        }
     </style>
 </head>
 <body>
@@ -659,13 +689,16 @@
 
     <!-- ─── AI ASSISTANT ─── -->
     <div id="aiAssistant" class="ai-assistant collapsed">
-        <div class="ai-header" onclick="toggleAI()">
+                <div class="ai-header" onclick="toggleAI()">
             <div class="ai-header-content">
                 <span class="ai-icon">🧠</span>
                 <span class="ai-title">Physics AI Tutor</span>
                 <span class="ai-badge">Ultra</span>
             </div>
-            <div class="ai-toggle">▼</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button id="ttsToggle" onclick="event.stopPropagation(); toggleTTS()" title="Toggle voice answers" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:1rem;width:32px;height:32px;border-radius:50%;cursor:pointer;">🔊</button>
+                <div class="ai-toggle">▼</div>
+            </div>
         </div>
         <div class="ai-body">
             <div class="ai-messages" id="aiMessages">
@@ -684,8 +717,16 @@
         </div>
     </div>
 
-    <!-- ─── TOAST ─── -->
+   <!-- ─── TOAST ─── -->
     <div id="appToast" class="app-toast"></div>
+
+    <!-- ─── PHASE 8: INSTALL + OFFLINE BANNERS ─── -->
+    <div id="installBanner" class="install-banner">
+        <span>📲 Install Adusei Labs for offline use</span>
+        <button onclick="installApp()">Install</button>
+        <button onclick="dismissInstall()">✕</button>
+    </div>
+    <div id="offlineBanner" class="offline-banner">📶 You're offline — cached content still works</div>
 
     <!-- ─── SCRIPTS ─── -->
     <script src="js/ai-content.js"></script>
@@ -711,7 +752,7 @@
     function escapeHtml(s) {
         return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
-    function showToast(msg) {
+        function showToast(msg) {
         const t = document.getElementById('appToast');
         if (!t) return;
         t.textContent = msg;
@@ -720,6 +761,86 @@
         window._toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
     }
 
+    // ══════════ PHASE 6: TTS VOICE ANSWERS ══════════
+    let ttsEnabled = localStorage.getItem('adusei_tts') === 'on';
+
+    function toggleTTS() {
+        ttsEnabled = !ttsEnabled;
+        localStorage.setItem('adusei_tts', ttsEnabled ? 'on' : 'off');
+        const btn = document.getElementById('ttsToggle');
+        if (btn) btn.textContent = ttsEnabled ? '🔊' : '🔇';
+        if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+        showToast(ttsEnabled ? '🔊 Voice answers ON' : '🔇 Voice answers OFF');
+    }
+
+    function speakText(text) {
+        if (!ttsEnabled || !window.speechSynthesis) return;
+        let clean = String(text)
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/[#*_`•·]/g, ' ')
+            .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!clean) return;
+        if (clean.length > 450) clean = clean.substring(0, 450) + '...';
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = 'en-US';
+        u.rate = 0.95;
+        u.pitch = 1.05;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+    }
+
+    // Restore TTS button state on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('ttsToggle');
+        if (btn) btn.textContent = ttsEnabled ? '🔊' : '🔇';
+    });
+  // ══════════ PHASE 8: PWA POLISH ══════════
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (localStorage.getItem('adusei_installDismissed') !== '1') {
+            document.getElementById('installBanner').classList.add('show');
+        }
+    });
+
+    function installApp() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choice) => {
+            if (choice.outcome === 'accepted') showToast('✅ App installed!');
+            deferredPrompt = null;
+            document.getElementById('installBanner').classList.remove('show');
+        });
+    }
+
+    function dismissInstall() {
+        localStorage.setItem('adusei_installDismissed', '1');
+        document.getElementById('installBanner').classList.remove('show');
+    }
+
+    window.addEventListener('online', () => {
+        document.getElementById('offlineBanner').classList.remove('show');
+    });
+    window.addEventListener('offline', () => {
+        document.getElementById('offlineBanner').classList.add('show');
+    });
+    if (!navigator.onLine) {
+        document.getElementById('offlineBanner').classList.add('show');
+    }
+
+    // SW update notification
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'SW_UPDATED') {
+                showToast('✨ New version available — refresh to update');
+            }
+        });
+    }
+    
     // ─── NAVIGATION (labId → path) ───
     function navigateToLab(lab) {
         const files = {
@@ -1552,6 +1673,7 @@
         else if (typeof generateAIResponse === 'function') response = generateAIResponse(q);
         else response = "⚠️ AI content is still loading. Please try again in a moment.";
         addAIMessage(response, false);
+         speakText(response);
     }
 
     function handleAIKeypress(e) { if (e.key === 'Enter') sendAIMessage(); }
@@ -1612,6 +1734,7 @@
                     if (typeof getAIResponse === 'function') response = getAIResponse(cmd);
                     else response = `I heard: "${transcript}". Try 'Dashboard' or 'Start Quiz'.`;
                     addAIMessage(response, false);
+                    speakText(response);
                 }
             };
 
