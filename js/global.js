@@ -396,7 +396,6 @@ function _getAIResponseEnglish(query, currentLab = null) {
     }
 
     if (!target) {
-        const results = typeof searchAIContent === 'function' ? searchAIContent(normalized) : [];
         const gc = _matchGeneralConcept(normalized);
         if (gc) {
             return `💡 **${gc.concept.q}**\n\n${gc.concept.a}`;
