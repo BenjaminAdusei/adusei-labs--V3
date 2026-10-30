@@ -274,6 +274,8 @@ function _findTargetLab(normalizedQuery, currentLab) {
 
 function _detectIntent(q) {
     if (/^(hi|hello|hey|yo|sup|good morning|good afternoon|good evening)\b/.test(q)) return 'greeting';
+    if (/^(akwaaba|medaase|mepa|woezo|woezɔ|woezↄ|woe zo|miiŋa|miinga|miiŋa bo|aamaaraabaa|amaraba|maraba|a maraaba|oo)\b/.test(q)) return 'greeting';
+    if (/(help|what can you do|commands|how do i use|what do you do)/.test(q)) return 'help';
     if (/(help|what can you do|commands|how do i use|what do you do)/.test(q)) return 'help';
     if (/(waec|past question|exam question|jamb)/.test(q)) return 'waec';
     if (/(formula|equation|expression|derive)/.test(q)) return 'formula';

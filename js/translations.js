@@ -31,7 +31,7 @@ window.TRANSLATIONS = {
     },
 
     ga: {  // ═══ Ga ═══
-        greeting_title: "👋 Miiŋa bo! Mi ji o AI Physics Tutor!",
+        greeting_title: "👋 Oobakɛ! Mi ji o AI Physics Tutor!",
         try_asking: "Okɛɛ:",
         help_intro: "Nɔ ni miɔnyɛɔ:",
         not_sure: "Mi le nɔ ni o biɔ lɛ shishi. Kɛɛ:",
@@ -48,7 +48,7 @@ window.TRANSLATIONS = {
     },
 
     ewe: {  // ═══ Ewe ═══
-        greeting_title: "👋 Woezɔ! Nyee nye AI Physics Tutor!",
+         greeting_title: "👋 Woé zɔ! Nyee nye AI Physics Tutor!",
         try_asking: "Bia:",
         help_intro: "Nu siwo mate ŋu awɔ:",
         not_sure: "Nyemese nu si nèle bibia o. Bia:",
