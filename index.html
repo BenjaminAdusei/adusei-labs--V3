@@ -633,6 +633,8 @@
             <div class="setup-sub">Let's set up your profile so we can track your progress.</div>
             <label class="field-label" for="setupName">Your Name</label>
             <input class="field-input" id="setupName" type="text" placeholder="e.g. Ama Mensah" autocomplete="name" maxlength="60">
+            <label class="field-label" for="setupSchool">School</label>
+            <input class="field-input" id="setupSchool" type="text" placeholder="e.g. Accra High School" autocomplete="off" maxlength="80">
             <label class="field-label" for="setupClass">Your Class</label>
             <input class="field-input" id="setupClass" type="text" placeholder="e.g. SHS 2 Science B" autocomplete="off" maxlength="60">
             <div class="setup-error" id="setupError"></div>
@@ -876,28 +878,59 @@
     function submitSetup() {
         const name = normalizeText(document.getElementById('setupName').value);
         const cls = normalizeText(document.getElementById('setupClass').value);
+        const schoolEl = document.getElementById('setupSchool');
+        const school = schoolEl ? normalizeText(schoolEl.value) : '';
         const err = document.getElementById('setupError');
         if (!name) { err.textContent = 'Please enter your name.'; return; }
         if (!cls) { err.textContent = 'Please enter your class.'; return; }
         const old = getStudent() || {};
-        setStorage('student', { ...old, name, class: cls, createdAt: old.createdAt || new Date().toISOString() });
+        setStorage('student', {
+            ...old, name, class: cls,
+            school: school || old.school || 'Unknown',
+            createdAt: old.createdAt || new Date().toISOString()
+        });
+        localStorage.removeItem('adusei_pendingSchool');
         document.getElementById('setupModal').classList.remove('active');
         document.body.style.overflow = '';
         updateGreeting();
         showToast(`Welcome, ${name}! 🎉`);
     }
 
+        // ══════════ PHASE A: School from URL ══════════
+    function parseSchoolFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('school');
+        if (!raw) return '';
+        return decodeURIComponent(raw)
+            .replace(/[_+\-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function requireSetup() {
         if (!getStudent()) {
+            // Pre-fill school from URL
+            const urlSchool = parseSchoolFromURL();
+            const schoolInput = document.getElementById('setupSchool');
+            if (schoolInput) {
+                if (urlSchool) schoolInput.value = urlSchool;
+                else {
+                    const pending = localStorage.getItem('adusei_pendingSchool') || '';
+                    if (pending) schoolInput.value = pending;
+                }
+            }
             document.getElementById('setupModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
     }
 
-    function updateGreeting() {
+        function updateGreeting() {
         const s = getStudent();
         const el = document.getElementById('greetingLine');
-        if (el) el.textContent = s ? `👋 ${s.name} · ${s.class}` : '';
+        if (el) {
+            const schoolPart = (s && s.school && s.school !== 'Unknown') ? ` · ${s.school}` : '';
+            el.textContent = s ? `👋 ${s.name}${schoolPart} · ${s.class}` : '';
+        }
     }
 
     // ─── LANGUAGE ───
@@ -1417,12 +1450,12 @@
         const notes = getStorage('notebook', {});
         const esc = v => `"${String(v).replace(/"/g, '""')}"`;
 
-        let csv = 'Name,Class,Lab,Attempts,Average Score (%)\n';
+        let csv = 'Name,School,Class,Lab,Attempts,Average Score (%)\n';
         let rows = 0;
         for (const lab of LABS) {
             const s = stats[lab.id] || { attempts: 0, average: 0 };
             if (s.attempts > 0) {
-                csv += `${esc(student.name)},${esc(student.class)},${esc(lab.name)},${s.attempts},${s.average}\n`;
+                csv += `${esc(student.name)},${esc(student.school || 'Unknown')},${esc(student.class)},${esc(lab.name)},${s.attempts},${s.average}\n`;
                 rows++;
             }
         }

@@ -374,8 +374,10 @@
         clearTimeout(window._toastTimer);
         window._toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
     }
-    function studentKey(name, cls) {
-        return normalizeText(name).toLowerCase() + '|' + normalizeText(cls).toLowerCase();
+function studentKey(name, cls, school) {
+        return normalizeText(school || 'Unknown').toLowerCase() + '|' +
+               normalizeText(name).toLowerCase() + '|' +
+               normalizeText(cls).toLowerCase();
     }
 
     // ─── PIN GATE ───
@@ -549,13 +551,31 @@
             if (!name) continue;
             if (name.toLowerCase() === 'name') continue;     // header
             if (name.toLowerCase().startsWith('notes saved')) continue; // footer
-            rows.push({
-                name: normalizeText(f[0]),
-                class: normalizeText(f[1]),
-                lab: normalizeText(f[2]),
-                attempts: parseInt(f[3], 10) || 0,
-                average: parseInt(f[4], 10) || 0
-            });
+             // Support both legacy (5-col) and new (6-col with school) formats
+            let row;
+            if (f.length >= 6) {
+                // New: Name, School, Class, Lab, Attempts, Average
+                row = {
+                    name: normalizeText(f[0]),
+                    school: normalizeText(f[1]) || 'Unknown',
+                    class: normalizeText(f[2]),
+                    lab: normalizeText(f[3]),
+                    attempts: parseInt(f[4], 10) || 0,
+                    average: parseInt(f[5], 10) || 0
+                };
+            } else {
+                // Legacy: Name, Class, Lab, Attempts, Average
+                row = {
+                    name: normalizeText(f[0]),
+                    school: 'Unknown',
+                    class: normalizeText(f[1]),
+                    lab: normalizeText(f[2]),
+                    attempts: parseInt(f[3], 10) || 0,
+                    average: parseInt(f[4], 10) || 0
+                };
+            }
+            rows.push(row);
+
         }
         return rows;
     }
@@ -603,7 +623,7 @@
     }
 
     // ─── MERGE LOGIC (Option D: newer attempts win) ───
-    function mergeImport(rows) {
+        function mergeImport(rows) {
         const data = getStorage('teacherData', {});
         let labsAdded = 0, labsUpdated = 0;
         const now = new Date().toISOString();
@@ -612,14 +632,20 @@
             if (!row.name || !row.class || !row.lab) continue;
             const labId = labNameToId(row.lab);
             if (!labId) continue;
-            const key = studentKey(row.name, row.class);
+            const key = studentKey(row.name, row.class, row.school);
 
             if (!data[key]) {
-                data[key] = { name: row.name, class: row.class, labs: {}, updatedAt: now };
+                data[key] = {
+                    name: row.name,
+                    class: row.class,
+                    school: row.school || 'Unknown',
+                    labs: {},
+                    updatedAt: now
+                };
             }
-            // Refresh display name/class to latest import
             data[key].name = row.name;
             data[key].class = row.class;
+            if (row.school) data[key].school = row.school;
             data[key].updatedAt = now;
 
             const existing = data[key].labs[labId];
@@ -627,15 +653,12 @@
                 data[key].labs[labId] = { attempts: row.attempts, average: row.average, updatedAt: now };
                 labsAdded++;
             } else if (row.attempts > existing.attempts) {
-                // Newer data has more attempts → take it
                 data[key].labs[labId] = { attempts: row.attempts, average: row.average, updatedAt: now };
                 labsUpdated++;
             } else if (row.attempts === existing.attempts && row.average !== existing.average) {
-                // Same attempts, different score → take newer
                 data[key].labs[labId] = { attempts: row.attempts, average: row.average, updatedAt: now };
                 labsUpdated++;
             }
-            // else: old attempts > new attempts → keep existing (new file is older)
         }
 
         setStorage('teacherData', data);
@@ -884,10 +907,10 @@
             const avg = studentAverage(s);
             const avgClass = avg >= 70 ? 'score-good' : avg >= 50 ? 'score-mid' : 'score-low';
             const updated = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString() : '—';
-            const key = studentKey(s.name, s.class);
+            const key = studentKey(s.name, s.class, s.school);
             html += `<tr>
                 <td class="s-name">${escapeHtml(s.name)}</td>
-                <td class="s-class">${escapeHtml(s.class)}</td>
+                <td class="s-class">${escapeHtml(s.class)}<br><span style="color:#38bdf8;font-size:0.72rem;">${escapeHtml(s.school || 'Unknown')}</span></td>
                 <td>${labCount}/19</td>
                 <td class="${avgClass}">${avg}%</td>
                 <td style="color:#94a3b8;font-size:0.82rem;">${updated}</td>
