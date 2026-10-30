@@ -268,7 +268,14 @@ function _findTargetLab(normalizedQuery, currentLab) {
             }
         }
     }
-    if (best && best.confidence >= 0.5) return best;
+        if (best && best.confidence >= 0.5) return best;
+
+    // Phase 7: context-based follow-up for pronouns
+    if (window._convContext && window._convContext.lastLab &&
+        /\b(that|it|this|those|these|them)\b/.test(normalizedQuery)) {
+        return { lab: window._convContext.lastLab, confidence: 0.6, fromContext: true };
+    }
+
     return currentLab ? { lab: currentLab, confidence: 0.5 } : null;
 }
 
@@ -330,6 +337,7 @@ function _matchGeneralConcept(normalizedQuery) {
 function getAIResponse(query, currentLab = null) {
     const lang = (typeof detectLanguage === 'function') ? detectLanguage(query) : 'english';
     const response = _getAIResponseEnglish(query, currentLab);
+     _rememberTurn(query, response, window._convContext ? window._convContext.lastLab : null);
     if (lang === 'english') return response;
     return _decorateResponseForLanguage(response, lang);
 }
@@ -368,7 +376,20 @@ function _decorateResponseForLanguage(response, lang) {
 }
 
 // ══════════ PHASE 3 CORE LOGIC ══════════
+// ══════════ PHASE 7: CONVERSATION MEMORY ══════════
+window._convContext = {
+    lastLab: null,
+    lastTopic: null,
+    history: []
+};
 
+function _rememberTurn(query, response, labId) {
+    if (!window._convContext) return;
+    window._convContext.lastTopic = query;
+    if (labId) window._convContext.lastLab = labId;
+    window._convContext.history.push({ q: query, a: String(response).substring(0, 150) });
+    if (window._convContext.history.length > 5) window._convContext.history.shift();
+}
 function _getAIResponseEnglish(query, currentLab = null) {
     if (typeof AI_CONTENT === 'undefined') {
         return "⚠️ AI content is still loading. Please try again in a moment.";
@@ -380,7 +401,7 @@ function _getAIResponseEnglish(query, currentLab = null) {
     const normalized = _expandContractions(_normalizeQuery(query));
     const intent = _detectIntent(normalized);
     const target = _findTargetLab(normalized, currentLab);
-
+    if (target && target.lab && window._convContext) window._convContext.lastLab = target.lab;
     if (intent === 'greeting') {
         return "👋 Hello! I'm your Physics AI Tutor.\n\nI can help with:\n• 🔧 Mechanics\n• 🌡️ Thermal Physics\n• 🌊 Waves\n• ⚡ Electricity & Magnetism\n• ⚛️ Modern Physics\n\nOr type \"help\" to see what I can do.";
     }
